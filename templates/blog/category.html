@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - My Website{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">{{ category.name }}</h1>
+        {% if posts %}
+            <ul class="list-group mb-4">
+            {% for post in posts %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="/blog/{{ post.id }}">{{ post.title }}</a>
+                    <small class="text-muted">{{ post.created_at.strftime('%Y-%m-%d') }}</small>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <div class="text-center text-muted py-5">이 카테고리에 글이 없습니다</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
