@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}블로그 - My Website{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="mb-4">블로그</h1>
+        
+        {% if posts %}
+            <div class="row">
+                {% for post in posts %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ post.title }}</h5>
+                            <p class="card-text flex-grow-1">{{ post.excerpt or post.content[:150] }}...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="/blog/{{ post.id }}" class="btn btn-primary">더 읽기</a>
+                                <small class="text-muted">조회 {{ post.views }}회</small>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ post.created_at.strftime('%Y-%m-%d') }}</span>
+                                <span>{{ post.author.username }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page - 1 }}">이전</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, pages + 1) %}
+                        <li class="page-item {{ 'active' if p == page else '' }}">
+                            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+                    
+                    {% if page < pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page + 1 }}">다음</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <h3 class="text-muted">아직 포스트가 없습니다</h3>
+                <p class="text-muted">첫 번째 포스트를 기다리고 있어요!</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>카테고리</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for category in categories %}
+                <a href="/category/{{ category.slug }}" 
+                   class="list-group-item list-group-item-action">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}대시보드{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">총 포스트</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_posts }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-edit fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">발행된 포스트</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ published_posts }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">총 사용자</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">카테고리</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_categories }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tags fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">최근 포스트</h6>
+                <a href="/admin/posts" class="btn btn-sm btn-outline-primary">전체 보기</a>
+            </div>
+            <div class="card-body">
+                {% if recent_posts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>제목</th>
+                                    <th>상태</th>
+                                    <th>작성일</th>
+                                    <th>조회수</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in recent_posts %}
+                                <tr>
+                                    <td>{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        {% if post.is_published %}
+                                            <span class="badge bg-success">발행됨</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">초안</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ post.created_at.strftime('%m/%d') }}</td>
+                                    <td>{{ post.views }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <h5 class="text-muted">포스트가 없습니다</h5>
+                        <p class="text-muted">첫 번째 포스트를 작성해보세요!</p>
+                        <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">빠른 작업</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
+                    <a href="/admin/categories" class="btn btn-outline-secondary">카테고리 관리</a>
+                    <a href="/" target="_blank" class="btn btn-outline-success">사이트 미리보기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

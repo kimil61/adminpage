@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}홈 - My Website{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">환영합니다!</h1>
+            <p class="lead">FastAPI + Jinja2로 만든 웹사이트입니다.</p>
+            <a class="btn btn-light btn-lg" href="/blog">블로그 보기</a>
+        </div>
+        
+        <h2>최신 포스트</h2>
+        <div class="row">
+            {% for post in recent_posts %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    {% if post.featured_image %}
+                    <img src="{{ post.featured_image }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text flex-grow-1">{{ post.excerpt or post.content[:100] }}...</p>
+                        <a href="/blog/{{ post.id }}" class="btn btn-primary mt-auto">더 읽기</a>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{ post.created_at.strftime('%Y-%m-%d') }} | {{ post.author.username }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not recent_posts %}
+            <div class="col-12 text-center py-5">
+                <h3 class="text-muted">아직 포스트가 없습니다</h3>
+                <p class="text-muted">관리자 페이지에서 첫 번째 포스트를 작성해보세요!</p>
+                {% if request.session.get('is_admin') %}
+                <a href="/admin/posts/create" class="btn btn-primary">첫 포스트 작성하기</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>카테고리</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for category in categories %}
+                <a href="/category/{{ category.slug }}" 
+                   class="list-group-item list-group-item-action">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+                
+                {% if not categories %}
+                <div class="list-group-item text-muted text-center">
+                    카테고리가 없습니다
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

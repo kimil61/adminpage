@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}포스트 관리{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0">총 {{ posts|length }}개의 포스트</p>
+    </div>
+    <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if posts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>제목</th>
+                            <th>작성자</th>
+                            <th>카테고리</th>
+                            <th>상태</th>
+                            <th>작성일</th>
+                            <th>조회수</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                        <tr>
+                            <td>{{ post.title }}</td>
+                            <td>{{ post.author.username }}</td>
+                            <td>
+                                {% if post.category %}
+                                    {{ post.category.name }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if post.is_published %}
+                                    <span class="badge bg-success">발행됨</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">초안</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ post.views }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/admin/posts/{{ post.id }}/edit" class="btn btn-outline-primary btn-sm">수정</a>
+                                    {% if post.is_published %}
+                                        <a href="/blog/{{ post.id }}" target="_blank" class="btn btn-outline-success btn-sm">보기</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h4 class="text-muted">포스트가 없습니다</h4>
+                <p class="text-muted">첫 번째 포스트를 작성해보세요!</p>
+                <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

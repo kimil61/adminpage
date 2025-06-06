@@ -1,0 +1,108 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}
+{% if action == "create" %}
+새 포스트 작성
+{% else %}
+포스트 수정
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">포스트 내용</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">제목 *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ form.title.data or '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">내용 *</label>
+                        <textarea class="form-control" id="content" name="content" rows="15">{{ form.content.data or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="excerpt" class="form-label">요약</label>
+                        <textarea class="form-control" id="excerpt" name="excerpt" rows="3">{{ form.excerpt.data or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">발행 설정</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published" 
+                                   {% if form.is_published.data %}checked{% endif %}>
+                            <label class="form-check-label" for="is_published">바로 발행</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">카테고리</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            {% for value, label in form.category_id.choices %}
+                            <option value="{{ value }}" {% if form.category_id.data == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="featured_image" class="form-label">대표 이미지</label>
+                        <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if action == "create" %}
+                            포스트 생성
+                            {% else %}
+                            포스트 수정
+                            {% endif %}
+                        </button>
+                        <a href="/admin/posts" class="btn btn-secondary">취소</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+tinymce.init({
+    selector: '#content',
+    height: 400,
+    menubar: false,
+    plugins: [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+    ],
+    toolbar: 'undo redo | blocks | bold italic backcolor | ' +
+             'alignleft aligncenter alignright alignjustify | ' +
+             'bullist numlist outdent indent | removeformat | help',
+    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+    language: 'ko'
+});
+</script>
+{% endblock %}

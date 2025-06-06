@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}카테고리 관리{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">카테고리 목록</h6>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>슬러그</th>
+                                    <th>설명</th>
+                                    <th>포스트 수</th>
+                                    <th>생성일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td><code>{{ category.slug }}</code></td>
+                                    <td>{{ category.description or '-' }}</td>
+                                    <td>{{ category.posts|length }}</td>
+                                    <td>{{ category.created_at.strftime('%Y-%m-%d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <h4 class="text-muted">카테고리가 없습니다</h4>
+                        <p class="text-muted">첫 번째 카테고리를 만들어보세요!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">새 카테고리 추가</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">카테고리명 *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">슬러그 *</label>
+                        <input type="text" class="form-control" id="slug" name="slug" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">설명</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">카테고리 추가</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-');
+    document.getElementById('slug').value = slug;
+});
+</script>
+{% endblock %}
