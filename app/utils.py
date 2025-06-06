@@ -28,6 +28,13 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     
     return user
 
+def get_current_user_optional(request: Request, db: Session = Depends(get_db)) -> User | None:
+    """선택적 사용자 인증 (로그인하지 않아도 됨)"""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return None
+    return db.query(User).filter(User.id == user_id).first()
+
 def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
     user = get_current_user(request, db)
     if not user.is_admin:

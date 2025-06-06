@@ -10,7 +10,8 @@ from app.database import engine, get_db
 from app.models import Base, Post, Category
 from app.routers import auth, blog, admin
 from app.utils import get_flashed_messages
-import os
+from app.settings import settings
+from app.exception_handlers import global_exception_handler
 
 # 테이블 생성
 Base.metadata.create_all(bind=engine)
@@ -20,8 +21,8 @@ app = FastAPI(title="My Website", version="1.0.0")
 
 # 세션 미들웨어 (실제 운영에서는 강력한 비밀키 사용)
 app.add_middleware(
-    SessionMiddleware, 
-    secret_key=os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
+    SessionMiddleware,
+    secret_key=settings.secret_key
 )
 
 # 정적 파일 설정
@@ -90,6 +91,8 @@ async def server_error_handler(request: Request, exc):
     return templates.TemplateResponse("errors/500.html", {
         "request": request
     }, status_code=500)
+
+app.add_exception_handler(Exception, global_exception_handler)
 
 if __name__ == "__main__":
     import uvicorn

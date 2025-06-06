@@ -12,3 +12,4 @@ aiofiles==23.2.1
 pillow==10.1.0
 itsdangerous==2.1.2
 starlette==0.27.0
+redis==5.0.1
