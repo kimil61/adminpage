@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-# from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
@@ -9,29 +8,15 @@ from app.utils import hash_password, verify_password, flash_message
 from app.template import templates
 
 router = APIRouter()
-# templates = Jinja2Templates(directory="templates")
 
-@router.post("/login")
-async def login(request: Request, db: Session = Depends(get_db)):
-    formdata = await request.form()
-    form = LoginForm(formdata)
-
-    username = formdata.get("username")
-    password = formdata.get("password")
-
-    user = db.query(User).filter(User.username == username).first()
-    
-    if not user or not verify_password(password, user.password):
-        flash_message(request, "아이디 또는 비밀번호가 틀렸습니다.", "error")
-        return templates.TemplateResponse("auth/login.html", {
-            "request": request,
-            "form": form
-        })
-
-    # 로그인 성공 처리
-    request.session["user_id"] = user.id
-    request.session["is_admin"] = user.is_admin
-    return RedirectResponse(url="/admin", status_code=302)
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Render login form."""
+    form = LoginForm()
+    return templates.TemplateResponse("auth/login.html", {
+        "request": request,
+        "form": form
+    })
 
 @router.post("/login")
 async def login(
@@ -47,16 +32,17 @@ async def login(
         request.session['user_id'] = user.id
         request.session['username'] = user.username
         request.session['is_admin'] = user.is_admin
-        
+
         flash_message(request, "로그인되었습니다.", "success")
         return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     else:
         flash_message(request, "사용자명 또는 비밀번호가 잘못되었습니다.", "error")
-        form = LoginForm(request)
-        return templates.TemplateResponse("auth/login.html", {
-            "request": request,
-            "form": form
-        })
+        form = LoginForm()
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {"request": request, "form": form},
+            status_code=400,
+        )
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
