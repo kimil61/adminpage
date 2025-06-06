@@ -1,5 +1,8 @@
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends, Request, UploadFile
+from werkzeug.utils import secure_filename
+import magic
+import secrets
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
@@ -55,26 +58,47 @@ def create_slug(text: str) -> str:
     slug = re.sub(r'\s+', '-', slug.strip())
     return slug.lower()
 
+
+def generate_csrf_token(request: Request) -> str:
+    """세션에 CSRF 토큰을 생성하고 반환"""
+    token = secrets.token_hex(16)
+    request.session['csrf_token'] = token
+    return token
+
+
+def verify_csrf_token(request: Request, token: str):
+    session_token = request.session.get('csrf_token')
+    if not session_token or session_token != token:
+        raise HTTPException(status_code=400, detail="Invalid CSRF token")
+
 async def save_uploaded_file(file: UploadFile, folder: str = "uploads") -> str:
-    allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx'}
-    file_extension = os.path.splitext(file.filename)[1].lower()
-    
-    if file_extension not in allowed_extensions:
+    """파일 업로드시 확장자와 MIME 타입, 크기를 검증한다."""
+    allowed_mime_types = {
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf', 'application/msword'
+    }
+    max_file_size = 5 * 1024 * 1024  # 5MB
+
+    content = await file.read()
+    if len(content) > max_file_size:
+        raise ValueError("파일 크기가 제한을 초과합니다.")
+
+    mime_type = magic.from_buffer(content, mime=True)
+    if mime_type not in allowed_mime_types:
         raise ValueError("허용되지 않는 파일 형식입니다.")
-    
+
+    file_extension = os.path.splitext(secure_filename(file.filename))[1].lower()
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     upload_dir = f"static/uploads/{folder}"
     os.makedirs(upload_dir, exist_ok=True)
-    
+
     file_path = os.path.join(upload_dir, unique_filename)
-    
     async with aiofiles.open(file_path, 'wb') as f:
-        content = await file.read()
         await f.write(content)
-    
-    if file_extension in {'.jpg', '.jpeg', '.png', '.webp'}:
+
+    if mime_type.startswith('image/'):
         resize_image(file_path, max_width=800)
-    
+
     return f"/static/uploads/{folder}/{unique_filename}"
 
 def resize_image(image_path: str, max_width: int = 800):
