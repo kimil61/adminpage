@@ -1,4 +1,3 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -6,19 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}My Website{% endblock %}</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
     <link href="/static/css/style.css" rel="stylesheet">
     
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- 네비게이션 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">My Website</a>
+            <a class="navbar-brand" href="/">My Website</a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -27,37 +22,33 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home') }}">홈</a>
+                        <a class="nav-link" href="/">홈</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('blog_list') }}">블로그</a>
+                        <a class="nav-link" href="/blog">블로그</a>
                     </li>
                 </ul>
                 
                 <ul class="navbar-nav">
-                    {% set user_id = request.session.get('user_id') %}
-                    {% set username = request.session.get('username') %}
-                    {% set is_admin = request.session.get('is_admin') %}
-                    
-                    {% if user_id %}
+                    {% if request.session.get('user_id') %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                {{ username }}
+                                {{ request.session.get('username') }}
                             </a>
                             <ul class="dropdown-menu">
-                                {% if is_admin %}
-                                <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">관리자</a></li>
+                                {% if request.session.get('is_admin') %}
+                                <li><a class="dropdown-item" href="/admin/">관리자</a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">로그아웃</a></li>
+                                <li><a class="dropdown-item" href="/logout">로그아웃</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">로그인</a>
+                            <a class="nav-link" href="/login">로그인</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">회원가입</a>
+                            <a class="nav-link" href="/register">회원가입</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -66,7 +57,6 @@
     </nav>
     
     <main class="container mt-4">
-        <!-- 플래시 메시지 -->
         {% with messages = get_flashed_messages(request) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -81,7 +71,6 @@
         {% block content %}{% endblock %}
     </main>
     
-    <!-- Footer -->
     <footer class="bg-dark text-light mt-5 py-4">
         <div class="container">
             <div class="row">
@@ -95,7 +84,6 @@
         </div>
     </footer>
     
-    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     {% block extra_scripts %}{% endblock %}

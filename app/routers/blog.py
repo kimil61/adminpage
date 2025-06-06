@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session, joinedload
-from app.database import get_db, get_paginated_posts
+from sqlalchemy.orm import Session
+from app.database import get_db
 from app.models import Post, Category
+from app.template import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
 
 @router.get("/blog", response_class=HTMLResponse)
 async def blog_list(
@@ -15,21 +14,25 @@ async def blog_list(
     db: Session = Depends(get_db)
 ):
     per_page = 6
-
-    result = get_paginated_posts(db, page, per_page)
+    offset = (page - 1) * per_page
+    
+    posts = db.query(Post).filter(
+        Post.is_published == True
+    ).order_by(Post.created_at.desc()).offset(offset).limit(per_page).all()
+    
+    total = db.query(Post).filter(Post.is_published == True).count()
+    pages = (total + per_page - 1) // per_page
+    
     categories = db.query(Category).all()
-
-    return templates.TemplateResponse(
-        "blog/list.html",
-        {
-            "request": request,
-            "posts": result["posts"],
-            "categories": categories,
-            "page": page,
-            "pages": result["pages"],
-            "total": result["total"],
-        },
-    )
+    
+    return templates.TemplateResponse("blog/list.html", {
+        "request": request,
+        "posts": posts,
+        "categories": categories,
+        "page": page,
+        "pages": pages,
+        "total": total
+    })
 
 @router.get("/blog/{post_id}", response_class=HTMLResponse)
 async def blog_detail(
@@ -37,16 +40,10 @@ async def blog_detail(
     post_id: int,
     db: Session = Depends(get_db)
 ):
-    post = (
-        db.query(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
-        .filter(
-            Post.id == post_id,
-            Post.is_published == True,
-            Post.is_deleted == False,
-        )
-        .first()
-    )
+    post = db.query(Post).filter(
+        Post.id == post_id,
+        Post.is_published == True
+    ).first()
     
     if not post:
         raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
@@ -54,17 +51,11 @@ async def blog_detail(
     post.views += 1
     db.commit()
     
-    related_posts = (
-        db.query(Post)
-        .filter(
-            Post.category_id == post.category_id,
-            Post.id != post.id,
-            Post.is_published == True,
-            Post.is_deleted == False,
-        )
-        .limit(3)
-        .all()
-    )
+    related_posts = db.query(Post).filter(
+        Post.category_id == post.category_id,
+        Post.id != post.id,
+        Post.is_published == True
+    ).limit(3).all()
     
     return templates.TemplateResponse("blog/detail.html", {
         "request": request,
@@ -85,20 +76,11 @@ async def blog_category(
     
     per_page = 6
     offset = (page - 1) * per_page
-
-    posts = (
-        db.query(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
-        .filter(
-            Post.category_id == category.id,
-            Post.is_published == True,
-            Post.is_deleted == False,
-        )
-        .order_by(Post.created_at.desc())
-        .offset(offset)
-        .limit(per_page)
-        .all()
-    )
+    
+    posts = db.query(Post).filter(
+        Post.category_id == category.id,
+        Post.is_published == True
+    ).order_by(Post.created_at.desc()).offset(offset).limit(per_page).all()
     
     return templates.TemplateResponse("blog/category.html", {
         "request": request,

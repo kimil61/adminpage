@@ -1,43 +1,46 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+# from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.forms import LoginForm, RegisterForm
-from app.utils import (
-    hash_password,
-    verify_password,
-    flash_message,
-    generate_csrf_token,
-    verify_csrf_token,
-)
-from app.main import limiter
+from app.utils import hash_password, verify_password, flash_message
+from app.template import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+# templates = Jinja2Templates(directory="templates")
 
-@router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    form = LoginForm()
-    csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("auth/login.html", {
-        "request": request,
-        "form": form,
-        "csrf_token": csrf_token
-    })
+@router.post("/login")
+async def login(request: Request, db: Session = Depends(get_db)):
+    formdata = await request.form()
+    form = LoginForm(formdata)
 
-@limiter.limit("5/minute")
+    username = formdata.get("username")
+    password = formdata.get("password")
+
+    user = db.query(User).filter(User.username == username).first()
+    
+    if not user or not verify_password(password, user.password):
+        flash_message(request, "아이디 또는 비밀번호가 틀렸습니다.", "error")
+        return templates.TemplateResponse("auth/login.html", {
+            "request": request,
+            "form": form
+        })
+
+    # 로그인 성공 처리
+    request.session["user_id"] = user.id
+    request.session["is_admin"] = user.is_admin
+    return RedirectResponse(url="/admin", status_code=302)
+
 @router.post("/login")
 async def login(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
-    csrf_token: str = Form(...),
     remember_me: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    verify_csrf_token(request, csrf_token)
     user = db.query(User).filter(User.username == username).first()
     
     if user and verify_password(password, user.password):
@@ -58,11 +61,9 @@ async def login(
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     form = RegisterForm()
-    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse("auth/register.html", {
         "request": request,
-        "form": form,
-        "csrf_token": csrf_token
+        "form": form
     })
 
 @router.post("/register")
@@ -72,10 +73,8 @@ async def register(
     email: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
-    csrf_token: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    verify_csrf_token(request, csrf_token)
     existing_user = db.query(User).filter(
         (User.username == username) | (User.email == email)
     ).first()
@@ -95,7 +94,10 @@ async def register(
         flash_message(request, "회원가입이 완료되었습니다. 로그인해주세요.", "success")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    form = RegisterForm(request)
+    # 💥 여기 수정
+    formdata = await request.form()
+    form = RegisterForm(formdata)
+    
     return templates.TemplateResponse("auth/register.html", {
         "request": request,
         "form": form

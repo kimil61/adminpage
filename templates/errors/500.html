@@ -1,23 +1,12 @@
-<!-- templates/errors/500.html -->
 {% extends "base.html" %}
 
 {% block title %}서버 오류 - My Website{% endblock %}
 
 {% block content %}
 <div class="text-center py-5">
-    <div class="mb-4">
-        <i class="fas fa-server text-danger" style="font-size: 5rem;"></i>
-    </div>
-    <h1 class="display-1 fw-bold text-muted">500</h1>
-    <h2 class="mb-4">내부 서버 오류</h2>
-    <p class="lead mb-4">일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
-    <div class="d-flex justify-content-center gap-3">
-        <a href="{{ url_for('home') }}" class="btn btn-primary">
-            <i class="fas fa-home me-2"></i>홈으로 돌아가기
-        </a>
-        <button onclick="location.reload()" class="btn btn-outline-secondary">
-            <i class="fas fa-redo me-2"></i>페이지 새로고침
-        </button>
-    </div>
+    <h1 class="display-1">500</h1>
+    <h2>서버 오류가 발생했습니다</h2>
+    <p class="text-muted">잠시 후 다시 시도해주세요.</p>
+    <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
 </div>
 {% endblock %}
