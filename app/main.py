@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
 
-from app.database import engine, get_db
+from app.database import engine, get_db, get_posts_with_relations
 from app.models import Base, Post, Category
 from app.routers import auth, blog, admin
 from app.utils import get_flashed_messages
@@ -65,9 +65,7 @@ app.include_router(admin.router)
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: Session = Depends(get_db)):
     # 최신 포스트 (발행된 것만)
-    recent_posts = db.query(Post).filter(
-        Post.is_published == True
-    ).order_by(Post.created_at.desc()).limit(6).all()
+    recent_posts = get_posts_with_relations(db, limit=6)
     
     # 카테고리 목록
     categories = db.query(Category).all()

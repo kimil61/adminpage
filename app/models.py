@@ -1,7 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
+
+
+class SoftDeleteMixin:
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = datetime.utcnow()
 
 class User(Base):
     __tablename__ = "users"
@@ -16,6 +25,11 @@ class User(Base):
     
     posts = relationship("Post", back_populates="author")
 
+    __table_args__ = (
+        Index('idx_user_email', 'email'),
+        Index('idx_user_username', 'username'),
+    )
+
 class Category(Base):
     __tablename__ = "categories"
     
@@ -27,7 +41,7 @@ class Category(Base):
     
     posts = relationship("Post", back_populates="category")
 
-class Post(Base):
+class Post(Base, SoftDeleteMixin):
     __tablename__ = "posts"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -49,6 +63,13 @@ class Post(Base):
     
     author = relationship("User", back_populates="posts")
     category = relationship("Category", back_populates="posts")
+
+    __table_args__ = (
+        Index('idx_post_published_created', 'is_published', 'created_at'),
+        Index('idx_post_category_published', 'category_id', 'is_published'),
+        Index('idx_post_author_published', 'author_id', 'is_published'),
+        Index('idx_post_slug', 'slug'),
+    )
 
 class Media(Base):
     __tablename__ = "media"

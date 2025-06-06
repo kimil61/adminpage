@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models import User, Post, Category, Media
 from app.forms import PostForm, CategoryForm
@@ -18,12 +18,23 @@ async def admin_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    total_posts = db.query(Post).count()
-    published_posts = db.query(Post).filter(Post.is_published == True).count()
+    total_posts = db.query(Post).filter(Post.is_deleted == False).count()
+    published_posts = (
+        db.query(Post)
+        .filter(Post.is_published == True, Post.is_deleted == False)
+        .count()
+    )
     total_users = db.query(User).count()
     total_categories = db.query(Category).count()
     
-    recent_posts = db.query(Post).order_by(Post.created_at.desc()).limit(5).all()
+    recent_posts = (
+        db.query(Post)
+        .options(joinedload(Post.author), joinedload(Post.category))
+        .filter(Post.is_deleted == False)
+        .order_by(Post.created_at.desc())
+        .limit(5)
+        .all()
+    )
     
     return templates.TemplateResponse("admin/dashboard.html", {
         "request": request,
@@ -44,8 +55,16 @@ async def admin_posts(
     per_page = 10
     offset = (page - 1) * per_page
     
-    posts = db.query(Post).order_by(Post.created_at.desc()).offset(offset).limit(per_page).all()
-    total = db.query(Post).count()
+    posts = (
+        db.query(Post)
+        .options(joinedload(Post.author), joinedload(Post.category))
+        .filter(Post.is_deleted == False)
+        .order_by(Post.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+    total = db.query(Post).filter(Post.is_deleted == False).count()
     pages = (total + per_page - 1) // per_page
     
     return templates.TemplateResponse("admin/posts.html", {
