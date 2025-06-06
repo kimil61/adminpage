@@ -9,7 +9,8 @@
 {% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -29,7 +30,8 @@
                     
                     <div class="mb-3">
                         <label for="content" class="form-label">내용 *</label>
-                        <textarea class="form-control" id="content" name="content" rows="15">{{ form.content.data or '' }}</textarea>
+                        <div id="editor"></div>
+                        <textarea id="content" name="content" style="display:none;">{{ form.content.data or '' }}</textarea>
                     </div>
                     
                     <div class="mb-3">
@@ -89,20 +91,18 @@
 
 {% block extra_scripts %}
 <script>
-tinymce.init({
-    selector: '#content',
-    height: 400,
-    menubar: false,
-    plugins: [
-        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-    ],
-    toolbar: 'undo redo | blocks | bold italic backcolor | ' +
-             'alignleft aligncenter alignright alignjustify | ' +
-             'bullist numlist outdent indent | removeformat | help',
-    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-    language: 'ko'
-});
+  const editor = new toastui.Editor({
+    el: document.querySelector('#editor'),
+    height: '400px',
+    initialEditType: 'wysiwyg',
+    previewStyle: 'vertical',
+    language: 'ko',
+    initialValue: document.querySelector('#content').value
+  });
+
+  // copy editor HTML content into textarea on form submit
+  document.querySelector('form').addEventListener('submit', function () {
+    document.querySelector('#content').value = editor.getHTML();
+  });
 </script>
 {% endblock %}

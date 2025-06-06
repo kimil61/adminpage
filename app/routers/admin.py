@@ -110,6 +110,74 @@ async def admin_create_post_submit(
     flash_message(request, "포스트가 생성되었습니다.", "success")
     return RedirectResponse(url="/admin/posts", status_code=302)
 
+@router.get("/posts/{post_id}/edit", response_class=HTMLResponse)
+async def admin_edit_post(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+
+    form = PostForm(obj=post)
+    categories = db.query(Category).all()
+    form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
+
+    return templates.TemplateResponse("admin/post_form.html", {
+        "request": request,
+        "form": form,
+        "post": post,
+        "action": "edit"
+    })
+
+
+# POST route for editing a post
+from fastapi import File  # Ensure File is imported (already in imports)
+from fastapi import Form  # Ensure Form is imported (already in imports)
+
+@router.post("/posts/{post_id}/edit")
+async def admin_edit_post_submit(
+    request: Request,
+    post_id: int,
+    title: str = Form(...),
+    content: str = Form(...),
+    excerpt: str = Form(""),
+    category_id: int = Form(0),
+    is_published: bool = Form(False),
+    featured_image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+
+    slug = create_slug(title)
+    if slug != post.slug:
+        existing_post = db.query(Post).filter(Post.slug == slug).first()
+        if existing_post:
+            slug = f"{slug}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        post.slug = slug
+
+    if featured_image and featured_image.filename:
+        featured_image_url = await save_uploaded_file(featured_image, "posts")
+        post.featured_image = featured_image_url
+
+    post.title = title
+    post.content = content
+    post.excerpt = excerpt
+    post.category_id = category_id if category_id > 0 else None
+    post.is_published = is_published
+    post.updated_at = datetime.utcnow()
+    if is_published and not post.published_at:
+        post.published_at = datetime.utcnow()
+
+    db.commit()
+    flash_message(request, "포스트가 수정되었습니다.", "success")
+    return RedirectResponse(url="/admin/posts", status_code=302)
+
 @router.get("/categories", response_class=HTMLResponse)
 async def admin_categories(
     request: Request,
