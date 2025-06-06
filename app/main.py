@@ -14,7 +14,8 @@ from app.database import engine, get_db, get_posts_with_relations
 from app.models import Base, Post, Category
 from app.routers import auth, blog, admin
 from app.utils import get_flashed_messages
-import os
+from app.settings import settings
+from app.exception_handlers import global_exception_handler
 
 # 테이블 생성
 Base.metadata.create_all(bind=engine)
@@ -103,6 +104,8 @@ async def server_error_handler(request: Request, exc):
     return templates.TemplateResponse("errors/500.html", {
         "request": request
     }, status_code=500)
+
+app.add_exception_handler(Exception, global_exception_handler)
 
 if __name__ == "__main__":
     import uvicorn

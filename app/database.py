@@ -1,14 +1,16 @@
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.ext.declarative import declarative_base
+
 from sqlalchemy.pool import QueuePool
 from contextlib import contextmanager
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:password@localhost:3306/website_db")
+from app.settings import settings
+
+DATABASE_URL = settings.database_url
 
 engine = create_engine(
     DATABASE_URL,
@@ -17,7 +19,9 @@ engine = create_engine(
     max_overflow=30,
     pool_pre_ping=True,
     pool_recycle=3600,
+    echo=settings.debug
     echo=os.getenv("DEBUG", "False").lower() == "true",
+
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
