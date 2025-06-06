@@ -90,7 +90,19 @@ async def admin_create_post_submit(
     
     featured_image_url = None
     if featured_image and featured_image.filename:
-        featured_image_url = await save_uploaded_file(featured_image, "posts")
+        try:
+            featured_image_url = await save_uploaded_file(featured_image, "posts")
+        except ValueError as e:
+            flash_message(request, str(e), "error")
+            formdata = await request.form()
+            form = PostForm(formdata)
+            categories = db.query(Category).all()
+            form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
+            return templates.TemplateResponse(
+                "admin/post_form.html",
+                {"request": request, "form": form, "action": "create"},
+                status_code=400,
+            )
     
     new_post = Post(
         title=title,
@@ -162,8 +174,20 @@ async def admin_edit_post_submit(
         post.slug = slug
 
     if featured_image and featured_image.filename:
-        featured_image_url = await save_uploaded_file(featured_image, "posts")
-        post.featured_image = featured_image_url
+        try:
+            featured_image_url = await save_uploaded_file(featured_image, "posts")
+            post.featured_image = featured_image_url
+        except ValueError as e:
+            flash_message(request, str(e), "error")
+            formdata = await request.form()
+            form = PostForm(formdata)
+            categories = db.query(Category).all()
+            form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
+            return templates.TemplateResponse(
+                "admin/post_form.html",
+                {"request": request, "form": form, "post": post, "action": "edit"},
+                status_code=400,
+            )
 
     post.title = title
     post.content = content
