@@ -5,7 +5,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.forms import LoginForm, RegisterForm
-from app.utils import hash_password, verify_password, flash_message
+from app.utils import (
+    hash_password,
+    verify_password,
+    flash_message,
+    generate_csrf_token,
+    verify_csrf_token,
+)
+from app.main import limiter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -13,19 +20,24 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     form = LoginForm()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse("auth/login.html", {
-        "request": request, 
-        "form": form
+        "request": request,
+        "form": form,
+        "csrf_token": csrf_token
     })
 
+@limiter.limit("5/minute")
 @router.post("/login")
 async def login(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
+    csrf_token: str = Form(...),
     remember_me: bool = Form(False),
     db: Session = Depends(get_db)
 ):
+    verify_csrf_token(request, csrf_token)
     user = db.query(User).filter(User.username == username).first()
     
     if user and verify_password(password, user.password):
@@ -46,9 +58,11 @@ async def login(
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     form = RegisterForm()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse("auth/register.html", {
         "request": request,
-        "form": form
+        "form": form,
+        "csrf_token": csrf_token
     })
 
 @router.post("/register")
@@ -58,8 +72,10 @@ async def register(
     email: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    verify_csrf_token(request, csrf_token)
     existing_user = db.query(User).filter(
         (User.username == username) | (User.email == email)
     ).first()
