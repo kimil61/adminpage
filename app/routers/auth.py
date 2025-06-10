@@ -79,15 +79,12 @@ async def register(
         
         flash_message(request, "회원가입이 완료되었습니다. 로그인해주세요.", "success")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    
-    # 💥 여기 수정
-    formdata = await request.form()
-    form = RegisterForm(formdata)
-    
-    return templates.TemplateResponse("auth/register.html", {
-        "request": request,
-        "form": form
-    })
+
+    form = RegisterForm()
+    return templates.TemplateResponse(
+        "auth/register.html",
+        {"request": request, "form": form},
+    )
 
 @router.get("/logout")
 async def logout(request: Request):
