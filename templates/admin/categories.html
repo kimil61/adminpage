@@ -20,6 +20,7 @@
                                     <th>설명</th>
                                     <th>포스트 수</th>
                                     <th>생성일</th>
+                                    <th>작업</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -30,6 +31,11 @@
                                     <td>{{ category.description or '-' }}</td>
                                     <td>{{ category.posts|length }}</td>
                                     <td>{{ category.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <form method="post" action="/admin/categories/{{ category.id }}/delete" style="display:inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                                        </form>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

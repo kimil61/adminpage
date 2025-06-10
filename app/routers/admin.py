@@ -214,6 +214,21 @@ async def admin_edit_post_submit(
     flash_message(request, "포스트가 수정되었습니다.", "success")
     return RedirectResponse(url="/admin/posts", status_code=302)
 
+
+@router.post("/posts/{post_id}/delete")
+async def admin_delete_post(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post:
+        db.delete(post)
+        db.commit()
+        flash_message(request, "포스트가 삭제되었습니다.", "success")
+    return RedirectResponse(url="/admin/posts", status_code=302)
+
 @router.get("/categories", response_class=HTMLResponse)
 async def admin_categories(
     request: Request,
@@ -250,6 +265,21 @@ async def admin_create_category(
         db.commit()
         flash_message(request, "카테고리가 생성되었습니다.", "success")
 
+    return RedirectResponse(url="/admin/categories", status_code=302)
+
+
+@router.post("/categories/{category_id}/delete")
+async def admin_delete_category(
+    request: Request,
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if category:
+        db.delete(category)
+        db.commit()
+        flash_message(request, "카테고리가 삭제되었습니다.", "success")
     return RedirectResponse(url="/admin/categories", status_code=302)
 
 
