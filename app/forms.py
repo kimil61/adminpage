@@ -53,3 +53,23 @@ class CategoryForm(Form):
         Length(max=100, message="슬러그는 100자 이하여야 합니다.")
     ])
     description = TextAreaField('설명')
+
+
+class KnowledgeItemForm(Form):
+    title = StringField('제목', validators=[
+        DataRequired(message='제목을 입력해주세요.'),
+        Length(max=200, message='제목은 200자 이하여야 합니다.')
+    ])
+    content = TextAreaField('내용', validators=[
+        DataRequired(message='내용을 입력해주세요.')
+    ])
+
+
+class FilteredContentForm(Form):
+    original_text = TextAreaField('원본 내용', validators=[
+        DataRequired(message='원본 내용을 입력해주세요.')
+    ])
+    filtered_text = TextAreaField('필터링된 내용', validators=[
+        DataRequired(message='필터링된 내용을 입력해주세요.')
+    ])
+    reason = StringField('사유', validators=[Length(max=255), Optional()])
