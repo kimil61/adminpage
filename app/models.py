@@ -85,7 +85,9 @@ class FilteredContent(Base):
     __tablename__ = "filtered_contents"
 
     id = Column(Integer, primary_key=True, index=True)
-    original_text = Column(Text, nullable=False)
-    filtered_text = Column(Text, nullable=False)
-    reason = Column(String(255))
+    knowledge_id = Column(Integer, index=True, nullable=True)
+    filter_result = Column(Text, nullable=True)
+    confidence_score = Column(Integer, nullable=True)  # MySQL float → use Float if high precision needed
+    reasoning = Column(Text, nullable=True)
+    suitable_for_blog = Column(Boolean, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
