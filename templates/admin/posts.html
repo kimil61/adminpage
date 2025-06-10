@@ -53,6 +53,9 @@
                                     {% if post.is_published %}
                                         <a href="/blog/{{ post.id }}" target="_blank" class="btn btn-outline-success btn-sm">보기</a>
                                     {% endif %}
+                                    <form method="post" action="/admin/posts/{{ post.id }}/delete" style="display:inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
