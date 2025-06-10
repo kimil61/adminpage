@@ -1,4 +1,13 @@
-from wtforms import Form, StringField, TextAreaField, PasswordField, BooleanField, SelectField, FileField
+from wtforms import (
+    Form,
+    StringField,
+    TextAreaField,
+    PasswordField,
+    BooleanField,
+    SelectField,
+    FileField,
+    IntegerField,
+)
 from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
 
 class LoginForm(Form):
@@ -66,10 +75,9 @@ class KnowledgeItemForm(Form):
 
 
 class FilteredContentForm(Form):
-    original_text = TextAreaField('원본 내용', validators=[
-        DataRequired(message='원본 내용을 입력해주세요.')
+    filter_result = TextAreaField('필터 결과', validators=[
+        DataRequired(message='필터 결과를 입력해주세요.')
     ])
-    filtered_text = TextAreaField('필터링된 내용', validators=[
-        DataRequired(message='필터링된 내용을 입력해주세요.')
-    ])
-    reason = StringField('사유', validators=[Length(max=255), Optional()])
+    reasoning = TextAreaField('분석 내용', validators=[Optional()])
+    confidence_score = IntegerField('신뢰도', validators=[Optional()])
+    suitable_for_blog = BooleanField('블로그 적합 여부')

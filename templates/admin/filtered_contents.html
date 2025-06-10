@@ -17,7 +17,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>사유</th>
+                            <th>블로그 적합 여부</th>
                             <th>등록일</th>
                             <th>작업</th>
                         </tr>
@@ -25,7 +25,7 @@
                     <tbody>
                         {% for c in contents %}
                         <tr>
-                            <td>{{ c.reason or '-' }}</td>
+                            <td>{{ '예' if c.suitable_for_blog else '아니오' }}</td>
                             <td>{{ c.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
