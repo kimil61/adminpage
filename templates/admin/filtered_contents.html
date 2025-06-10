@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}필터링 콘텐츠{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0">총 {{ contents|length }}개 기록</p>
+    </div>
+    <a href="/admin/filtered/create" class="btn btn-primary">새 기록 추가</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if contents %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>사유</th>
+                            <th>등록일</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contents %}
+                        <tr>
+                            <td>{{ c.reason or '-' }}</td>
+                            <td>{{ c.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/admin/filtered/{{ c.id }}/edit" class="btn btn-outline-primary btn-sm">수정</a>
+                                    <form method="post" action="/admin/filtered/{{ c.id }}/delete" style="display:inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h4 class="text-muted">기록이 없습니다</h4>
+                <a href="/admin/filtered/create" class="btn btn-primary">새 기록 추가</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}{% if action == "create" %}새 항목 추가{% else %}항목 수정{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post">
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="title" class="form-label">제목 *</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ form.title.data or '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="content" class="form-label">내용 *</label>
+                <textarea class="form-control" id="content" name="content" rows="6" required>{{ form.content.data or '' }}</textarea>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">{% if action == "create" %}생성{% else %}수정{% endif %}</button>
+                <a href="/admin/knowledge" class="btn btn-secondary">취소</a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -63,3 +63,29 @@ class Media(Base):
     
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
+
+
+class KnowledgeItem(Base):
+    """개발자 지식베이스 항목"""
+
+    __tablename__ = "knowledge_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    content = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class FilteredContent(Base):
+    """필터링된 원본/치환 콘텐츠 기록"""
+
+    __tablename__ = "filtered_contents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    original_text = Column(Text, nullable=False)
+    filtered_text = Column(Text, nullable=False)
+    reason = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
