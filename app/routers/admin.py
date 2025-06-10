@@ -408,14 +408,18 @@ async def admin_create_filtered(
 @router.post("/filtered/create")
 async def admin_create_filtered_submit(
     request: Request,
-    original_text: str = Form(...),
-    filtered_text: str = Form(...),
-    reason: str = Form(""),
+    filter_result: str = Form(...),
+    reasoning: str = Form(""),
+    confidence_score: int = Form(None),
+    suitable_for_blog: bool = Form(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
     content = FilteredContent(
-        original_text=original_text, filtered_text=filtered_text, reason=reason
+        filter_result=filter_result,
+        reasoning=reasoning,
+        confidence_score=confidence_score,
+        suitable_for_blog=suitable_for_blog,
     )
     db.add(content)
     db.commit()
@@ -451,9 +455,10 @@ async def admin_edit_filtered(
 async def admin_edit_filtered_submit(
     request: Request,
     content_id: int,
-    original_text: str = Form(...),
-    filtered_text: str = Form(...),
-    reason: str = Form(""),
+    filter_result: str = Form(...),
+    reasoning: str = Form(""),
+    confidence_score: int = Form(None),
+    suitable_for_blog: bool = Form(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
@@ -462,9 +467,10 @@ async def admin_edit_filtered_submit(
     )
     if not content:
         raise HTTPException(status_code=404, detail="콘텐츠를 찾을 수 없습니다.")
-    content.original_text = original_text
-    content.filtered_text = filtered_text
-    content.reason = reason
+    content.filter_result = filter_result
+    content.reasoning = reasoning
+    content.confidence_score = confidence_score
+    content.suitable_for_blog = suitable_for_blog
     db.commit()
     flash_message(request, "콘텐츠가 수정되었습니다.", "success")
     return RedirectResponse("/admin/filtered", status_code=302)

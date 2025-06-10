@@ -7,16 +7,20 @@
     <div class="card">
         <div class="card-body">
             <div class="mb-3">
-                <label for="original_text" class="form-label">원본 내용 *</label>
-                <textarea class="form-control" id="original_text" name="original_text" rows="4" required>{{ form.original_text.data or '' }}</textarea>
+                <label for="filter_result" class="form-label">필터 결과 *</label>
+                <textarea class="form-control" id="filter_result" name="filter_result" rows="4" required>{{ form.filter_result.data or '' }}</textarea>
             </div>
             <div class="mb-3">
-                <label for="filtered_text" class="form-label">필터링된 내용 *</label>
-                <textarea class="form-control" id="filtered_text" name="filtered_text" rows="4" required>{{ form.filtered_text.data or '' }}</textarea>
+                <label for="reasoning" class="form-label">분석 내용</label>
+                <textarea class="form-control" id="reasoning" name="reasoning" rows="4">{{ form.reasoning.data or '' }}</textarea>
             </div>
             <div class="mb-3">
-                <label for="reason" class="form-label">사유</label>
-                <input type="text" class="form-control" id="reason" name="reason" value="{{ form.reason.data or '' }}">
+                <label for="confidence_score" class="form-label">신뢰도</label>
+                <input type="number" class="form-control" id="confidence_score" name="confidence_score" value="{{ form.confidence_score.data or '' }}">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="suitable_for_blog" name="suitable_for_blog" {% if form.suitable_for_blog.data %}checked{% endif %}>
+                <label class="form-check-label" for="suitable_for_blog">블로그 적합 여부</label>
             </div>
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">{% if action == "create" %}생성{% else %}수정{% endif %}</button>
