@@ -48,6 +48,9 @@ async def blog_detail(
     if not post:
         raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
     
+    # 🔒 None 방어 처리
+    if post.views is None:
+        post.views = 0
     post.views += 1
     db.commit()
     
