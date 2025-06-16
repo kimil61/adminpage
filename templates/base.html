@@ -116,12 +116,31 @@
     </footer>
 
     {% block extra_scripts %}{% endblock %}
+    <!-- Naver Analytics -->
+    <script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
+    <script type="text/javascript">
+        if(!wcs_add) var wcs_add = {};
+            wcs_add["wa"] = "125dbd7ba328b60";
+        if(window.wcs) {
+            wcs_do();
+        }
+    </script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EK53P8DPEK"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
+        gtag('config', 'G-EK53P8DPEK');
+    </script>
     <script>
         // mobile nav toggle
         document.getElementById('navToggle').addEventListener('click', () => {
             document.getElementById('mobileMenu').classList.toggle('hidden');
         });
     </script>
+
+
 </body>
 </html>
