@@ -55,15 +55,32 @@ async def admin_posts(
     per_page = 10
     offset = (page - 1) * per_page
     
-    posts = db.query(Post).order_by(Post.created_at.desc()).offset(offset).limit(per_page).all()
+    # 전체 포스트 수 조회
     total = db.query(Post).count()
+    
+    # 페이지별 포스트 조회
+    posts = db.query(Post).order_by(Post.created_at.desc()).offset(offset).limit(per_page).all()
+    
+    # 총 페이지 수 계산
     pages = (total + per_page - 1) // per_page
+    
+    # 페이지네이션 정보 계산
+    has_prev = page > 1
+    has_next = page < pages
+    prev_page = page - 1 if has_prev else None
+    next_page = page + 1 if has_next else None
     
     return templates.TemplateResponse("admin/posts.html", {
         "request": request,
         "posts": posts,
         "page": page,
-        "pages": pages
+        "pages": pages,
+        "total": total,
+        "per_page": per_page,
+        "has_prev": has_prev,
+        "has_next": has_next,
+        "prev_page": prev_page,
+        "next_page": next_page
     })
 
 @router.get("/posts/create", response_class=HTMLResponse)
