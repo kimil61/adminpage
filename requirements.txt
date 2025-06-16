@@ -14,3 +14,5 @@ itsdangerous==2.1.2
 starlette==0.27.0
 pytest==7.4.3
 httpx==0.25.2
+sxtwl
+openai

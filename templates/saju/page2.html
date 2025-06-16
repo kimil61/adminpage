@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}{{ name }}님의 사주팔자 결과 🔮{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Noto Serif KR', serif;
+    background: #fdf7ff;
+  }
+
+  .saju-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+
+  .saju-title {
+    font-size: 28px;
+    text-align: center;
+    color: #6a1b9a;
+    margin-bottom: 32px;
+    font-weight: 600;
+  }
+
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    color: #6a1b9a;
+    margin-bottom: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #e0b3ff;
+    padding-bottom: 8px;
+  }
+
+  .pillars-display {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .pillar-card {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .pillar-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .pillar-chars {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4a148c;
+    margin-bottom: 4px;
+  }
+
+  .analysis-box {
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 12px;
+    border-left: 5px solid #6a1b9a;
+    margin: 16px 0;
+    line-height: 1.8;
+  }
+
+  .ai-analysis-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #6a1b9a, #8e24aa);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    margin: 16px 0;
+  }
+
+  .ai-analysis-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(106, 27, 154, 0.3);
+  }
+
+  .ai-analysis-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e0b3ff;
+    border-top: 4px solid #6a1b9a;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    text-align: center;
+    color: #6a1b9a;
+    font-size: 16px;
+    margin-top: 12px;
+  }
+
+  .welcome-banner {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ffeb3b, #ffc107);
+    padding: 16px 24px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 9999;
+    animation: welcomeAnimation 4s ease forwards;
+    display: none;
+  }
+
+  @keyframes welcomeAnimation {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  }
+
+  .donation-section {
+    text-align: center;
+    margin-top: 40px;
+    padding: 24px;
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+    border-radius: 12px;
+  }
+
+  .donation-btn {
+    background: linear-gradient(135deg, #11a09b, #00897b);
+    color: white;
+    padding: 16px 32px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .donation-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(17, 160, 155, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    .saju-container {
+      margin: 16px;
+      padding: 24px;
+    }
+    
+    .pillars-display {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    .pillar-chars {
+      font-size: 20px;
+    }
+    
+    .saju-title {
+      font-size: 24px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loadingInitial" style="text-align: center; padding: 80px 20px;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">사주를 정성껏 분석하고 있습니다...</div>
+</div>
+
+<div class="welcome-banner" id="welcomeBanner">
+  ✨ {{ name }}님의 사주풀이가 완성되었습니다! 💫
+</div>
+
+<div id="sajuContent" style="display: none;">
+  <div class="saju-container">
+    <h1 class="saju-title">🔮 {{ name }}님의 사주팔자</h1>
+
+    <!-- 사주 기둥 표시 -->
+    <div class="section">
+      <h2 class="section-title">🌿 사주 네 기둥</h2>
+      <div class="pillars-display">
+        <div class="pillar-card">
+          <div class="pillar-label">년주 (年柱)</div>
+          <div class="pillar-chars">{{ pillars.year }}</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-label">월주 (月柱)</div>
+          <div class="pillar-chars">{{ pillars.month }}</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-label">일주 (日柱)</div>
+          <div class="pillar-chars">{{ pillars.day }}</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-label">시주 (時柱)</div>
+          <div class="pillar-chars">{{ pillars.hour }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기본 분석 결과 -->
+    <div class="section">
+      <h2 class="section-title">🧠 기본 분석 결과</h2>
+      <div class="analysis-box">
+        {{ saju_analyzer_result|safe }}
+      </div>
+    </div>
+
+    <!-- AI 분석 섹션 -->
+    <div class="section">
+      <h2 class="section-title">✨ AI 심화 분석</h2>
+      <button class="ai-analysis-btn" onclick="loadAIAnalysis()" id="aiAnalysisBtn">
+        🤖 AI가 분석한 상세 해석 보기
+      </button>
+      
+      <div id="aiLoadingSpinner" style="display: none; text-align: center;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">AI가 당신만을 위한 해석을 작성하고 있습니다...</div>
+      </div>
+      
+      <div id="aiAnalysisResult" style="display: none;" class="analysis-box"></div>
+    </div>
+
+    <!-- 후원 섹션 -->
+    <div class="donation-section" id="donationSection" style="display: none;">
+      <h3 style="color: #2e7d32; margin-bottom: 16px;">이 해석이 도움이 되셨나요?</h3>
+      <p style="color: #555; margin-bottom: 20px;">
+        더 나은 서비스를 위해 따뜻한 응원 부탁드립니다 ☕
+      </p>
+      <button class="donation-btn" onclick="showDonationModal()">
+        ☕ 커피 한 잔으로 응원하기
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 후원 모달 -->
+<div id="donationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+  <div style="background: white; max-width: 500px; margin: 50px auto; padding: 40px; border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+    <button onclick="closeDonationModal()" style="position: absolute; top: 15px; right: 15px; background: #f0f0f0; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; font-weight: bold; color: #666; cursor: pointer;">×</button>
+    
+    <h3 style="color: #6a1b9a; font-size: 24px; margin-bottom: 24px; text-align: center;">
+      소중한 후원에 감사드립니다 🙏
+    </h3>
+    
+    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px;">
+      <div style="text-align: center;">
+        <p style="font-weight: bold; margin-bottom: 12px;">카카오페이</p>
+        <img src="/static/assets/qr_kakao.jpg" alt="카카오페이 QR" 
+             style="width: 160px; height: 160px; object-fit: cover; border: 2px solid #ddd; border-radius: 12px;" />
+      </div>
+      <div style="text-align: center;">
+        <p style="font-weight: bold; margin-bottom: 12px;">토스페이</p>
+        <img src="/static/assets/qr_toss.jpg" alt="토스페이 QR" 
+             style="width: 160px; height: 160px; object-fit: cover; border: 2px solid #ddd; border-radius: 12px;" />
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+let aiAnalysisCached = null;
+
+// 페이지 로딩 애니메이션
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    document.getElementById('loadingInitial').style.display = 'none';
+    document.getElementById('sajuContent').style.display = 'block';
+    
+    // 축하 효과
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+    
+    // 환영 배너 표시
+    const banner = document.getElementById('welcomeBanner');
+    banner.style.display = 'block';
+    
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 4000);
+    
+  }, 3000);
+});
+
+// AI 분석 로드
+async function loadAIAnalysis() {
+  const btn = document.getElementById('aiAnalysisBtn');
+  const spinner = document.getElementById('aiLoadingSpinner');
+  const result = document.getElementById('aiAnalysisResult');
+  const donationSection = document.getElementById('donationSection');
+  
+  if (aiAnalysisCached) {
+    result.innerHTML = '<strong>🔍 AI 분석 결과:</strong><br><br>' + aiAnalysisCached;
+    result.style.display = 'block';
+    donationSection.style.display = 'block';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '분석 중...';
+  spinner.style.display = 'block';
+  
+  try {
+    const response = await fetch('/saju/api/ai_analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.result) {
+      aiAnalysisCached = data.result;
+      result.innerHTML = '<strong>🔍 AI 분석 결과:</strong><br><br>' + data.result;
+      result.style.display = 'block';
+      donationSection.style.display = 'block';
+    } else {
+      result.innerHTML = '<p style="color: red;">AI 분석에 실패했습니다. 다시 시도해주세요.</p>';
+      result.style.display = 'block';
+    }
+  } catch (error) {
+    result.innerHTML = '<p style="color: red;">서버 통신 오류가 발생했습니다.</p>';
+    result.style.display = 'block';
+  } finally {
+    spinner.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '🤖 AI가 분석한 상세 해석 보기';
+  }
+}
+
+// 후원 모달 관련
+function showDonationModal() {
+  document.getElementById('donationModal').style.display = 'block';
+  
+  // Google Analytics 이벤트 (선택사항)
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'click_donate', {
+      event_category: 'engagement',
+      event_label: '후원버튼',
+      value: 1
+    });
+  }
+}
+
+function closeDonationModal() {
+  document.getElementById('donationModal').style.display = 'none';
+}
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('donationModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDonationModal();
+  }
+});
+</script>
+{% endblock %}

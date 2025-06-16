@@ -91,3 +91,53 @@ class FilteredContent(Base):
     reasoning = Column(Text, nullable=True)
     suitable_for_blog = Column(Boolean, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+# app/models.py에 추가할 사주 관련 모델들
+
+class SajuUser(Base):
+    """사주 사용자 테이블"""
+    __tablename__ = "saju_users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    email = Column(String(100), unique=True, index=True)
+    birthdate = Column(String(20))  # YYYY-MM-DD 형식
+    birthhour = Column(Integer)
+    gender = Column(String(10))
+    session_token = Column(String(255), unique=True)
+    first_visit = Column(DateTime, default=datetime.utcnow)
+    last_visit = Column(DateTime, default=datetime.utcnow)
+    visit_count = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class SajuFortune(Base):
+    """사주 운세 결과 테이블"""
+    __tablename__ = "saju_fortunes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(100), index=True)
+    menu = Column(String(50))  # 'basic', 'saju', 'love', etc.
+    date = Column(String(20))  # YYYY-MM-DD 형식
+    result = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class SajuInterpretation(Base):
+    """사주 해석 데이터 테이블"""
+    __tablename__ = "saju_interpretations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(Integer)
+    ilju = Column(String(10))  # 일주 (예: 甲子)
+    cn = Column(Text)  # 중국어 해석
+    kr = Column(Text)  # 한국어 해석
+    en = Column(Text)  # 영어 해석
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class MatchReport(Base):
+    """궁합 리포트 캐시 테이블"""
+    __tablename__ = "match_reports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(255), unique=True)  # 해시키
+    report = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
