@@ -3,37 +3,37 @@
 {% block page_title %}카테고리 관리{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">카테고리 목록</h6>
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="w-full lg:w-2/3">
+        <div class="bg-white shadow rounded">
+            <div class="border-b px-4 py-3">
+                <h6 class="text-blue-600 font-semibold">카테고리 목록</h6>
             </div>
-            <div class="card-body">
+            <div class="p-4">
                 {% if categories %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-100">
                                 <tr>
-                                    <th>이름</th>
-                                    <th>슬러그</th>
-                                    <th>설명</th>
-                                    <th>포스트 수</th>
-                                    <th>생성일</th>
-                                    <th>작업</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">이름</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">슬러그</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">설명</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">포스트 수</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">생성일</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">작업</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100">
                                 {% for category in categories %}
-                                <tr>
-                                    <td>{{ category.name }}</td>
-                                    <td><code>{{ category.slug }}</code></td>
-                                    <td>{{ category.description or '-' }}</td>
-                                    <td>{{ category.posts|length }}</td>
-                                    <td>{{ category.created_at.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        <form method="post" action="/admin/categories/{{ category.id }}/delete" style="display:inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-2">{{ category.name }}</td>
+                                    <td class="px-4 py-2"><code>{{ category.slug }}</code></td>
+                                    <td class="px-4 py-2">{{ category.description or '-' }}</td>
+                                    <td class="px-4 py-2">{{ category.posts|length }}</td>
+                                    <td class="px-4 py-2">{{ category.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td class="px-4 py-2">
+                                        <form method="post" action="/admin/categories/{{ category.id }}/delete" onsubmit="return confirm('삭제하시겠습니까?');">
+                                            <button type="submit" class="text-red-600 border border-red-300 hover:bg-red-50 px-2 py-1 rounded text-xs">삭제</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -42,38 +42,40 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-5">
-                        <h4 class="text-muted">카테고리가 없습니다</h4>
-                        <p class="text-muted">첫 번째 카테고리를 만들어보세요!</p>
+                    <div class="text-center py-10 text-gray-500">
+                        <h4 class="text-lg font-semibold">카테고리가 없습니다</h4>
+                        <p>첫 번째 카테고리를 만들어보세요!</p>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">새 카테고리 추가</h6>
+
+    <div class="w-full lg:w-1/3">
+        <div class="bg-white shadow rounded">
+            <div class="border-b px-4 py-3">
+                <h6 class="text-blue-600 font-semibold">새 카테고리 추가</h6>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">카테고리명 *</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+            <div class="p-4">
+                <form method="POST" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium mb-1">카테고리명 *</label>
+                        <input type="text" id="name" name="name" required class="w-full border rounded px-3 py-2" />
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="slug" class="form-label">슬러그 *</label>
-                        <input type="text" class="form-control" id="slug" name="slug" required>
+
+                    <div>
+                        <label for="slug" class="block text-sm font-medium mb-1">슬러그 *</label>
+                        <input type="text" id="slug" name="slug" required class="w-full border rounded px-3 py-2" />
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">설명</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium mb-1">설명</label>
+                        <textarea id="description" name="description" rows="3" class="w-full border rounded px-3 py-2"></textarea>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">카테고리 추가</button>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        카테고리 추가
+                    </button>
                 </form>
             </div>
         </div>
@@ -85,7 +87,7 @@
 <script>
 document.getElementById('name').addEventListener('input', function() {
     const name = this.value;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-');
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
     document.getElementById('slug').value = slug;
 });
 </script>

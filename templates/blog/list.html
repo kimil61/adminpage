@@ -3,77 +3,82 @@
 {% block title %}블로그 - My Website{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <h1 class="mb-4">블로그</h1>
-        
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- 본문 영역 -->
+    <div class="w-full lg:w-2/3">
+        <h1 class="text-2xl font-semibold mb-6">블로그</h1>
+
         {% if posts %}
-            <div class="row">
-                {% for post in posts %}
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        {% if post.featured_image %}
-                        <img src="{{ post.featured_image }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
-                        {% endif %}
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ post.title }}</h5>
-                            <p class="card-text flex-grow-1">{{ post.excerpt or post.content[:150] }}...</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="/blog/{{ post.id }}" class="btn btn-primary">더 읽기</a>
-                                <small class="text-muted">조회 {{ post.views }}회</small>
-                            </div>
-                        </div>
-                        <div class="card-footer text-muted">
-                            <div class="d-flex justify-content-between">
-                                <span>{{ post.created_at.strftime('%Y-%m-%d') }}</span>
-                                <span>{{ post.author.username }}</span>
-                            </div>
-                        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for post in posts %}
+            <div class="bg-white rounded shadow overflow-hidden flex flex-col">
+                {% if post.featured_image %}
+                <img src="{{ post.featured_image }}" alt="{{ post.title }}" class="w-full h-48 object-cover">
+                {% endif %}
+                <div class="p-4 flex flex-col flex-1">
+                    <h5 class="text-lg font-semibold mb-2">{{ post.title }}</h5>
+                    <p class="text-sm text-gray-700 flex-grow">{{ post.excerpt or post.content[:150] }}...</p>
+                    <div class="mt-4 flex items-center justify-between text-sm">
+                        <a href="/blog/{{ post.id }}" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">더 읽기</a>
+                        <span class="text-gray-500">조회 {{ post.views }}회</span>
                     </div>
                 </div>
-                {% endfor %}
+                <div class="bg-gray-100 text-gray-500 text-xs px-4 py-2 flex justify-between">
+                    <span>{{ post.created_at.strftime('%Y-%m-%d') }}</span>
+                    <span>{{ post.author.username }}</span>
+                </div>
             </div>
-            
-            {% if pages > 1 %}
-            <nav>
-                <ul class="pagination justify-content-center">
+            {% endfor %}
+        </div>
+
+        {% if pages > 1 %}
+        <div class="mt-8">
+            <nav class="flex justify-center">
+                <ul class="inline-flex items-center space-x-1 text-sm">
                     {% if page > 1 %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page - 1 }}">이전</a>
-                        </li>
+                    <li>
+                        <a href="?page={{ page - 1 }}"
+                           class="px-3 py-1 rounded border bg-white hover:bg-gray-100">이전</a>
+                    </li>
                     {% endif %}
-                    
+
                     {% for p in range(1, pages + 1) %}
-                        <li class="page-item {{ 'active' if p == page else '' }}">
-                            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-                        </li>
+                    <li>
+                        <a href="?page={{ p }}"
+                           class="px-3 py-1 rounded border {{ 'bg-blue-600 text-white' if p == page else 'bg-white hover:bg-gray-100' }}">
+                            {{ p }}
+                        </a>
+                    </li>
                     {% endfor %}
-                    
+
                     {% if page < pages %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page + 1 }}">다음</a>
-                        </li>
+                    <li>
+                        <a href="?page={{ page + 1 }}"
+                           class="px-3 py-1 rounded border bg-white hover:bg-gray-100">다음</a>
+                    </li>
                     {% endif %}
                 </ul>
             </nav>
-            {% endif %}
+        </div>
+        {% endif %}
         {% else %}
-            <div class="text-center py-5">
-                <h3 class="text-muted">아직 포스트가 없습니다</h3>
-                <p class="text-muted">첫 번째 포스트를 기다리고 있어요!</p>
-            </div>
+        <div class="text-center py-12 text-gray-500">
+            <h3 class="text-xl font-semibold">아직 포스트가 없습니다</h3>
+            <p class="mt-2">첫 번째 포스트를 기다리고 있어요!</p>
+        </div>
         {% endif %}
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>카테고리</h5>
+
+    <!-- 사이드바 -->
+    <div class="w-full lg:w-1/3">
+        <div class="bg-white rounded shadow">
+            <div class="border-b px-4 py-3">
+                <h5 class="text-lg font-semibold">카테고리</h5>
             </div>
-            <div class="list-group list-group-flush">
+            <div>
                 {% for category in categories %}
-                <a href="/category/{{ category.slug }}" 
-                   class="list-group-item list-group-item-action">
+                <a href="/category/{{ category.slug }}"
+                   class="block px-4 py-2 border-b hover:bg-gray-50">
                     {{ category.name }}
                 </a>
                 {% endfor %}

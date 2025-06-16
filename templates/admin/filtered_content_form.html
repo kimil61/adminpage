@@ -3,28 +3,44 @@
 {% block page_title %}{% if action == "create" %}새 기록 추가{% else %}기록 수정{% endif %}{% endblock %}
 
 {% block content %}
-<form method="post">
-    <div class="card">
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="filter_result" class="form-label">필터 결과 *</label>
-                <textarea class="form-control" id="filter_result" name="filter_result" rows="4" required>{{ form.filter_result.data or '' }}</textarea>
+<form method="post" class="max-w-3xl mx-auto">
+    <div class="bg-white rounded shadow">
+        <div class="p-6 space-y-6">
+            <div>
+                <label for="filter_result" class="block text-sm font-medium mb-1">필터 결과 *</label>
+                <textarea id="filter_result" name="filter_result" rows="4" required
+                          class="w-full border rounded px-3 py-2">{{ form.filter_result.data or '' }}</textarea>
             </div>
-            <div class="mb-3">
-                <label for="reasoning" class="form-label">분석 내용</label>
-                <textarea class="form-control" id="reasoning" name="reasoning" rows="4">{{ form.reasoning.data or '' }}</textarea>
+
+            <div>
+                <label for="reasoning" class="block text-sm font-medium mb-1">분석 내용</label>
+                <textarea id="reasoning" name="reasoning" rows="4"
+                          class="w-full border rounded px-3 py-2">{{ form.reasoning.data or '' }}</textarea>
             </div>
-            <div class="mb-3">
-                <label for="confidence_score" class="form-label">신뢰도</label>
-                <input type="number" class="form-control" id="confidence_score" name="confidence_score" value="{{ form.confidence_score.data or '' }}">
+
+            <div>
+                <label for="confidence_score" class="block text-sm font-medium mb-1">신뢰도</label>
+                <input type="number" id="confidence_score" name="confidence_score"
+                       value="{{ form.confidence_score.data or '' }}"
+                       class="w-full border rounded px-3 py-2">
             </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="suitable_for_blog" name="suitable_for_blog" {% if form.suitable_for_blog.data %}checked{% endif %}>
-                <label class="form-check-label" for="suitable_for_blog">블로그 적합 여부</label>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="suitable_for_blog" name="suitable_for_blog"
+                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+                       {% if form.suitable_for_blog.data %}checked{% endif %}>
+                <label for="suitable_for_blog" class="ml-2 text-sm text-gray-700">블로그 적합 여부</label>
             </div>
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">{% if action == "create" %}생성{% else %}수정{% endif %}</button>
-                <a href="/admin/filtered" class="btn btn-secondary">취소</a>
+
+            <div class="space-y-2">
+                <button type="submit"
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    {% if action == "create" %}생성{% else %}수정{% endif %}
+                </button>
+                <a href="/admin/filtered"
+                   class="w-full inline-block text-center border border-gray-400 text-gray-700 px-4 py-2 rounded hover:bg-gray-100">
+                    취소
+                </a>
             </div>
         </div>
     </div>

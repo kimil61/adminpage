@@ -3,131 +3,121 @@
 {% block page_title %}대시보드{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">총 포스트</div>
-                        <div class="h5 mb-0 font-weight-bold">{{ total_posts }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-edit fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="border border-blue-400 bg-white rounded shadow p-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-semibold text-blue-600 uppercase mb-1">총 포스트</div>
+                <div class="text-xl font-bold">{{ total_posts }}</div>
+            </div>
+            <div>
+                <i class="fas fa-edit fa-2x text-gray-300"></i>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">발행된 포스트</div>
-                        <div class="h5 mb-0 font-weight-bold">{{ published_posts }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-check fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+
+    <div class="border border-green-400 bg-white rounded shadow p-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-semibold text-green-600 uppercase mb-1">발행된 포스트</div>
+                <div class="text-xl font-bold">{{ published_posts }}</div>
+            </div>
+            <div>
+                <i class="fas fa-check fa-2x text-gray-300"></i>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">총 사용자</div>
-                        <div class="h5 mb-0 font-weight-bold">{{ total_users }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+
+    <div class="border border-cyan-400 bg-white rounded shadow p-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-semibold text-cyan-600 uppercase mb-1">총 사용자</div>
+                <div class="text-xl font-bold">{{ total_users }}</div>
+            </div>
+            <div>
+                <i class="fas fa-users fa-2x text-gray-300"></i>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">카테고리</div>
-                        <div class="h5 mb-0 font-weight-bold">{{ total_categories }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-tags fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+
+    <div class="border border-yellow-400 bg-white rounded shadow p-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-semibold text-yellow-600 uppercase mb-1">카테고리</div>
+                <div class="text-xl font-bold">{{ total_categories }}</div>
+            </div>
+            <div>
+                <i class="fas fa-tags fa-2x text-gray-300"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">최근 포스트</h6>
-                <a href="/admin/posts" class="btn btn-sm btn-outline-primary">전체 보기</a>
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="w-full lg:w-2/3">
+        <div class="bg-white shadow rounded">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+                <h6 class="font-semibold text-blue-600">최근 포스트</h6>
+                <a href="/admin/posts" class="text-sm text-blue-600 border border-blue-500 px-2 py-1 rounded hover:bg-blue-50">전체 보기</a>
             </div>
-            <div class="card-body">
+            <div class="p-4">
                 {% if recent_posts %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <th>제목</th>
-                                    <th>상태</th>
-                                    <th>작성일</th>
-                                    <th>조회수</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">제목</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">상태</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">작성일</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-600">조회수</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100">
                                 {% for post in recent_posts %}
-                                <tr>
-                                    <td>{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}</td>
-                                    <td>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-2">{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}</td>
+                                    <td class="px-4 py-2">
                                         {% if post.is_published %}
-                                            <span class="badge bg-success">발행됨</span>
+                                            <span class="inline-block px-2 py-1 text-xs text-white bg-green-500 rounded">발행됨</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">초안</span>
+                                            <span class="inline-block px-2 py-1 text-xs text-white bg-gray-500 rounded">초안</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ post.created_at.strftime('%m/%d') }}</td>
-                                    <td>{{ post.views }}</td>
+                                    <td class="px-4 py-2">{{ post.created_at.strftime('%m/%d') }}</td>
+                                    <td class="px-4 py-2">{{ post.views }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-5">
-                        <h5 class="text-muted">포스트가 없습니다</h5>
-                        <p class="text-muted">첫 번째 포스트를 작성해보세요!</p>
-                        <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
+                    <div class="text-center py-8 text-gray-500">
+                        <h5 class="text-lg font-semibold">포스트가 없습니다</h5>
+                        <p class="mb-4">첫 번째 포스트를 작성해보세요!</p>
+                        <a href="/admin/posts/create" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            새 포스트 작성
+                        </a>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">빠른 작업</h6>
+
+    <div class="w-full lg:w-1/3">
+        <div class="bg-white shadow rounded">
+            <div class="px-4 py-3 border-b">
+                <h6 class="text-blue-600 font-semibold">빠른 작업</h6>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/admin/posts/create" class="btn btn-primary">새 포스트 작성</a>
-                    <a href="/admin/categories" class="btn btn-outline-secondary">카테고리 관리</a>
-                    <a href="/" target="_blank" class="btn btn-outline-success">사이트 미리보기</a>
-                </div>
+            <div class="p-4 space-y-3">
+                <a href="/admin/posts/create" class="block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                    새 포스트 작성
+                </a>
+                <a href="/admin/categories" class="block w-full text-center border border-gray-400 text-gray-700 py-2 rounded hover:bg-gray-100">
+                    카테고리 관리
+                </a>
+                <a href="/" target="_blank" class="block w-full text-center border border-green-400 text-green-600 py-2 rounded hover:bg-green-50">
+                    사이트 미리보기
+                </a>
             </div>
         </div>
     </div>

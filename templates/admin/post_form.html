@@ -1,3 +1,4 @@
+
 {% extends "admin/base.html" %}
 
 {% block page_title %}
@@ -14,51 +15,56 @@
 {% endblock %}
 
 {% block content %}
-<form method="POST" enctype="multipart/form-data">
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">포스트 내용</h6>
+<form method="POST" enctype="multipart/form-data" class="space-y-6">
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- 왼쪽 입력 폼 -->
+        <div class="w-full lg:w-2/3">
+            <div class="bg-white rounded shadow">
+                <div class="border-b px-4 py-3">
+                    <h6 class="font-semibold text-blue-600">포스트 내용</h6>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">제목 *</label>
-                        <input type="text" class="form-control" id="title" name="title" 
-                               value="{{ form.title.data or '' }}" required>
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label for="title" class="block text-sm font-medium mb-1">제목 *</label>
+                        <input type="text" id="title" name="title" required
+                               class="w-full border rounded px-3 py-2"
+                               value="{{ form.title.data or '' }}">
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="content" class="form-label">내용 *</label>
-                        <div id="editor"></div>
+
+                    <div>
+                        <label for="content" class="block text-sm font-medium mb-1">내용 *</label>
+                        <div id="editor" class="border rounded"></div>
                         <textarea id="content" name="content" style="display:none;">{{ form.content.data or '' }}</textarea>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="excerpt" class="form-label">요약</label>
-                        <textarea class="form-control" id="excerpt" name="excerpt" rows="3">{{ form.excerpt.data or '' }}</textarea>
+
+                    <div>
+                        <label for="excerpt" class="block text-sm font-medium mb-1">요약</label>
+                        <textarea id="excerpt" name="excerpt" rows="3"
+                                  class="w-full border rounded px-3 py-2">{{ form.excerpt.data or '' }}</textarea>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">발행 설정</h6>
+
+        <!-- 오른쪽 설정 영역 -->
+        <div class="w-full lg:w-1/3">
+            <div class="bg-white rounded shadow">
+                <div class="border-b px-4 py-3">
+                    <h6 class="font-semibold text-blue-600">발행 설정</h6>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published" 
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="is_published" name="is_published"
+                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
                                    {% if form.is_published.data %}checked{% endif %}>
-                            <label class="form-check-label" for="is_published">바로 발행</label>
-                        </div>
+                            <span class="ml-2 text-sm">바로 발행</span>
+                        </label>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="category_id" class="form-label">카테고리</label>
-                        <select class="form-select" id="category_id" name="category_id">
+
+                    <div>
+                        <label for="category_id" class="block text-sm font-medium mb-1">카테고리</label>
+                        <select id="category_id" name="category_id" class="w-full border rounded px-3 py-2">
                             {% for value, label in form.category_id.choices %}
                             <option value="{{ value }}" {% if form.category_id.data == value %}selected{% endif %}>
                                 {{ label }}
@@ -66,21 +72,22 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="featured_image" class="form-label">대표 이미지</label>
-                        <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
+
+                    <div>
+                        <label for="featured_image" class="block text-sm font-medium mb-1">대표 이미지</label>
+                        <input type="file" id="featured_image" name="featured_image" accept="image/*"
+                               class="w-full border rounded px-3 py-2">
                     </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            {% if action == "create" %}
-                            포스트 생성
-                            {% else %}
-                            포스트 수정
-                            {% endif %}
+
+                    <div class="space-y-2">
+                        <button type="submit"
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            {% if action == "create" %}포스트 생성{% else %}포스트 수정{% endif %}
                         </button>
-                        <a href="/admin/posts" class="btn btn-secondary">취소</a>
+                        <a href="/admin/posts"
+                           class="w-full inline-block text-center border border-gray-400 text-gray-700 px-4 py-2 rounded hover:bg-gray-100">
+                            취소
+                        </a>
                     </div>
                 </div>
             </div>
@@ -100,9 +107,9 @@
     initialValue: document.querySelector('#content').value
   });
 
-  // copy editor HTML content into textarea on form submit
   document.querySelector('form').addEventListener('submit', function () {
     document.querySelector('#content').value = editor.getHTML();
   });
 </script>
 {% endblock %}
+

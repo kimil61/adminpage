@@ -1,39 +1,40 @@
+
 {% extends "admin/base.html" %}
 
 {% block page_title %}지식 관리{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <p class="text-muted mb-0">총 {{ items|length }}개 항목</p>
-    </div>
-    <a href="/admin/knowledge/create" class="btn btn-primary">새 항목 추가</a>
+<div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <p class="text-gray-500 mb-2 md:mb-0">총 {{ items|length }}개 항목</p>
+    <a href="/admin/knowledge/create" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">새 항목 추가</a>
 </div>
 
-<div class="card">
-    <div class="card-body">
+<div class="bg-white shadow rounded">
+    <div class="p-4">
         {% if items %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th>제목</th>
-                            <th>작성일</th>
-                            <th>작업</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">제목</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">작성일</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">작업</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         {% for item in items %}
-                        <tr>
-                            <td>{{ item.title }}</td>
-                            <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="/admin/knowledge/{{ item.id }}/edit" class="btn btn-outline-primary btn-sm">수정</a>
-                                    <form method="post" action="/admin/knowledge/{{ item.id }}/delete" style="display:inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
-                                    </form>
-                                </div>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">{{ item.title }}</td>
+                            <td class="px-4 py-2">{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-4 py-2 space-x-1 whitespace-nowrap">
+                                <a href="/admin/knowledge/{{ item.id }}/edit"
+                                   class="inline-block px-2 py-1 border border-blue-400 text-blue-600 text-xs rounded hover:bg-blue-50">수정</a>
+                                <form method="post" action="/admin/knowledge/{{ item.id }}/delete"
+                                      class="inline-block"
+                                      onsubmit="return confirm('삭제하시겠습니까?');">
+                                    <button type="submit"
+                                            class="inline-block px-2 py-1 border border-red-400 text-red-600 text-xs rounded hover:bg-red-50">삭제</button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
@@ -41,9 +42,9 @@
                 </table>
             </div>
         {% else %}
-            <div class="text-center py-5">
-                <h4 class="text-muted">등록된 항목이 없습니다</h4>
-                <a href="/admin/knowledge/create" class="btn btn-primary">새 항목 추가</a>
+            <div class="text-center py-10 text-gray-500">
+                <h4 class="text-lg font-semibold mb-4">등록된 항목이 없습니다</h4>
+                <a href="/admin/knowledge/create" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">새 항목 추가</a>
             </div>
         {% endif %}
     </div>
