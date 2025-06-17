@@ -11,7 +11,7 @@
   }
 
   .saju-container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     background: white;
     padding: 32px;
@@ -66,7 +66,27 @@
     font-size: 24px;
     font-weight: bold;
     color: #4a148c;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+  }
+
+  .pillar-details {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .detail-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 5px solid #6a1b9a;
   }
 
   .analysis-box {
@@ -76,6 +96,40 @@
     border-left: 5px solid #6a1b9a;
     margin: 16px 0;
     line-height: 1.8;
+  }
+
+  .interpretation-tabs {
+    display: flex;
+    border-bottom: 2px solid #e0b3ff;
+    margin-bottom: 16px;
+  }
+
+  .tab-button {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .tab-button.active {
+    color: #6a1b9a;
+    border-bottom-color: #6a1b9a;
+    font-weight: 600;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    line-height: 1.8;
+  }
+
+  .tab-content.active {
+    display: block;
   }
 
   .ai-analysis-btn {
@@ -173,6 +227,22 @@
     box-shadow: 0 6px 20px rgba(17, 160, 155, 0.3);
   }
 
+  .twelve-gods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .god-item {
+    background: #fff;
+    border: 1px solid #e0b3ff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+  }
+
   @media (max-width: 768px) {
     .saju-container {
       margin: 16px;
@@ -190,6 +260,10 @@
     
     .saju-title {
       font-size: 24px;
+    }
+
+    .detail-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
@@ -213,22 +287,24 @@
     <div class="section">
       <h2 class="section-title">🌿 사주 네 기둥</h2>
       <div class="pillars-display">
+        {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+        {% set pillar_labels = {'year': '년주 (年柱)', 'month': '월주 (月柱)', 'day': '일주 (日柱)', 'hour': '시주 (時柱)'} %}
+        {% set pillar_info = saju_info[pillar_name] %}
         <div class="pillar-card">
-          <div class="pillar-label">년주 (年柱)</div>
-          <div class="pillar-chars">{{ pillars.year }}</div>
+          <div class="pillar-label">{{ pillar_labels[pillar_name] }}</div>
+          <div class="pillar-chars">{{ pillar_info.gan }}{{ pillar_info.zhi }}</div>
+          <div class="pillar-details">
+            <div><strong>천간:</strong> {{ pillar_info.gan }} ({{ pillar_info.element_gan }})</div>
+            <div><strong>지지:</strong> {{ pillar_info.zhi }} ({{ pillar_info.element_zhi }})</div>
+            {% if pillar_info.ten_god %}
+            <div><strong>십성:</strong> {{ pillar_info.ten_god }}</div>
+            {% endif %}
+            {% if pillar_info.twelve_stage %}
+            <div><strong>운성:</strong> {{ pillar_info.twelve_stage }}</div>
+            {% endif %}
+          </div>
         </div>
-        <div class="pillar-card">
-          <div class="pillar-label">월주 (月柱)</div>
-          <div class="pillar-chars">{{ pillars.month }}</div>
-        </div>
-        <div class="pillar-card">
-          <div class="pillar-label">일주 (日柱)</div>
-          <div class="pillar-chars">{{ pillars.day }}</div>
-        </div>
-        <div class="pillar-card">
-          <div class="pillar-label">시주 (時柱)</div>
-          <div class="pillar-chars">{{ pillars.hour }}</div>
-        </div>
+        {% endfor %}
       </div>
     </div>
 
@@ -240,16 +316,125 @@
       </div>
     </div>
 
+    <!-- 상세 사주 정보 -->
+    <div class="section">
+      <h2 class="section-title">📊 상세 사주 정보</h2>
+      <div class="detail-grid">
+        <!-- 십성 정보 -->
+        <div class="detail-card">
+          <h4 style="color: #6a1b9a; margin-bottom: 12px;">십성 (十星) 분석</h4>
+          {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+          {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
+          {% set pillar_info = saju_info[pillar_name] %}
+          <div style="margin-bottom: 8px;">
+            <strong>{{ pillar_labels[pillar_name] }}주:</strong> 
+            {{ pillar_info.gan }} ({{ pillar_info.ten_god }})
+            {% if pillar_info.ten_god_zhi %} | {{ pillar_info.zhi }} ({{ pillar_info.ten_god_zhi }}){% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- 십이운성 정보 -->
+        <div class="detail-card">
+          <h4 style="color: #6a1b9a; margin-bottom: 12px;">십이운성 (十二運星)</h4>
+          {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+          {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
+          {% set pillar_info = saju_info[pillar_name] %}
+          <div style="margin-bottom: 8px;">
+            <strong>{{ pillar_labels[pillar_name] }}지 {{ pillar_info.zhi }}:</strong> 
+            {{ pillar_info.twelve_stage if pillar_info.twelve_stage else '미산출' }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 십이신살 정보 -->
+      {% if get_twelve_gods_by_day_branch %}
+      {% set twelve_gods = get_twelve_gods_by_day_branch(pillars.day[1]) %}
+      {% if twelve_gods %}
+      <div class="detail-card" style="margin-top: 20px;">
+        <h4 style="color: #6a1b9a; margin-bottom: 12px;">십이신살 (十二神殺)</h4>
+        <p style="margin-bottom: 12px; font-size: 14px; color: #666;">일지 {{ pillars.day[1] }} 기준</p>
+        <div class="twelve-gods-grid">
+          {% for god_name, god_branch in twelve_gods.items() %}
+          <div class="god-item">
+            <strong>{{ god_name }}</strong><br>{{ god_branch }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- 일주 해석 -->
+    {% if ilju_interpretation %}
+    <div class="section">
+      <h2 class="section-title">📖 일주 해석: {{ ilju }}</h2>
+      
+      <div class="interpretation-tabs">
+        {% if ilju_interpretation.kr %}
+        <button class="tab-button active" onclick="showTab('korean')">한국어</button>
+        {% endif %}
+        {% if ilju_interpretation.cn %}
+        <button class="tab-button" onclick="showTab('chinese')">한문 원문</button>
+        {% endif %}
+        {% if ilju_interpretation.en %}
+        <button class="tab-button" onclick="showTab('english')">English</button>
+        {% endif %}
+      </div>
+
+      {% if ilju_interpretation.kr %}
+      <div id="korean" class="tab-content active">
+        {{ ilju_interpretation.kr|safe }}
+      </div>
+      {% endif %}
+
+      {% if ilju_interpretation.cn %}
+      <div id="chinese" class="tab-content">
+        {{ ilju_interpretation.cn|safe }}
+      </div>
+      {% endif %}
+
+      {% if ilju_interpretation.en %}
+      <div id="english" class="tab-content">
+        {{ ilju_interpretation.en|safe }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 삼명통회 원문 해석 -->
+    {% if ctext_explanation or ctext_kr_literal %}
+    <div class="section">
+      <h2 class="section-title">📜 삼명통회 원문 해석</h2>
+      
+      {% if ctext_explanation %}
+      <div class="analysis-box">
+        <h4 style="color: #6a1b9a; margin-bottom: 12px;">원문</h4>
+        {{ ctext_explanation|safe }}
+      </div>
+      {% endif %}
+
+      {% if ctext_kr_literal %}
+      <div class="analysis-box">
+        <h4 style="color: #6a1b9a; margin-bottom: 12px;">한국어 해석</h4>
+        {{ ctext_kr_literal|safe }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <!-- AI 분석 섹션 -->
     <div class="section">
       <h2 class="section-title">✨ AI 심화 분석</h2>
       <button class="ai-analysis-btn" onclick="loadAIAnalysis()" id="aiAnalysisBtn">
-        🤖 AI가 분석한 상세 해석 보기
+        🤖 AI가 분석한 종합 해석 보기
       </button>
       
       <div id="aiLoadingSpinner" style="display: none; text-align: center;">
         <div class="loading-spinner"></div>
-        <div class="loading-text">AI가 당신만을 위한 해석을 작성하고 있습니다...</div>
+        <div class="loading-text">AI가 당신만을 위한 종합 해석을 작성하고 있습니다...</div>
       </div>
       
       <div id="aiAnalysisResult" style="display: none;" class="analysis-box"></div>
@@ -289,6 +474,15 @@
              style="width: 160px; height: 160px; object-fit: cover; border: 2px solid #ddd; border-radius: 12px;" />
       </div>
     </div>
+
+    <!-- 외부 후원 링크가 설정된 경우 -->
+    {% if coffee_link and coffee_link != "https://www.buymeacoffee.com/yourname" %}
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="{{ coffee_link }}" target="_blank" style="display: inline-block; background: #6a1b9a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+        🌐 Buy Me a Coffee
+      </a>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -322,6 +516,23 @@ window.addEventListener('load', function() {
   }, 3000);
 });
 
+// 탭 전환 함수
+function showTab(tabId) {
+  // 모든 탭 버튼 비활성화
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // 모든 탭 콘텐츠 숨김
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // 선택된 탭 활성화
+  event.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
 // AI 분석 로드
 async function loadAIAnalysis() {
   const btn = document.getElementById('aiAnalysisBtn');
@@ -330,7 +541,7 @@ async function loadAIAnalysis() {
   const donationSection = document.getElementById('donationSection');
   
   if (aiAnalysisCached) {
-    result.innerHTML = '<strong>🔍 AI 분석 결과:</strong><br><br>' + aiAnalysisCached;
+    result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + aiAnalysisCached;
     result.style.display = 'block';
     donationSection.style.display = 'block';
     return;
@@ -341,7 +552,7 @@ async function loadAIAnalysis() {
   spinner.style.display = 'block';
   
   try {
-    const response = await fetch('/saju/api/ai_analysis', {
+    const response = await fetch('/saju/api/saju_ai_analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -352,9 +563,12 @@ async function loadAIAnalysis() {
     
     if (data.result) {
       aiAnalysisCached = data.result;
-      result.innerHTML = '<strong>🔍 AI 분석 결과:</strong><br><br>' + data.result;
+      result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + data.result;
       result.style.display = 'block';
       donationSection.style.display = 'block';
+    } else if (data.error) {
+      result.innerHTML = '<p style="color: red;">AI 분석 중 오류가 발생했습니다: ' + data.error + '</p>';
+      result.style.display = 'block';
     } else {
       result.innerHTML = '<p style="color: red;">AI 분석에 실패했습니다. 다시 시도해주세요.</p>';
       result.style.display = 'block';
@@ -362,10 +576,11 @@ async function loadAIAnalysis() {
   } catch (error) {
     result.innerHTML = '<p style="color: red;">서버 통신 오류가 발생했습니다.</p>';
     result.style.display = 'block';
+    console.error('AI 분석 오류:', error);
   } finally {
     spinner.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = '🤖 AI가 분석한 상세 해석 보기';
+    btn.textContent = '🤖 AI가 분석한 종합 해석 보기';
   }
 }
 
