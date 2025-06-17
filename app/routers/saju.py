@@ -1,3 +1,5 @@
+# app/routers/saju.py - 완전한 작동 버전
+
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -9,14 +11,16 @@ import uuid
 import hashlib
 import re
 import sxtwl
-import openai
 import os
 import sqlite3
-from dotenv import load_dotenv
+import secrets
 
 # 환경 변수 로드
+from dotenv import load_dotenv
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/saju")
 
@@ -322,37 +326,10 @@ def get_saju_details(pillars):
 
     return saju_info
 
-# === 삼명통회 원문 해석 함수 ===
-def normalize_section_key(day_pillar, hour_pillar):
-    """삼명통회 섹션 키 생성"""
-    day_stem = day_pillar[0]
-    hour_branch = hour_pillar[1]
-    return f"六{day_stem}日{hour_branch}时断"
-
-def get_ctext_match(day_pillar, hour_pillar):
-    """삼명통회 원문 매칭 - SQLite DB 연동"""
-    keyword1 = f"{day_pillar}日{hour_pillar}"
-    keyword2 = f"{day_pillar[0]}日{hour_pillar}"
-    
-    # TODO: FastAPI에서는 별도 DB 연결 설정 필요
-    # 현재는 ctext.db 파일이 있다고 가정
-    try:
-        conn = sqlite3.connect("ctext.db")
-        c = conn.cursor()
-        c.execute("SELECT content, kr_literal FROM wiki_content WHERE content LIKE ? OR content LIKE ?", 
-                  (f"%{keyword1}%", f"%{keyword2}%"))
-        rows = c.fetchall()
-        conn.close()
-        return [{"content": r[0], "kr_literal": r[1]} for r in rows if r[0]] if rows else None
-    except Exception as e:
-        print(f"⚠️ ctext.db 연결 오류: {e}")
-        return None
-
 def get_ilju_interpretation(ilju):
-    """일주 해석 조회 - 실제 DB 연동 버전"""
-    # TODO: SQLAlchemy를 통한 SajuInterpretation 테이블 조회로 변경 필요
+    """일주 해석 조회"""
     try:
-        conn = sqlite3.connect("fortune.db")  # 임시로 기존 DB 사용
+        conn = sqlite3.connect("fortune.db")
         c = conn.cursor()
         c.execute("SELECT cn, kr, en FROM saju_interpretations WHERE ilju = ?", (ilju,))
         row = c.fetchone()
@@ -369,10 +346,22 @@ def get_ilju_interpretation(ilju):
         print(f"⚠️ 일주 해석 DB 조회 오류: {e}")
         return {"cn": None, "kr": None, "en": None}
 
-def generate_session_token(email):
-    """세션 토큰 생성"""
-    raw = f"{email}-{str(uuid.uuid4())}"
-    return hashlib.sha256(raw.encode()).hexdigest()
+def get_ctext_match(day_pillar, hour_pillar):
+    """삼명통회 원문 매칭"""
+    keyword1 = f"{day_pillar}日{hour_pillar}"
+    keyword2 = f"{day_pillar[0]}日{hour_pillar}"
+    
+    try:
+        conn = sqlite3.connect("ctext.db")
+        c = conn.cursor()
+        c.execute("SELECT content, kr_literal FROM wiki_content WHERE content LIKE ? OR content LIKE ?", 
+                  (f"%{keyword1}%", f"%{keyword2}%"))
+        rows = c.fetchall()
+        conn.close()
+        return [{"content": r[0], "kr_literal": r[1]} for r in rows if r[0]] if rows else None
+    except Exception as e:
+        print(f"⚠️ ctext.db 연결 오류: {e}")
+        return None
 
 def format_fortune_text(text):
     """운세 텍스트 포맷팅"""
@@ -423,24 +412,12 @@ class SajuAnalyzer:
         else:
             analysis += "<br>오행의 균형이 비교적 잘 잡혀 있습니다."
 
-        # 십성 계산 추가
-        ten_gods = []
-        day_gan = day_pillar[0]
-        for label, pillar in zip(['년간', '월간', '일간', '시간'], [year_pillar, month_pillar, day_pillar, time_pillar]):
-            tg = get_ten_god(day_gan, pillar[0])
-            ten_gods.append(f"- {label} {pillar[0]}: {tg}")
-        for label, pillar in zip(['년지', '월지', '일지', '시지'], [year_pillar, month_pillar, day_pillar, time_pillar]):
-            zhi = pillar[1]
-            main_hidden_gan = {
-                '子': '癸', '丑': '己', '寅': '甲', '卯': '乙', '辰': '戊', '巳': '丙',
-                '午': '丁', '未': '己', '申': '庚', '酉': '辛', '戌': '戊', '亥': '壬'
-            }
-            hidden_g = main_hidden_gan.get(zhi)
-            if hidden_g:
-                tg = get_ten_god(day_gan, hidden_g)
-                ten_gods.append(f"- {label} {zhi}: {tg}")
-
         return analysis
+
+def generate_session_token(email):
+    """세션 토큰 생성"""
+    raw = f"{email}-{str(uuid.uuid4())}"
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 def generate_saju_analysis(birthdate, birth_hour):
     """GPT를 이용한 사주 분석"""
@@ -475,7 +452,7 @@ def generate_saju_analysis(birthdate, birth_hour):
 """
 
     try:
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "당신은 정확한 사주 해석 전문가입니다."},
@@ -567,7 +544,6 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     )
 
     # 삼명통회 원문 해석
-    print("🔎 section_key:", normalize_section_key(pillars["day"], pillars["hour"]))
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
     ctext_explanation = None
     ctext_kr_literal = None
@@ -597,9 +573,13 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
 @router.post("/api/saju_ai_analysis")
 async def api_saju_ai_analysis(request: Request):
     """AI 사주 분석 API"""
+    request.session.pop("cached_saju_analysis", None)
+    # print("✅ OpenAI client is set:", bool(client))
+    #print("▶ client.api_key =", client.api_key)
+    
     if "session_token" not in request.session:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
+        request.session["session_token"] = secrets.token_hex(16)
+        
     # 캐시 확인
     if "cached_saju_analysis" in request.session:
         return {"result": request.session["cached_saju_analysis"]}
@@ -647,7 +627,7 @@ async def api_saju_ai_analysis(request: Request):
 """
 
     try:
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "당신은 전문 사주 해석가입니다."},
@@ -662,4 +642,9 @@ async def api_saju_ai_analysis(request: Request):
         request.session["cached_saju_analysis"] = reply
         return {"result": reply}
     except Exception as e:
-        return {"error": str(e)}, 500
+        return {"error": str(e)}
+    
+@router.get("/debug")
+def test_openai_key():
+    import openai
+    return {"key_set": bool(openai.api_key), "key": openai.api_key[:10] + "..."}
