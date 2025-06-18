@@ -4,155 +4,71 @@
 
 {% block extra_head %}
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap" rel="stylesheet">
-<style>
-  body {
-    font-family: 'Noto Serif KR', serif;
-    background: #fdf7ff;
-  }
-
-  .saju-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    padding: 32px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  }
-
-  .saju-title {
-    font-size: 32px;
-    text-align: center;
-    color: #6a1b9a;
-    margin-bottom: 24px;
-    font-weight: 600;
-  }
-
-  .saju-description {
-    font-size: 18px;
-    line-height: 1.8;
-    color: #555;
-    margin-bottom: 24px;
-  }
-
-  .saju-form {
-    margin-top: 32px;
-  }
-
-  .form-group {
-    margin-bottom: 24px;
-  }
-
-  .form-label {
-    display: block;
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 8px;
-    font-weight: 500;
-  }
-
-  .form-input, .form-select {
-    width: 100%;
-    font-size: 18px;
-    padding: 16px;
-    border-radius: 8px;
-    border: 2px solid #e0e0e0;
-    box-sizing: border-box;
-    transition: border-color 0.3s ease;
-  }
-
-  .form-input:focus, .form-select:focus {
-    outline: none;
-    border-color: #6a1b9a;
-  }
-
-  .birth-date-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-
-  .submit-btn {
-    width: 100%;
-    padding: 20px;
-    margin-top: 32px;
-    background: linear-gradient(135deg, #6a1b9a, #8e24aa);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-
-  .submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(106, 27, 154, 0.3);
-  }
-
-  .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .spinner {
-    width: 60px;
-    height: 60px;
-    border: 6px solid #e0b3ff;
-    border-top: 6px solid #6a1b9a;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .loading-text {
-    margin-top: 20px;
-    font-size: 18px;
-    color: #6a1b9a;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    .saju-container {
-      margin: 16px;
-      padding: 24px;
-    }
-    
-    .saju-title {
-      font-size: 24px;
-    }
-    
-    .saju-description {
-      font-size: 16px;
-    }
-    
-    .birth-date-row {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-  }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="saju-container">
-  <h1 class="saju-title">🔮 사주팔자를 알고 계시나요?</h1>
+<div class="saju-container max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+  <h1 class="text-3xl md:text-4xl font-bold text-center text-purple-800 mb-6">🔮 나의 사주팔자 확인하기</h1>
   
-  <div class="saju-description">
-    <p>
+  <div class="text-gray-700 text-lg leading-relaxed space-y-6 mb-6">
+  <form method="post" class="saju-form" id="sajuForm">
+    <div class="mb-6">
+      <label class="block text-base font-medium text-gray-800 mb-2">이름 (선택)</label>
+      <input type="text" name="name" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" placeholder="이름 입력은 선택사항입니다 😊">
+    </div>
+
+    <div class="mb-6">
+      <label class="block text-base font-medium text-gray-800 mb-2">성별 *</label>
+      <select name="gender" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required>
+        <option value="">성별을 선택해주세요</option>
+        <option value="male">남자</option>
+        <option value="female">여자</option>
+      </select>
+    </div>
+
+    <div class="mb-6">
+      <label class="block text-base font-medium text-gray-800 mb-2">생년월일 (양력) *</label>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <select name="birth_year" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required id="birthYear">
+          <option value="">년도</option>
+          {% for y in range(1920, 2025) %}
+            <option value="{{ y }}" {% if y == default_year %}selected{% endif %}>{{ y }}년</option>
+          {% endfor %}
+        </select>
+
+        <select name="birth_month" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required id="birthMonth">
+          <option value="">월</option>
+          {% for m in range(1, 13) %}
+            <option value="{{ m }}" {% if m == default_month %}selected{% endif %}>{{ m }}월</option>
+          {% endfor %}
+        </select>
+
+        <select name="birth_day" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required id="birthDay">
+          <option value="">일</option>
+          {% for d in range(1, 32) %}
+            <option value="{{ d }}" {% if d == default_day %}selected{% endif %}>{{ d }}일</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <label class="block text-base font-medium text-gray-800 mb-2">출생 시간 *</label>
+      <select name="birthhour" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required>
+        <option value="">출생 시간을 선택해주세요</option>
+        <option value="12">모름</option>
+        {% for h in range(0, 24) %}
+          <option value="{{ h }}">{{ h }}시</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="w-full py-5 mt-8 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
+      🔮 운세 보러가기
+    </button>
+  </form>
+</div>
+<p>
       사주팔자의 뿌리는 멀리 <strong>당나라</strong>까지 거슬러 올라갑니다.<br>
       인간이 살아가며 겪는 기쁨과 슬픔, 성공과 방황의 흐름 속에서  
       사람들은 '시간'과 '기운'이 삶에 어떤 영향을 미치는지를 통찰하려 했습니다.
@@ -179,68 +95,10 @@
       관계 속에서 고민하는 마음은 수천 년 전이나 지금이나 다르지 않습니다.
     </p>
   </div>
-
-  <form method="post" class="saju-form" id="sajuForm">
-    <div class="form-group">
-      <label class="form-label">이름 (선택)</label>
-      <input type="text" name="name" class="form-input" placeholder="이름 입력은 선택사항입니다 😊">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">성별 *</label>
-      <select name="gender" class="form-select" required>
-        <option value="">성별을 선택해주세요</option>
-        <option value="male">남자</option>
-        <option value="female">여자</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">생년월일 (양력) *</label>
-      <div class="birth-date-row">
-        <select name="birth_year" class="form-select" required id="birthYear">
-          <option value="">년도</option>
-          {% for y in range(1920, 2025) %}
-            <option value="{{ y }}" {% if y == default_year %}selected{% endif %}>{{ y }}년</option>
-          {% endfor %}
-        </select>
-
-        <select name="birth_month" class="form-select" required id="birthMonth">
-          <option value="">월</option>
-          {% for m in range(1, 13) %}
-            <option value="{{ m }}" {% if m == default_month %}selected{% endif %}>{{ m }}월</option>
-          {% endfor %}
-        </select>
-
-        <select name="birth_day" class="form-select" required id="birthDay">
-          <option value="">일</option>
-          {% for d in range(1, 32) %}
-            <option value="{{ d }}" {% if d == default_day %}selected{% endif %}>{{ d }}일</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">출생 시간 *</label>
-      <select name="birthhour" class="form-select" required>
-        <option value="">출생 시간을 선택해주세요</option>
-        <option value="12">모름</option>
-        {% for h in range(0, 24) %}
-          <option value="{{ h }}">{{ h }}시</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <button type="submit" class="submit-btn">🔮 운세 보러가기</button>
-  </form>
-</div>
-
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">
-    당신의 운명을 해석하는 중이에요... 🔮<br>
-    잠시만 기다려주세요 🙏
+<div class="fixed inset-0 bg-white bg-opacity-90 z-50 hidden flex-col justify-center items-center" id="loadingOverlay">
+  <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin"></div>
+  <div class="mt-4 text-lg text-purple-700 text-center">
+    당신의 운명을 해석하는 중이에요... 🔮<br>잠시만 기다려주세요 🙏
   </div>
 </div>
 {% endblock %}
