@@ -4,7 +4,7 @@ from app.database import Base
 from datetime import datetime
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "blog_users"
     
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
@@ -17,7 +17,7 @@ class User(Base):
     posts = relationship("Post", back_populates="author")
 
 class Category(Base):
-    __tablename__ = "categories"
+    __tablename__ = "blog_categories"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
@@ -28,7 +28,7 @@ class Category(Base):
     posts = relationship("Post", back_populates="category")
 
 class Post(Base):
-    __tablename__ = "posts"
+    __tablename__ = "blog_posts"
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
@@ -37,8 +37,8 @@ class Post(Base):
     excerpt = Column(String(500))
     featured_image = Column(String(500))
     
-    author_id = Column(Integer, ForeignKey("users.id"))
-    category_id = Column(Integer, ForeignKey("categories.id"))
+    author_id = Column(Integer, ForeignKey("blog_users.id"))
+    category_id = Column(Integer, ForeignKey("blog_categories.id"))
     
     is_published = Column(Boolean, default=False)
     views = Column(Integer, default=0)
@@ -51,7 +51,7 @@ class Post(Base):
     category = relationship("Category", back_populates="posts")
 
 class Media(Base):
-    __tablename__ = "media"
+    __tablename__ = "blog_media"
     
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
@@ -61,22 +61,23 @@ class Media(Base):
     file_path = Column(String(500))
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")
 
 
-class KnowledgeItem(Base):
-    """개발자 지식베이스 항목"""
+class InPost(Base):
+    """지식in에서 수집된 포스트"""
 
-    __tablename__ = "knowledge_items"
+    __tablename__ = "in_posts"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text)
+    gen_content1 = Column(Text)
+    gen_content2 = Column(Text)
+    gen_content3 = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class FilteredContent(Base):
@@ -141,3 +142,18 @@ class MatchReport(Base):
     key = Column(String(255), unique=True)  # 해시키
     report = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    
+
+# 사주 위키 콘텐츠 테이블
+class SajuWikiContent(Base):
+    """사주 위키 콘텐츠 테이블"""
+
+    __tablename__ = "saju_wiki_contents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    section = Column(Text)
+    line_number = Column(Integer)
+    content = Column(Text)
+    kr_literal = Column(Text)
+    kr_explained = Column(Text)

@@ -7,13 +7,13 @@ from app.models import (
     Post,
     Category,
     Media,
-    KnowledgeItem,
+    InPost,
     FilteredContent,
 )
 from app.forms import (
     PostForm,
     CategoryForm,
-    KnowledgeItemForm,
+    InPostForm,
     FilteredContentForm,
 )
 from app.utils import require_admin, save_uploaded_file, create_slug, flash_message
@@ -300,66 +300,67 @@ async def admin_delete_category(
     return RedirectResponse(url="/admin/categories", status_code=302)
 
 
-@router.get("/knowledge", response_class=HTMLResponse)
-async def admin_knowledge_items(
+
+@router.get("/in_posts", response_class=HTMLResponse)
+async def admin_in_posts(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    items = db.query(KnowledgeItem).order_by(KnowledgeItem.created_at.desc()).all()
+    items = db.query(InPost).order_by(InPost.created_at.desc()).all()
     return templates.TemplateResponse(
-        "admin/knowledge_items.html",
+        "admin/in_posts.html",
         {"request": request, "items": items},
     )
 
 
-@router.get("/knowledge/create", response_class=HTMLResponse)
-async def admin_create_knowledge(
+@router.get("/in_posts/create", response_class=HTMLResponse)
+async def admin_create_in_post(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    form = KnowledgeItemForm()
+    form = InPostForm()
     return templates.TemplateResponse(
-        "admin/knowledge_item_form.html",
+        "admin/in_post_form.html",
         {"request": request, "form": form, "action": "create"},
     )
 
 
-@router.post("/knowledge/create")
-async def admin_create_knowledge_submit(
+@router.post("/in_posts/create")
+async def admin_create_in_post_submit(
     request: Request,
     title: str = Form(...),
     content: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    item = KnowledgeItem(title=title, content=content)
+    item = InPost(title=title, content=content)
     db.add(item)
     db.commit()
     flash_message(request, "지식 항목이 생성되었습니다.", "success")
-    return RedirectResponse("/admin/knowledge", status_code=302)
+    return RedirectResponse("/admin/in_posts", status_code=302)
 
 
-@router.get("/knowledge/{item_id}/edit", response_class=HTMLResponse)
-async def admin_edit_knowledge(
+@router.get("/in_posts/{item_id}/edit", response_class=HTMLResponse)
+async def admin_edit_in_post(
     request: Request,
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    item = db.query(KnowledgeItem).filter(KnowledgeItem.id == item_id).first()
+    item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
-    form = KnowledgeItemForm(obj=item)
+    form = InPostForm(obj=item)
     return templates.TemplateResponse(
-        "admin/knowledge_item_form.html",
+        "admin/in_post_form.html",
         {"request": request, "form": form, "item": item, "action": "edit"},
     )
 
 
-@router.post("/knowledge/{item_id}/edit")
-async def admin_edit_knowledge_submit(
+@router.post("/in_posts/{item_id}/edit")
+async def admin_edit_in_post_submit(
     request: Request,
     item_id: int,
     title: str = Form(...),
@@ -367,29 +368,29 @@ async def admin_edit_knowledge_submit(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    item = db.query(KnowledgeItem).filter(KnowledgeItem.id == item_id).first()
+    item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
     item.title = title
     item.content = content
     db.commit()
     flash_message(request, "지식 항목이 수정되었습니다.", "success")
-    return RedirectResponse("/admin/knowledge", status_code=302)
+    return RedirectResponse("/admin/in_posts", status_code=302)
 
 
-@router.post("/knowledge/{item_id}/delete")
-async def admin_delete_knowledge(
+@router.post("/in_posts/{item_id}/delete")
+async def admin_delete_in_post(
     request: Request,
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    item = db.query(KnowledgeItem).filter(KnowledgeItem.id == item_id).first()
+    item = db.query(InPost).filter(InPost.id == item_id).first()
     if item:
         db.delete(item)
         db.commit()
         flash_message(request, "지식 항목이 삭제되었습니다.", "success")
-    return RedirectResponse("/admin/knowledge", status_code=302)
+    return RedirectResponse("/admin/in_posts", status_code=302)
 
 
 @router.get("/filtered", response_class=HTMLResponse)

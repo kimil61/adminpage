@@ -44,8 +44,6 @@ def setup_database():
         # 기본 카테고리 생성
         categories_data = [
             {"name": "기술", "slug": "tech", "description": "기술 관련 포스트"},
-            {"name": "일상", "slug": "daily", "description": "일상 이야기"},
-            {"name": "여행", "slug": "travel", "description": "여행 후기"},
         ]
         
         for cat_data in categories_data:

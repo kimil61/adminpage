@@ -64,7 +64,7 @@ class CategoryForm(Form):
     description = TextAreaField('설명')
 
 
-class KnowledgeItemForm(Form):
+class InPostForm(Form):
     title = StringField('제목', validators=[
         DataRequired(message='제목을 입력해주세요.'),
         Length(max=200, message='제목은 200자 이하여야 합니다.')
