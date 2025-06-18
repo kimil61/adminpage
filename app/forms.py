@@ -95,3 +95,12 @@ class FilteredContentForm(Form):
     reasoning = TextAreaField('분석 내용', validators=[Optional()])
     confidence_score = IntegerField('신뢰도', validators=[Optional()])
     suitable_for_blog = BooleanField('블로그 적합 여부')
+
+
+class SajuUserAdminForm(Form):
+    """Admin form for SajuUser"""
+    name = StringField('이름', validators=[DataRequired(message='이름을 입력해주세요.')])
+    birthdate = StringField('생년월일', validators=[DataRequired(message='생년월일을 입력해주세요.')])
+    birthhour = IntegerField('출생시', validators=[Optional()])
+    gender = SelectField('성별', choices=[('male', '남자'), ('female', '여자')])
+    user_id = SelectField('블로그 사용자', coerce=int, validators=[Optional()])

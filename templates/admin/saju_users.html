@@ -1,0 +1,53 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}사주 사용자{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <p class="text-gray-500 mb-2 md:mb-0">총 {{ users|length }}명</p>
+    <a href="/admin/saju_users/create" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">새 사용자</a>
+</div>
+
+<div class="bg-white shadow rounded">
+    <div class="p-4">
+        {% if users %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">이름</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">생년월일</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">출생시</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">성별</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">방문수</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for u in users %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">{{ u.name }}</td>
+                            <td class="px-4 py-2">{{ u.birthdate }}</td>
+                            <td class="px-4 py-2">{{ u.birthhour }}</td>
+                            <td class="px-4 py-2">{{ u.gender }}</td>
+                            <td class="px-4 py-2">{{ u.visit_count }}</td>
+                            <td class="px-4 py-2 space-x-1 whitespace-nowrap">
+                                <a href="/admin/saju_users/{{ u.id }}/edit" class="inline-block px-2 py-1 border border-blue-400 text-blue-600 text-xs rounded hover:bg-blue-50">수정</a>
+                                <form method="post" action="/admin/saju_users/{{ u.id }}/delete" class="inline-block" onsubmit="return confirm('삭제하시겠습니까?');">
+                                    <button type="submit" class="inline-block px-2 py-1 border border-red-400 text-red-600 text-xs rounded hover:bg-red-50">삭제</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-10 text-gray-500">
+                <h4 class="text-lg font-semibold mb-4">사용자가 없습니다</h4>
+                <a href="/admin/saju_users/create" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">새 사용자</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

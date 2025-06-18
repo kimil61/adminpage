@@ -9,12 +9,14 @@ from app.models import (
     Media,
     InPost,
     FilteredContent,
+    SajuUser,
 )
 from app.forms import (
     PostForm,
     CategoryForm,
     InPostForm,
     FilteredContentForm,
+    SajuUserAdminForm,
 )
 from app.utils import require_admin, save_uploaded_file, create_slug, flash_message
 import os
@@ -459,6 +461,115 @@ async def admin_create_filtered_submit(
     db.commit()
     flash_message(request, "필터링된 콘텐츠가 저장되었습니다.", "success")
     return RedirectResponse("/admin/filtered", status_code=302)
+
+
+@router.get("/saju_users", response_class=HTMLResponse)
+async def admin_saju_users(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    users = db.query(SajuUser).order_by(SajuUser.created_at.desc()).all()
+    return templates.TemplateResponse(
+        "admin/saju_users.html", {"request": request, "users": users}
+    )
+
+
+@router.get("/saju_users/create", response_class=HTMLResponse)
+async def admin_create_saju_user(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    form = SajuUserAdminForm()
+    form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
+    return templates.TemplateResponse(
+        "admin/saju_user_form.html",
+        {"request": request, "form": form, "action": "create"},
+    )
+
+
+@router.post("/saju_users/create")
+async def admin_create_saju_user_submit(
+    request: Request,
+    name: str = Form(...),
+    birthdate: str = Form(...),
+    birthhour: int = Form(None),
+    gender: str = Form(...),
+    user_id_field: int = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    user = SajuUser(
+        name=name,
+        birthdate=birthdate,
+        birthhour=birthhour,
+        gender=gender,
+        user_id=user_id_field if user_id_field else None,
+    )
+    db.add(user)
+    db.commit()
+    flash_message(request, "사용자가 생성되었습니다.", "success")
+    return RedirectResponse("/admin/saju_users", status_code=302)
+
+
+@router.get("/saju_users/{saju_user_id}/edit", response_class=HTMLResponse)
+async def admin_edit_saju_user(
+    request: Request,
+    saju_user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
+    if not saju_user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    form = SajuUserAdminForm(obj=saju_user)
+    form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
+    form.user_id.data = saju_user.user_id
+    return templates.TemplateResponse(
+        "admin/saju_user_form.html",
+        {"request": request, "form": form, "user": saju_user, "action": "edit"},
+    )
+
+
+@router.post("/saju_users/{saju_user_id}/edit")
+async def admin_edit_saju_user_submit(
+    request: Request,
+    saju_user_id: int,
+    name: str = Form(...),
+    birthdate: str = Form(...),
+    birthhour: int = Form(None),
+    gender: str = Form(...),
+    user_id_field: int = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
+    if not saju_user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    saju_user.name = name
+    saju_user.birthdate = birthdate
+    saju_user.birthhour = birthhour
+    saju_user.gender = gender
+    saju_user.user_id = user_id_field if user_id_field else None
+    db.commit()
+    flash_message(request, "사용자가 수정되었습니다.", "success")
+    return RedirectResponse("/admin/saju_users", status_code=302)
+
+
+@router.post("/saju_users/{saju_user_id}/delete")
+async def admin_delete_saju_user(
+    request: Request,
+    saju_user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
+    if saju_user:
+        db.delete(saju_user)
+        db.commit()
+        flash_message(request, "사용자가 삭제되었습니다.", "success")
+    return RedirectResponse("/admin/saju_users", status_code=302)
 
 
 @router.get("/filtered/{content_id}/edit", response_class=HTMLResponse)
