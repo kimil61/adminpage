@@ -322,7 +322,7 @@ async def admin_create_in_post(
 ):
     form = InPostForm()
     return templates.TemplateResponse(
-        "admin/in_post_form.html",
+        "admin/in_posts_form.html",
         {"request": request, "form": form, "action": "create"},
     )
 
@@ -354,7 +354,7 @@ async def admin_edit_in_post(
         raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
     form = InPostForm(obj=item)
     return templates.TemplateResponse(
-        "admin/in_post_form.html",
+        "admin/in_posts_form.html",
         {"request": request, "form": form, "item": item, "action": "edit"},
     )
 

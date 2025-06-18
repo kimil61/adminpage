@@ -354,7 +354,7 @@ def get_ctext_match(day_pillar, hour_pillar):
     try:
         conn = sqlite3.connect("ctext.db")
         c = conn.cursor()
-        c.execute("SELECT content, kr_literal FROM wiki_content WHERE content LIKE ? OR content LIKE ?", 
+        c.execute("SELECT content, kr_literal FROM saju_wiki_contents WHERE content LIKE ? OR content LIKE ?", 
                   (f"%{keyword1}%", f"%{keyword2}%"))
         rows = c.fetchall()
         conn.close()

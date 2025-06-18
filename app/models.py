@@ -86,7 +86,7 @@ class FilteredContent(Base):
     __tablename__ = "filtered_contents"
 
     id = Column(Integer, primary_key=True, index=True)
-    knowledge_id = Column(Integer, index=True, nullable=True)
+    in_posts_id = Column(Integer, index=True, nullable=True)
     filter_result = Column(Text, nullable=True)
     confidence_score = Column(Integer, nullable=True)  # MySQL float → use Float if high precision needed
     reasoning = Column(Text, nullable=True)

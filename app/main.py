@@ -10,7 +10,8 @@ from app.models import Base, Post, Category
 from app.routers import auth, blog, admin
 from app.routers import auth, blog, admin, saju  # saju 추가
 from app.utils import get_flashed_messages
-
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 import os
 
 Base.metadata.create_all(bind=engine)
@@ -19,7 +20,7 @@ app = FastAPI(title="My Website", version="1.0.0")
 
 app.add_middleware(
     SessionMiddleware, 
-    secret_key=os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
+    secret_key=os.getenv("SECRET_KEY", "your-super-secret-key-change-this-for-footjob")
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -48,6 +49,16 @@ async def home(request: Request, db: Session = Depends(get_db)):
         "recent_posts": recent_posts,
         "categories": categories
     })
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == HTTP_404_NOT_FOUND:
+        return templates.TemplateResponse("errors/404.html", {"request": request}, status_code=404)
+    return templates.TemplateResponse("errors/error.html", {"request": request, "code": exc.status_code}, status_code=exc.status_code)
+
+@app.exception_handler(Exception)
+async def custom_exception_handler(request: Request, exc: Exception):
+    return templates.TemplateResponse("errors/500.html", {"request": request}, status_code=500)
 
 if __name__ == "__main__":
     import uvicorn
