@@ -101,7 +101,6 @@ class SajuUser(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100))
-    email = Column(String(100), unique=True, index=True)
     birthdate = Column(String(20))  # YYYY-MM-DD 형식
     birthhour = Column(Integer)
     gender = Column(String(10))
@@ -110,6 +109,8 @@ class SajuUser(Base):
     last_visit = Column(DateTime, default=datetime.utcnow)
     visit_count = Column(Integer, default=1)
     created_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("blog_users.id"))
+    user = relationship("User")
 
 class SajuFortune(Base):
     """사주 운세 결과 테이블"""
@@ -157,3 +158,12 @@ class SajuWikiContent(Base):
     content = Column(Text)
     kr_literal = Column(Text)
     kr_explained = Column(Text)
+
+class SajuAnalysisCache(Base):
+    __tablename__ = "saju_analysis_cache"
+
+    id = Column(Integer, primary_key=True)
+    saju_key = Column(String(100), unique=True, index=True)  # 예: "1984-06-01_13_male"
+    analysis_result = Column(Text)  # JSON 형태 가능
+    created_at = Column(DateTime, default=datetime.utcnow)
+

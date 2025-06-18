@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Post, Category
+from app.models import Post, Category, SajuUser, SajuAnalysisCache
 from app.template import templates
 from datetime import datetime, timedelta
 import uuid
@@ -14,7 +14,9 @@ import sxtwl
 import os
 import sqlite3
 import secrets
-
+# Use SQLAlchemy ORM to query saju_wiki_contents
+from app.database import SessionLocal
+from app.models import SajuWikiContent
 # 환경 변수 로드
 from dotenv import load_dotenv
 load_dotenv()
@@ -350,15 +352,23 @@ def get_ctext_match(day_pillar, hour_pillar):
     """삼명통회 원문 매칭"""
     keyword1 = f"{day_pillar}日{hour_pillar}"
     keyword2 = f"{day_pillar[0]}日{hour_pillar}"
-    
+
     try:
-        conn = sqlite3.connect("ctext.db")
-        c = conn.cursor()
-        c.execute("SELECT content, kr_literal FROM saju_wiki_contents WHERE content LIKE ? OR content LIKE ?", 
-                  (f"%{keyword1}%", f"%{keyword2}%"))
-        rows = c.fetchall()
-        conn.close()
-        return [{"content": r[0], "kr_literal": r[1]} for r in rows if r[0]] if rows else None
+
+        db = SessionLocal()
+        rows = (
+            db.query(SajuWikiContent)
+            .filter(
+                (SajuWikiContent.content.like(f"%{keyword1}%")) |
+                (SajuWikiContent.content.like(f"%{keyword2}%"))
+            )
+            .all()
+        )
+        db.close()
+        if rows:
+            return [{"content": r.content, "kr_literal": r.kr_literal} for r in rows if r.content]
+        else:
+            return None
     except Exception as e:
         print(f"⚠️ ctext.db 연결 오류: {e}")
         return None
@@ -469,6 +479,10 @@ def generate_saju_analysis(birthdate, birth_hour):
 @router.get("/page1", response_class=HTMLResponse)
 async def saju_page1(request: Request):
     """사주 입력 페이지"""
+    # 로그인 세션 확인
+    if not request.session.get("user_id"):
+        return RedirectResponse("/login", status_code=302)
+    
     default_year = 1984
     default_month = 1
     default_day = 1
@@ -494,20 +508,26 @@ async def saju_page1_submit(
     """사주 입력 처리"""
     birthdate = f"{birth_year:04d}-{birth_month:02d}-{birth_day:02d}"
     
-    # 가상 이메일 생성
-    email = f"user_{uuid.uuid4().hex[:8]}@nomail.com"
-    if not name.strip():
-        name = "손님"
-
-    session_token = generate_session_token(email)
+    session_token = generate_session_token(request.session.get("user_id"))
     
     # 세션에 정보 저장
     request.session["session_token"] = session_token
-    request.session["email"] = email
     request.session["name"] = name
     request.session["gender"] = gender
     request.session["birthdate"] = birthdate
     request.session["birthhour"] = birthhour
+
+    # Save the submitted form data into the saju_users table using SQLAlchemy
+    new_user = SajuUser(
+        name=name,
+        gender=gender,
+        birthdate=birthdate,
+        birthhour=birthhour,
+        session_token=session_token,
+        user_id=request.session.get("user_id")
+    )
+    db.add(new_user)
+    db.commit()
 
     return RedirectResponse(url="/saju/page2", status_code=302)
 
@@ -515,10 +535,9 @@ async def saju_page1_submit(
 async def saju_page2(request: Request, db: Session = Depends(get_db)):
     """사주 결과 페이지"""
     if "session_token" not in request.session:
-        return RedirectResponse(url="/saju/page1", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
 
     name = request.session.get("name", "손님")
-    email = request.session.get("email")
     birthdate_str = request.session.get("birthdate")
     birth_hour = int(request.session.get("birthhour", 12))
 
@@ -571,21 +590,26 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     })
 
 @router.post("/api/saju_ai_analysis")
-async def api_saju_ai_analysis(request: Request):
+async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     """AI 사주 분석 API"""
     request.session.pop("cached_saju_analysis", None)
     # print("✅ OpenAI client is set:", bool(client))
     #print("▶ client.api_key =", client.api_key)
-    
+
     if "session_token" not in request.session:
         request.session["session_token"] = secrets.token_hex(16)
-        
-    # 캐시 확인
-    if "cached_saju_analysis" in request.session:
-        return {"result": request.session["cached_saju_analysis"]}
 
+    # === DB 캐시 확인 ===
     birthdate_str = request.session.get("birthdate")
     birth_hour = int(request.session.get("birthhour", 12))
+
+    gender = request.session.get("gender", "unknown")
+    saju_key = f"{birthdate_str}_{birth_hour}_{gender}"
+
+    # DB 캐시 확인
+    cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+    if cached_row:
+        return {"result": cached_row.analysis_result}
 
     try:
         birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
@@ -637,14 +661,13 @@ async def api_saju_ai_analysis(request: Request):
             max_tokens=600
         )
         reply = format_fortune_text(response.choices[0].message.content)
-        
-        # 캐시에 저장
-        request.session["cached_saju_analysis"] = reply
+        # DB에 캐시 저장
+        new_cache = SajuAnalysisCache(
+            saju_key=saju_key,
+            analysis_result=reply
+        )
+        db.add(new_cache)
+        db.commit()
         return {"result": reply}
     except Exception as e:
         return {"error": str(e)}
-    
-@router.get("/debug")
-def test_openai_key():
-    import openai
-    return {"key_set": bool(openai.api_key), "key": openai.api_key[:10] + "..."}

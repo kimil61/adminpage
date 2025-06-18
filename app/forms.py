@@ -77,6 +77,17 @@ class InPostForm(Form):
     gen_content3 = TextAreaField("3차 생성 결과")
 
 
+
+##########
+# 사주
+class SajuForm(Form):
+    gender = SelectField("성별", choices=[("male", "남자"), ("female", "여자")])
+    birth_year = StringField("출생년도")
+    birth_month = StringField("출생월")
+    birth_day = StringField("출생일")
+    birth_hour = StringField("출생시")
+
+
 class FilteredContentForm(Form):
     filter_result = TextAreaField('필터 결과', validators=[
         DataRequired(message='필터 결과를 입력해주세요.')
