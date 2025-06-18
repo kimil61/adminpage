@@ -72,6 +72,9 @@ class InPostForm(Form):
     content = TextAreaField('내용', validators=[
         DataRequired(message='내용을 입력해주세요.')
     ])
+    gen_content1 = TextAreaField("1차 생성 결과")
+    gen_content2 = TextAreaField("2차 생성 결과")
+    gen_content3 = TextAreaField("3차 생성 결과")
 
 
 class FilteredContentForm(Form):

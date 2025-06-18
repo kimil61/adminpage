@@ -17,6 +17,21 @@
                 <textarea id="content" name="content" rows="6" required
                           class="w-full border rounded px-3 py-2">{{ form.content.data or '' }}</textarea>
             </div>
+            <div>
+                <label for="gen_content1" class="block text-sm font-medium mb-1">1차 생성 결과</label>
+                <textarea id="gen_content1" name="gen_content1" rows="6"
+                          class="w-full border rounded px-3 py-2">{{ form.gen_content1.data or '' }}</textarea>
+            </div>
+            <div>
+                <label for="gen_content2" class="block text-sm font-medium mb-1">2차 생성 결과</label>
+                <textarea id="gen_content2" name="gen_content2" rows="6"
+                          class="w-full border rounded px-3 py-2">{{ form.gen_content2.data or '' }}</textarea>
+            </div>
+            <div>
+                <label for="gen_content3" class="block text-sm font-medium mb-1">3차 생성 결과</label>
+                <textarea id="gen_content3" name="gen_content3" rows="6"
+                          class="w-full border rounded px-3 py-2">{{ form.gen_content3.data or '' }}</textarea>
+            </div>
             <div class="space-y-2">
                 <button type="submit"
                         class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -31,4 +46,3 @@
     </div>
 </form>
 {% endblock %}
-

@@ -1,4 +1,3 @@
-
 {% extends "admin/base.html" %}
 
 {% block page_title %}지식 관리{% endblock %}
@@ -17,6 +16,9 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-4 py-2 text-left font-medium text-gray-600">제목</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">1차 생성</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">2차 생성</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-600">3차 생성</th>
                             <th class="px-4 py-2 text-left font-medium text-gray-600">작성일</th>
                             <th class="px-4 py-2 text-left font-medium text-gray-600">작업</th>
                         </tr>
@@ -25,6 +27,15 @@
                         {% for item in items %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2">{{ item.title }}</td>
+                            <td class="px-4 py-2 text-gray-700">
+                                {{ (item.gen_content1 or '')[:80] }}{% if item.gen_content1 and item.gen_content1|length > 80 %}...{% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                {{ (item.gen_content2 or '')[:80] }}{% if item.gen_content2 and item.gen_content2|length > 80 %}...{% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                {{ (item.gen_content3 or '')[:80] }}{% if item.gen_content3 and item.gen_content3|length > 80 %}...{% endif %}
+                            </td>
                             <td class="px-4 py-2">{{ item.created_at.strftime('%Y-%m-%d') }}</td>
                             <td class="px-4 py-2 space-x-1 whitespace-nowrap">
                                 <a href="/admin/in_posts/{{ item.id }}/edit"

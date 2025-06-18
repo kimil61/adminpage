@@ -332,10 +332,20 @@ async def admin_create_in_post_submit(
     request: Request,
     title: str = Form(...),
     content: str = Form(...),
+    gen_content1: str = Form(None),
+    gen_content2: str = Form(None),
+    gen_content3: str = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    item = InPost(title=title, content=content)
+    # Create InPost with additional generated content fields
+    item = InPost(
+        title=title,
+        content=content,
+        gen_content1=gen_content1,
+        gen_content2=gen_content2,
+        gen_content3=gen_content3,
+    )
     db.add(item)
     db.commit()
     flash_message(request, "지식 항목이 생성되었습니다.", "success")
@@ -365,6 +375,9 @@ async def admin_edit_in_post_submit(
     item_id: int,
     title: str = Form(...),
     content: str = Form(...),
+    gen_content1: str = Form(None),
+    gen_content2: str = Form(None),
+    gen_content3: str = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
@@ -373,6 +386,9 @@ async def admin_edit_in_post_submit(
         raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
     item.title = title
     item.content = content
+    item.gen_content1 = gen_content1
+    item.gen_content2 = gen_content2
+    item.gen_content3 = gen_content3
     db.commit()
     flash_message(request, "지식 항목이 수정되었습니다.", "success")
     return RedirectResponse("/admin/in_posts", status_code=302)
