@@ -17,3 +17,7 @@ httpx==0.25.2
 sxtwl
 openai
 markdown==3.8.1
+celery==5.3.6
+pdfkit
+fpdf2==2.7.6
+weasyprint==65.1

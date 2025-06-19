@@ -190,10 +190,13 @@ class Order(Base):
     product_id = Column(Integer, ForeignKey("products.id"))  # 여기에 연결
     amount = Column(Integer, nullable=False)  # 금액
     kakao_tid = Column(String(100), unique=True, nullable=False)  # 카카오 결제 ID
+    saju_key = Column(String(100), nullable=False)  # 사주 캐시 키
     pdf_send_email = Column(String(100), nullable=True)  # PDF 리포트 발송 이메일
     pdf_send_phone = Column(String(50), nullable=True)  # PDF 발송용 전화번호
     status = Column(Enum("pending", "paid", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
     analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)  # 사주 분석 캐시 ID
+    report_html = Column(String(255), nullable=True)  # 생성된 HTML 리포트 경로
+    report_pdf = Column(String(255), nullable=True)   # 생성된 PDF 리포트 경로
     created_at = Column(DateTime, default=datetime.utcnow)
 
     analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
