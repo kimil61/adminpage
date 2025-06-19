@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}구매 내역 - My Website{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">구매 내역</h1>
+
+{% if orders %}
+<div class="bg-white rounded shadow">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">주문일</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">금액</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-600">리포트</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for order in orders %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 whitespace-nowrap">{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">{{ order.amount }}원</td>
+                    <td class="px-4 py-2">
+                        {% if order.report_pdf %}
+                        <a href="/{{ order.report_pdf }}" class="text-blue-600 hover:underline" download>PDF 다운로드</a>
+                        {% else %}
+                        <span class="text-gray-400">준비 중</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<p class="text-center text-gray-500 py-10">구매한 내역이 없습니다.</p>
+{% endif %}
+{% endblock %}
