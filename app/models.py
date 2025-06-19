@@ -191,6 +191,7 @@ class Order(Base):
     amount = Column(Integer, nullable=False)  # 금액
     kakao_tid = Column(String(100), unique=True, nullable=False)  # 카카오 결제 ID
     pdf_send_email = Column(String(100), nullable=True)  # PDF 리포트 발송 이메일
+    pdf_send_phone = Column(String(50), nullable=True)  # PDF 발송용 전화번호
     status = Column(Enum("pending", "paid", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
     analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)  # 사주 분석 캐시 ID
     created_at = Column(DateTime, default=datetime.utcnow)

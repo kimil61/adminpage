@@ -393,6 +393,24 @@ async function startPremiumPurchase() {
   location.href = next_redirect_pc_url;
 }
 
+async function saveUserContact() {
+  const email = document.getElementById('emailInput').value;
+  const phone = document.getElementById('phoneInput').value;
+
+  try {
+    await fetch('/order/save-contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone })
+    });
+    document.getElementById('infoModal').classList.add('hidden');
+    startPremiumPurchase();
+  } catch (err) {
+    console.error('contact save error', err);
+    alert('연락처 저장에 실패했습니다.');
+  }
+}
+
 // 후원 모달 관련
 function showDonationModal() {
   document.getElementById('donationModal').style.display = 'block';
