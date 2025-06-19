@@ -14,6 +14,8 @@ import sxtwl
 import os
 import sqlite3
 import secrets
+import markdown
+import requests
 # Use SQLAlchemy ORM to query saju_wiki_contents
 from app.database import SessionLocal
 from app.models import SajuWikiContent
@@ -22,10 +24,14 @@ from dotenv import load_dotenv
 load_dotenv()
 from openai import OpenAI
 
+# For duplicate key handling in saju_analysis_cache
+from sqlalchemy.exc import IntegrityError
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/saju")
-
+####################################################################
+# 기존 사주팔자 및 십성 계산 로직을 포함한 모듈
 # 천간/지지 계산 (중국 한자)
 heavenly_stems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
 earthly_branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
@@ -327,7 +333,161 @@ def get_saju_details(pillars):
         }
 
     return saju_info
+# 기존 사주팔자 및 십성 계산 로직을 포함한 모듈 끝
+####################################################################
 
+####################################################################
+# 새로운 사주 해석 및 운세 관련 로직
+# 사주 4주 십신 자동 분석기 (지지 + 정통 격국/용신/희신)
+# 정통 격국 성립 판단 추가: 得令, 通氣, 得地 기준 반영
+
+# 오행 구분표
+stem_elements = {
+    '甲': '목', '乙': '목', '丙': '화', '丁': '화',
+    '戊': '토', '己': '토', '庚': '금', '辛': '금',
+    '壬': '수', '癸': '수'
+}
+
+# 음양 구분표
+stem_yinyang = {
+    '甲': '양', '乙': '음', '丙': '양', '丁': '음',
+    '戊': '양', '己': '음', '庚': '양', '辛': '음',
+    '壬': '양', '癸': '음'
+}
+
+sheng = {'목': '화', '화': '토', '토': '금', '금': '수', '수': '목'}
+ke = {'목': '토', '토': '수', '수': '화', '화': '금', '금': '목'}
+
+branch_hidden_stems = {
+    '子': ['癸'], '丑': ['己', '癸', '辛'], '寅': ['甲', '丙', '戊'],
+    '卯': ['乙'], '辰': ['戊', '乙', '癸'], '巳': ['丙', '庚', '戊'],
+    '午': ['丁', '己'], '未': ['己', '丁', '乙'], '申': ['庚', '壬', '戊'],
+    '酉': ['辛'], '戌': ['戊', '辛', '丁'], '亥': ['壬', '甲']
+}
+
+# 십신 판단 함수
+def get_sipsin(day_gan, target_gan):
+    day_elem = stem_elements[day_gan]
+    day_yy = stem_yinyang[day_gan]
+    target_elem = stem_elements[target_gan]
+    target_yy = stem_yinyang[target_gan]
+    if day_elem == target_elem:
+        return '비견' if day_yy == target_yy else '겁재'
+    elif sheng[day_elem] == target_elem:
+        return '식신' if day_yy == target_yy else '상관'
+    elif sheng[target_elem] == day_elem:
+        return '정인' if day_yy != target_yy else '편인'
+    elif ke[day_elem] == target_elem:
+        return '정재' if day_yy != target_yy else '편재'
+    elif ke[target_elem] == day_elem:
+        return '정관' if day_yy != target_yy else '칠살'
+    return '관계 없음'
+
+# 격국 및 용신/희신 판단 (정통 방식: 得令, 通氣, 得地 고려)
+def guess_gek_guk_yongshin(day_gan, month_branch, month_gan, day_branch, hour_branch):
+    day_elem = stem_elements[day_gan]
+    month_stems = branch_hidden_stems.get(month_branch, [])
+    all_hidden = month_stems + branch_hidden_stems.get(day_branch, []) + branch_hidden_stems.get(hour_branch, [])
+    heavenly_stems = [month_gan]
+
+    freq = {}
+    for s in month_stems:
+        el = stem_elements[s]
+        freq[el] = freq.get(el, 0) + 1
+    max_elem = max(freq, key=freq.get, default=None)
+
+    # 격 판단
+    if not max_elem:
+        return '혼잡격', None, [], []
+
+    if sheng[max_elem] == day_elem:
+        gek = '인성격'
+    elif sheng[day_elem] == max_elem:
+        gek = '식상격'
+    elif ke[day_elem] == max_elem:
+        gek = '재격'
+    elif ke[max_elem] == day_elem:
+        gek = '관격'
+    else:
+        gek = '혼잡격'
+
+    # 得令: 월지 지장간에 용신 있음
+    deokryeong = max_elem in [stem_elements[s] for s in month_stems]
+    # 通氣: 천간에 용신이 있음
+    tonggi = max_elem in [stem_elements[s] for s in heavenly_stems]
+    # 得地: 일지/시지에 용신 있음
+    deokji = max_elem in [stem_elements[s] for s in all_hidden]
+
+    # 용신 = 격국의 중심 오행
+    yong = max_elem
+    heesin = [sheng[day_elem], ke[day_elem]]
+    gishin = [ke[max_elem]] if max_elem in ke else []
+
+    return gek + (" (得令)" if deokryeong else "") + (" (通氣)" if tonggi else "") + (" (得地)" if deokji else ""), yong, heesin, gishin
+
+# 전체 분석
+
+def analyze_four_pillars_with_branches(year_gan, year_branch, month_gan, month_branch, day_gan, day_branch, hour_gan, hour_branch):
+    print("=== 사주 정보 ===")
+    print(f"년주: {year_gan} {year_branch} (지장간: {', '.join(branch_hidden_stems.get(year_branch, []))})")
+    print(f"월주: {month_gan} {month_branch} (지장간: {', '.join(branch_hidden_stems.get(month_branch, []))})")
+    print(f"일주: {day_gan} {day_branch} (지장간: {', '.join(branch_hidden_stems.get(day_branch, []))})")
+    print(f"시주: {hour_gan} {hour_branch} (지장간: {', '.join(branch_hidden_stems.get(hour_branch, []))})")
+
+    print("\n십신 관계:")
+    if year_gan:
+        print(f"- 년간: {get_sipsin(day_gan, year_gan)}")
+    print(f"- 년지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(year_branch, [])])}")
+    if month_gan:
+        print(f"- 월간: {get_sipsin(day_gan, month_gan)}")
+    print(f"- 월지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(month_branch, [])])}")
+    print(f"- 일지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(day_branch, [])])}")
+    if hour_gan:
+        print(f"- 시간: {get_sipsin(day_gan, hour_gan)}")
+    print(f"- 시지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(hour_branch, [])])}")
+
+    gek, yong, heesin_list, gishin_list = guess_gek_guk_yongshin(
+        day_gan, month_branch, month_gan, day_branch, hour_branch
+    )
+    print("\n격국:", gek)
+    print("용신:", yong)
+    print("희신:", ', '.join(heesin_list) if heesin_list else '없음')
+    print("기신:", ', '.join(gishin_list) if gishin_list else '없음')
+
+def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branch, day_gan, day_branch, hour_gan, hour_branch):
+    lines = []
+    lines.append("=== 사주 정보 ===")
+    lines.append(f"년주: {year_gan} {year_branch} (지장간: {', '.join(branch_hidden_stems.get(year_branch, []))})")
+    lines.append(f"월주: {month_gan} {month_branch} (지장간: {', '.join(branch_hidden_stems.get(month_branch, []))})")
+    lines.append(f"일주: {day_gan} {day_branch} (지장간: {', '.join(branch_hidden_stems.get(day_branch, []))})")
+    lines.append(f"시주: {hour_gan} {hour_branch} (지장간: {', '.join(branch_hidden_stems.get(hour_branch, []))})")
+
+    lines.append("\n십신 관계:")
+    if year_gan:
+        lines.append(f"- 년간: {get_sipsin(day_gan, year_gan)}")
+    lines.append(f"- 년지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(year_branch, [])])}")
+    if month_gan:
+        lines.append(f"- 월간: {get_sipsin(day_gan, month_gan)}")
+    lines.append(f"- 월지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(month_branch, [])])}")
+    lines.append(f"- 일지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(day_branch, [])])}")
+    if hour_gan:
+        lines.append(f"- 시간: {get_sipsin(day_gan, hour_gan)}")
+    lines.append(f"- 시지 지장간: {', '.join([f'{h}: {get_sipsin(day_gan, h)}' for h in branch_hidden_stems.get(hour_branch, [])])}")
+
+    gek, yong, heesin_list, gishin_list = guess_gek_guk_yongshin(
+        day_gan, month_branch, month_gan, day_branch, hour_branch
+    )
+    lines.append("\n격국: " + gek)
+    lines.append("용신: " + str(yong))
+    lines.append("희신: " + (', '.join(heesin_list) if heesin_list else '없음'))
+    lines.append("기신: " + (', '.join(gishin_list) if gishin_list else '없음'))
+
+    return "\n".join(lines)
+
+## 끝
+#####################################################################
+####################################################################
+# 일주 해석 조회 함수
 def get_ilju_interpretation(ilju):
     """일주 해석 조회"""
     try:
@@ -348,31 +508,59 @@ def get_ilju_interpretation(ilju):
         print(f"⚠️ 일주 해석 DB 조회 오류: {e}")
         return {"cn": None, "kr": None, "en": None}
 
+# 삼명통회 원문 매칭 함수
 def get_ctext_match(day_pillar, hour_pillar):
-    """삼명통회 원문 매칭"""
-    keyword1 = f"{day_pillar}日{hour_pillar}"
-    keyword2 = f"{day_pillar[0]}日{hour_pillar}"
+    """삼명통회 원문 매칭
+    우선순위: (1) 완전 일치 ‑ 甲子日子 처럼 일·시가 모두 있는 형태
+             (2) 간략 일치 ‑ 甲日子 처럼 일간만 있는 형태
+    완전 일치가 발견되면 그 결과를 그대로 사용하고,
+    없을 때만 간략 일치를 시도한다.
+    """
+    full_kw = f"{day_pillar}日{hour_pillar}"       # 예: 甲子日子
+    stem_kw = f"{day_pillar[0]}日{hour_pillar}"    # 예: 甲日子
 
     try:
-
         db = SessionLocal()
+
+        # 1️⃣ 완전 일치 우선 검색
         rows = (
             db.query(SajuWikiContent)
-            .filter(
-                (SajuWikiContent.content.like(f"%{keyword1}%")) |
-                (SajuWikiContent.content.like(f"%{keyword2}%"))
-            )
+            .filter(SajuWikiContent.content.like(f"%{full_kw}%"))
             .all()
         )
+
+        # 2️⃣ 결과가 없으면 간략 일치로 재검색
+        if not rows:
+            rows = (
+                db.query(SajuWikiContent)
+                .filter(SajuWikiContent.content.like(f"%{stem_kw}%"))
+                .all()
+            )
+
         db.close()
-        if rows:
-            return [{"content": r.content, "kr_literal": r.kr_literal} for r in rows if r.content]
-        else:
+
+        if not rows:
             return None
+
+        # 중복 content 제거 후 필요한 필드만 반환
+        seen = set()
+        result = []
+        for r in rows:
+            if r.content in seen:
+                continue
+            seen.add(r.content)
+            result.append({
+                "content": r.content,
+                "kr_literal": r.kr_literal,
+                "kr_explained": r.kr_explained
+            })
+        return result
+
     except Exception as e:
         print(f"⚠️ ctext.db 연결 오류: {e}")
         return None
 
+# ai 1차 사주 분석이후 포맷을 입히는 함수
 def format_fortune_text(text):
     """운세 텍스트 포맷팅"""
     sentences = re.split(r'(?<=[다요]\.)\s*', text.strip())
@@ -429,6 +617,7 @@ def generate_session_token(email):
     raw = f"{email}-{str(uuid.uuid4())}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
+# ai 사주분석 초기버전
 def generate_saju_analysis(birthdate, birth_hour):
     """GPT를 이용한 사주 분석"""
     year = birthdate.year
@@ -476,6 +665,7 @@ def generate_saju_analysis(birthdate, birth_hour):
     except Exception as e:
         return f"⚠️ 오류 발생: {e}"
 
+# ai 사주 첫페이지
 @router.get("/page1", response_class=HTMLResponse)
 async def saju_page1(request: Request):
     """사주 입력 페이지"""
@@ -494,6 +684,7 @@ async def saju_page1(request: Request):
         "default_day": default_day
     })
 
+# ai 사주 post 처리
 @router.post("/page1")
 async def saju_page1_submit(
     request: Request,
@@ -531,6 +722,7 @@ async def saju_page1_submit(
 
     return RedirectResponse(url="/saju/page2", status_code=302)
 
+# ai 사주 결과 페이지
 @router.get("/page2", response_class=HTMLResponse)
 async def saju_page2(request: Request, db: Session = Depends(get_db)):
     """사주 결과 페이지"""
@@ -566,10 +758,12 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
     ctext_explanation = None
     ctext_kr_literal = None
+    ctext_kr_explained = None
     if ctext_rows:
         ctext_explanation = "\n\n".join([row["content"] for row in ctext_rows])
         ctext_kr_literal = "\n\n".join([row["kr_literal"] for row in ctext_rows if row["kr_literal"]])
-
+        ctext_kr_explained = "\n\n".join([row["kr_explained"] for row in ctext_rows if row["kr_explained"]])
+    
     # 환경변수에서 후원 링크 가져오기
     coffee_link = os.getenv("BUY_ME_A_COFFEE_LINK", "https://www.buymeacoffee.com/yourname")
 
@@ -583,12 +777,14 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
         "saju_analyzer_result": saju_analyzer_result,
         "ctext_explanation": ctext_explanation,
         "ctext_kr_literal": ctext_kr_literal,
+        "ctext_kr_explained": markdown.markdown(ctext_kr_explained.replace('\n', '<br>')),
         "coffee_link": coffee_link,
         "get_twelve_gods_by_day_branch": get_twelve_gods_by_day_branch,
         "birth_hour": birth_hour,
         "birthdate": birthdate
     })
 
+# AI 사주 분석 초기버전 API
 @router.post("/api/saju_ai_analysis")
 async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     """AI 사주 분석 API"""
@@ -616,16 +812,16 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     except:
         raise HTTPException(status_code=400, detail="Invalid birthdate")
 
-    # 데이터 준비
+    # 사주팔자가져오기
     pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
-    saju_info = get_saju_details(pillars)
+    # saju_info = get_saju_details(pillars)
 
     # 원문 해석과 일주 해석 병합
     ilju = pillars["day"]
     ilju_interpretation = get_ilju_interpretation(ilju)
     ilju_kr = ilju_interpretation.get("kr", "")
 
-    # 삼명통회
+    # 삼명통회 해석  검색하여 가져오기
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
     ctext = ""
     if ctext_rows:
@@ -671,3 +867,139 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
         return {"result": reply}
     except Exception as e:
         return {"error": str(e)}
+
+###################################################################################
+# AI 사주 2차 업그레이드 버전 API
+# 프롬프트 파일 읽기
+
+# 환경 변수에서 Ollama URL과 모델명 가져오기
+OLLAMA_URL = os.getenv('OLLAMA_URL', "")  # .env에서 URL 가져오기
+MODEL_NAME = os.getenv('gemma3:27b-it-q8_0',"gemma3:27b-it-q8_0")  # 사용할 모델명
+BATCH_SIZE = os.getenv('BATCH_SIZE', 10)  # 한 번에 처리할 레코드 수
+DELAY_BETWEEN_REQUESTS = os.getenv('DELAY_BETWEEN_REQUESTS', 2)  # 요청 간 딜레이 (초)
+
+def load_prompt():
+    """improved_saju_prompt_v2.md 파일에서 프롬프트 로드"""
+    try:
+        with open('improved_saju_prompt_v2.md', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        print("❌ improved_saju_prompt_v2.md 파일을 찾을 수 없습니다.")
+        return None
+def test_ollama_connection():
+    """ollama 서버 연결 테스트"""
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            model_names = [model['name'] for model in models]
+            if MODEL_NAME in model_names:
+                print(f"✅ ollama 연결 성공 및 {MODEL_NAME} 모델 확인됨")
+                return True
+            else:
+                print(f"❌ {MODEL_NAME} 모델을 찾을 수 없습니다.")
+                print(f"사용 가능한 모델: {model_names}")
+                return False
+        else:
+            print(f"❌ ollama 서버 응답 오류: {response.status_code}")
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"❌ ollama 서버 연결 실패: {e}")
+        return False
+def ai_sajupalja_with_ollama(prompt, content):
+    """ollama를 사용하여 프롬프트에 기반하여 사주팔자 추리"""
+    try:
+        full_prompt = f"{prompt}\n\n다음 정보에 기반하여 사주팔자를 해석하세요:\n{content}"
+        
+        payload = {
+            "model": MODEL_NAME,
+            "prompt": full_prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.3,  # 창의성보다 정확성 우선
+                "num_predict": 3000,  # 최대 토큰 수
+                "top_p": 0.9
+            }
+        }
+        
+        response = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json=payload,
+            timeout=120  # 2분 타임아웃
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('response', '').strip()
+        else:
+            print(f"❌ ollama API 오류: {response.status_code}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"❌ ollama 요청 실패: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ 번역 중 오류: {e}")
+        return None
+    
+@router.post("/api/saju_ai_analysis_2")
+async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)):
+    """AI 사주 분석 API"""
+    request.session.pop("cached_saju_analysis", None)
+
+    # === DB 캐시 확인 ===
+    birthdate_str = request.session.get("birthdate")
+    birth_hour = int(request.session.get("birthhour", 12))
+
+    gender = request.session.get("gender", "unknown")
+    saju_key = f"{birthdate_str}_{birth_hour}_{gender}"
+
+    # DB 캐시 확인
+    cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+    if cached_row:
+        return {"result": cached_row.analysis_result}
+
+    try:
+        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
+        prompt = load_prompt()
+        if not prompt:
+            return
+        # 2. ollama 연결 테스트
+        if not test_ollama_connection():
+            return
+        # 사주팔자가져오기
+        pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
+
+        # Use string-based analysis for result_text
+        result_text = analyze_four_pillars_to_string(
+            pillars['year'][0], pillars['year'][1],
+            pillars['month'][0], pillars['month'][1],
+            pillars['day'][0], pillars['day'][1],
+            pillars['hour'][0], pillars['hour'][1])
+        analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=result_text)
+
+        # DB에 캐시 저장 (handle duplicate key gracefully)
+        try:
+            existing = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+            if existing:
+                # 이미 있으면 내용만 업데이트
+                existing.analysis_result = analysis_result
+            else:
+                db.add(SajuAnalysisCache(
+                    saju_key=saju_key,
+                    analysis_result=analysis_result
+                ))
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            # 중복키 발생 시 업데이트 시도 (경합 상황 대비)
+            db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).update(
+                {"analysis_result": analysis_result}
+            )
+            db.commit()
+        return {"result": markdown.markdown(analysis_result.replace('\n', '<br>'))}
+    except:
+        raise HTTPException(status_code=400, detail="Invalid birthdate")
+
+# AI 사주 2차 업그레이드 버전 API 끝
+#######################################################################

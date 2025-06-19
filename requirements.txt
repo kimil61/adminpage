@@ -16,3 +16,4 @@ pytest==7.4.3
 httpx==0.25.2
 sxtwl
 openai
+markdown==3.8.1

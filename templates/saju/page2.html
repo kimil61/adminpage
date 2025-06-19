@@ -22,7 +22,7 @@
 
     <!-- 사주 기둥 표시 -->
     <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🌿 사주 네 기둥</h2>
+      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🌿 사주팔자</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
         {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
         {% set pillar_labels = {'year': '년주 (年柱)', 'month': '월주 (月柱)', 'day': '일주 (日柱)', 'hour': '시주 (時柱)'} %}
@@ -142,23 +142,30 @@
     {% endif %}
 
     <!-- 삼명통회 원문 해석 -->
-    {% if ctext_explanation or ctext_kr_literal %}
+    {% if ctext_explanation or ctext_kr_literal or ctext_kr_explained %}
     <div class="mb-12">
       <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📜 삼명통회 원문 해석</h2>
       
       {% if ctext_explanation %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
+      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6 hidden">
         <h4 class="text-purple-800 font-semibold mb-3">원문</h4>
         {{ ctext_explanation|safe }}
       </div>
       {% endif %}
 
       {% if ctext_kr_literal %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
+      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6 hidden">
         <h4 class="text-purple-800 font-semibold mb-3">한국어 해석</h4>
         {{ ctext_kr_literal|safe }}
       </div>
       {% endif %}
+
+      {% if ctext_kr_explained %}
+      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
+        <h4 class="text-purple-800 font-semibold mb-3">자세한 해석</h4>
+        {{ ctext_kr_explained|safe }}
+      </div>
+      {% endif %} 
     </div>
     {% endif %}
 
@@ -300,7 +307,7 @@ async function loadAIAnalysis() {
   spinner.style.display = 'block';
   
   try {
-    const response = await fetch('/saju/api/saju_ai_analysis', {
+    const response = await fetch('/saju/api/saju_ai_analysis_2', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

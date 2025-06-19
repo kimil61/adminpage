@@ -146,3 +146,14 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+
+
+# 프롬프트
+improved_saju_prompt_v2.md
+saju_test_module.py
+saju_couple_test_module.py
+update_new_result.py
+daewoon_report_generator.py
+sajupalja_prompt_v13_ok.md
+*.zip
