@@ -51,17 +51,19 @@ async def create_order(
                             detail="이미 결제한 리포트입니다. 마이페이지에서 확인하세요.")
 
     # 1) pending Order 생성
+    # 주문 객체를 세션에 추가하고 flush()를 호출하여 ID를 미리 받아온다.
+    # kakao_tid 는 NOT NULL 필드이므로, 카카오페이 ready API 에서 받은 tid 를
+    # 저장한 뒤 한 번에 커밋한다.
     order = Order(
         user_id=user.id,
-        product_name="AI 사주 심층 리포트",
+        product_id=1,  # 기본 상품 ID (예: AI 사주 심층 리포트)
         amount=1900,
         saju_key=saju_key,
         status="pending",
         created_at=datetime.utcnow()
     )
     db.add(order)
-    db.commit()
-    db.refresh(order)
+    db.flush()  # order.id 확보
 
     # 2) Kakao Ready 호출
     ready_res = kakao_ready(
