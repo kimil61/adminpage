@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -12,6 +12,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    points = Column(Integer, default=0)  # 포인트 시스템 추가
     created_at = Column(DateTime, default=datetime.utcnow)
     
     posts = relationship("Post", back_populates="author")
@@ -164,6 +165,23 @@ class SajuAnalysisCache(Base):
 
     id = Column(Integer, primary_key=True)
     saju_key = Column(String(100), unique=True, index=True)  # 예: "1984-06-01_13_male"
-    analysis_result = Column(Text)  # JSON 형태 가능
+    analysis_preview = Column(Text, nullable=True)
+    analysis_full = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    orders = relationship("Order", back_populates="analysis_cache")
+
+class Order(Base):
+    """주문 테이블"""
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("blog_users.id"))
+    product_name = Column(String(100), nullable=False)
+    amount = Column(Integer, nullable=False)  # 금액
+    kakao_tid = Column(String(100), unique=True, nullable=False)  # 카카오 결제 ID
+    status = Column(Enum("pending", "paid", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
+    analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)  # 사주 분석 캐시 ID
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
+    user = relationship("User")

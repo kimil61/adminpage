@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Post, Category, SajuUser, SajuAnalysisCache
+from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation
 from app.template import templates
 from datetime import datetime, timedelta
 import uuid
@@ -12,9 +12,8 @@ import hashlib
 import re
 import sxtwl
 import os
-import sqlite3
 import secrets
-import markdown
+from markdown import markdown
 import requests
 # Use SQLAlchemy ORM to query saju_wiki_contents
 from app.database import SessionLocal
@@ -24,12 +23,17 @@ from dotenv import load_dotenv
 load_dotenv()
 from openai import OpenAI
 
-# For duplicate key handling in saju_analysis_cache
-from sqlalchemy.exc import IntegrityError
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/saju")
+
+def safe_markdown(value):
+    if not value:
+        return ""
+    return markdown(value.replace('\n', '<br>'))
+
+
 ####################################################################
 # 기존 사주팔자 및 십성 계산 로직을 포함한 모듈
 # 천간/지지 계산 (중국 한자)
@@ -489,18 +493,20 @@ def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branc
 ####################################################################
 # 일주 해석 조회 함수
 def get_ilju_interpretation(ilju):
-    """일주 해석 조회"""
+    """일주 해석 조회 (MySQL via SQLAlchemy)"""
     try:
-        conn = sqlite3.connect("fortune.db")
-        c = conn.cursor()
-        c.execute("SELECT cn, kr, en FROM saju_interpretations WHERE ilju = ?", (ilju,))
-        row = c.fetchone()
-        conn.close()
-        
+        db = SessionLocal()
+        row = (
+            db.query(SajuInterpretation)
+            .filter(SajuInterpretation.ilju == ilju)
+            .first()
+        )
+        db.close()
+
         if row:
-            cn = row[0].replace('\n', '<br>') if row[0] else None
-            kr = row[1].replace('\n', '<br>') if row[1] else None
-            en = row[2].replace('\n', '<br>') if row[2] else None
+            cn = row.cn.replace('\n', '<br>') if row.cn else None
+            kr = row.kr.replace('\n', '<br>') if row.kr else None
+            en = row.en.replace('\n', '<br>') if row.en else None
             return {"cn": cn, "kr": kr, "en": en}
         else:
             return {"cn": None, "kr": None, "en": None}
@@ -777,7 +783,7 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
         "saju_analyzer_result": saju_analyzer_result,
         "ctext_explanation": ctext_explanation,
         "ctext_kr_literal": ctext_kr_literal,
-        "ctext_kr_explained": markdown.markdown(ctext_kr_explained.replace('\n', '<br>')),
+        "ctext_kr_explained": safe_markdown(ctext_kr_explained),
         "coffee_link": coffee_link,
         "get_twelve_gods_by_day_branch": get_twelve_gods_by_day_branch,
         "birth_hour": birth_hour,
@@ -804,8 +810,8 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
 
     # DB 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
-    if cached_row:
-        return {"result": cached_row.analysis_result}
+    if cached_row and cached_row.analysis_preview:
+        return {"result": safe_markdown(cached_row.analysis_preview)}
 
     try:
         birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
@@ -857,14 +863,20 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
             max_tokens=600
         )
         reply = format_fortune_text(response.choices[0].message.content)
-        # DB에 캐시 저장
-        new_cache = SajuAnalysisCache(
-            saju_key=saju_key,
-            analysis_result=reply
-        )
-        db.add(new_cache)
-        db.commit()
-        return {"result": reply}
+        # DB에 preview 저장 (analysis_preview 컬럼)
+        try:
+            row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+            if row:
+                row.analysis_preview = reply
+            else:
+                db.add(SajuAnalysisCache(
+                    saju_key=saju_key,
+                    analysis_preview=reply
+                ))
+            db.commit()
+        except Exception:
+            db.rollback()
+        return {"result": safe_markdown(reply)}
     except Exception as e:
         return {"error": str(e)}
 
@@ -956,8 +968,8 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
 
     # DB 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
-    if cached_row:
-        return {"result": cached_row.analysis_result}
+    if cached_row and cached_row.analysis_full:
+        return {"result": safe_markdown(cached_row.analysis_full)}
 
     try:
         birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
@@ -978,26 +990,17 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
             pillars['hour'][0], pillars['hour'][1])
         analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=result_text)
 
-        # DB에 캐시 저장 (handle duplicate key gracefully)
-        try:
-            existing = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
-            if existing:
-                # 이미 있으면 내용만 업데이트
-                existing.analysis_result = analysis_result
-            else:
-                db.add(SajuAnalysisCache(
-                    saju_key=saju_key,
-                    analysis_result=analysis_result
-                ))
-            db.commit()
-        except IntegrityError:
-            db.rollback()
-            # 중복키 발생 시 업데이트 시도 (경합 상황 대비)
-            db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).update(
-                {"analysis_result": analysis_result}
-            )
-            db.commit()
-        return {"result": markdown.markdown(analysis_result.replace('\n', '<br>'))}
+        # DB에 캐시 저장 (analysis_full 컬럼)
+        existing = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+        if existing:
+            existing.analysis_full = analysis_result
+        else:
+            db.add(SajuAnalysisCache(
+                saju_key=saju_key,
+                analysis_full=analysis_result
+            ))
+        db.commit()
+        return {"result": safe_markdown(analysis_result)}
     except:
         raise HTTPException(status_code=400, detail="Invalid birthdate")
 

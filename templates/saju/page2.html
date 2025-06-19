@@ -3,7 +3,7 @@
 {% block title %}{{ name }}님의 사주팔자 결과 🔮{% endblock %}
 
 {% block extra_head %}
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -42,6 +42,21 @@
           </div>
         </div>
         {% endfor %}
+      </div>
+    </div>
+    <!-- 결제 정보 입력 모달 -->
+    <div id="infoModal" class="fixed inset-0 backdrop-blur-md flex items-center justify-center hidden z-50">
+      <div class="bg-white p-8 rounded-xl w-full max-w-md shadow-xl relative">
+        <button onclick="document.getElementById('infoModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        <h3 class="font-bold text-xl text-purple-800 mb-6 text-center">결제 정보를 입력하세요</h3>
+
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="emailInput">이메일</label>
+        <input id="emailInput" type="email" class="w-full mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" value="{{ user.email if user is defined and user.email is defined else '' }}" placeholder="example@email.com">
+
+        <label class="block text-sm font-medium text-gray-700 mb-1" for="phoneInput">전화번호</label>
+        <input id="phoneInput" type="tel" class="w-full mb-6 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" value="{{ user.phone if user is defined and user.phone is defined else '' }}" placeholder="010-1234-5678">
+
+        <button onclick="saveUserContact()" class="w-full py-3 bg-purple-700 text-white rounded-lg font-semibold hover:bg-purple-600 transition">저장 후 결제하기</button>
       </div>
     </div>
 
@@ -109,35 +124,24 @@
     <div class="mb-12">
       <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📖 일주 해석: {{ ilju }}</h2>
       
-      <div class="flex border-b-2 border-purple-300 mb-4">
-        {% if ilju_interpretation.kr %}
-        <button class="px-6 py-3 text-base cursor-pointer border-b-4 border-purple-700 font-semibold text-purple-800 tab-button active" onclick="showTab(this,'korean')">한국어</button>
-        {% endif %}
-        {% if ilju_interpretation.cn %}
-        <button class="px-6 py-3 text-base cursor-pointer border-b-4 border-transparent hover:border-purple-500 transition tab-button" onclick="showTab(this,'chinese')">한문 원문</button>
-        {% endif %}
-        {% if ilju_interpretation.en %}
-        <button class="px-6 py-3 text-base cursor-pointer border-b-4 border-transparent hover:border-purple-500 transition tab-button" onclick="showTab(this,'english')">English</button>
-        {% endif %}
+      {% if ilju_interpretation.cn %}
+      <div class="mb-4">
+        <button onclick="toggleCnText()" class="text-sm text-purple-700 underline hover:text-purple-900 transition">
+          📜 고전 원문 보기 ▾
+        </button>
+        <div id="cnText" class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
+          {{ ilju_interpretation.cn|safe }}
+        </div>
       </div>
+      {% endif %}
 
       {% if ilju_interpretation.kr %}
-      <div id="korean" class="block bg-gray-50 p-6 rounded-lg leading-relaxed tab-content active">
+      <div class="bg-gray-50 p-6 rounded-lg leading-relaxed mb-4">
         {{ ilju_interpretation.kr|safe }}
       </div>
       {% endif %}
 
-      {% if ilju_interpretation.cn %}
-      <div id="chinese" class="hidden bg-gray-50 p-6 rounded-lg leading-relaxed tab-content">
-        {{ ilju_interpretation.cn|safe }}
-      </div>
-      {% endif %}
-
-      {% if ilju_interpretation.en %}
-      <div id="english" class="hidden bg-gray-50 p-6 rounded-lg leading-relaxed tab-content">
-        {{ ilju_interpretation.en|safe }}
-      </div>
-      {% endif %}
+      
     </div>
     {% endif %}
 
@@ -147,9 +151,13 @@
       <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📜 삼명통회 원문 해석</h2>
       
       {% if ctext_explanation %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6 hidden">
-        <h4 class="text-purple-800 font-semibold mb-3">원문</h4>
-        {{ ctext_explanation|safe }}
+      <div class="mb-4">
+        <button onclick="toggleSamhyeongOriginal()" class="text-sm text-purple-700 underline hover:text-purple-900 transition">
+          📜 고전 원문 보기 ▾
+        </button>
+        <div id="samhyeongOriginalText" class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
+          {{ ctext_explanation|safe }}
+        </div>
       </div>
       {% endif %}
 
@@ -184,8 +192,27 @@
       <div id="aiAnalysisResult" style="display: none;" class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6"></div>
     </div>
 
+        <!-- 프리미엄 PDF 구매 CTA -->
+    <div class="text-center mt-10 p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl" id="premiumSection" style="display: none;">
+      <h3 class="text-amber-800 font-extrabold text-2xl mb-3">
+        이 무료 해석, 마음에 드셨나요? 🔮
+      </h3>
+      <p class="text-gray-700 mb-6 leading-relaxed">
+        단 <span class="font-semibold text-purple-700">₩1,900</span>으로<br>
+        <strong class="text-purple-800">고서 원문 + AI 심층 리포트 (PDF)</strong>를 받아보세요.<br>
+        당신만을 위한 <em>격국·용신·대운 15쪽 완전판</em>이 이메일로 즉시 전송됩니다.
+      </p>
+      <button
+        class="w-full py-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200"
+        onclick="startPremiumPurchase()">
+        🚀 ₩1,900 결제하고 심화 PDF 받기
+      </button>
+      <p class="text-xs text-gray-500 mt-3">
+        * 결제 완료 후&nbsp;~2분 내 이메일‧카카오톡 링크 발송
+      </p>
+    </div>
     <!-- 후원 섹션 -->
-    <div class="text-center mt-10 p-6 bg-gradient-to-br from-green-100 to-green-200 rounded-xl" id="donationSection" style="display: none;">
+    <!-- <div class="text-center mt-10 p-6 bg-gradient-to-br from-green-100 to-green-200 rounded-xl" id="donationSection" style="display: none;">
       <h3 class="text-green-800 font-bold text-xl mb-4">이 해석이 도움이 되셨나요?</h3>
       <p class="text-gray-700 mb-5">
         더 나은 서비스를 위해 따뜻한 응원 부탁드립니다 ☕
@@ -193,7 +220,7 @@
       <button class="bg-gradient-to-r from-teal-500 to-teal-700 text-white py-3 px-8 rounded-full text-base font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200" onclick="showDonationModal()">
         ☕ 커피 한 잔으로 응원하기
       </button>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -233,6 +260,18 @@
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+.cn-text {
+  font-family: 'Zhi Mang Xing', cursive;
+  font-size: 22px;
+  line-height: 1.9;
+  letter-spacing: 0.03em;
+  background-color: #fdf6e3;
+  border-left: 4px solid #b39f73;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+</style>
 <script>
 let aiAnalysisCached = null;
 
@@ -293,12 +332,13 @@ async function loadAIAnalysis() {
   const btn = document.getElementById('aiAnalysisBtn');
   const spinner = document.getElementById('aiLoadingSpinner');
   const result = document.getElementById('aiAnalysisResult');
-  const donationSection = document.getElementById('donationSection');
+  //const donationSection = document.getElementById('donationSection');
+  const premiumSection = document.getElementById('premiumSection');
   
   if (aiAnalysisCached) {
     result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + aiAnalysisCached;
     result.style.display = 'block';
-    donationSection.style.display = 'block';
+    premiumSection.style.display = 'block';
     return;
   }
   
@@ -307,7 +347,7 @@ async function loadAIAnalysis() {
   spinner.style.display = 'block';
   
   try {
-    const response = await fetch('/saju/api/saju_ai_analysis_2', {
+    const response = await fetch('/saju/api/saju_ai_analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -321,7 +361,7 @@ async function loadAIAnalysis() {
       aiAnalysisCached = data.result;
       result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + data.result;
       result.style.display = 'block';
-      donationSection.style.display = 'block';
+      premiumSection.style.display = 'block';
     } else if (data.error) {
       result.innerHTML = '<p style="color: red;">AI 분석 중 오류가 발생했습니다: ' + data.error + '</p>';
       result.style.display = 'block';
@@ -338,6 +378,19 @@ async function loadAIAnalysis() {
     btn.disabled = false;
     btn.textContent = '🤖 AI가 분석한 종합 해석 보기';
   }
+}
+
+// 구매버튼 클릭 시
+async function startPremiumPurchase() {
+  // // ① 이메일 존재 검사
+  // if (!userEmail) { openEmailModal(); return; }
+
+  // ② 서버에 주문 생성 요청
+  const res = await fetch("/api/order/create", {method:"POST", body:JSON.stringify({...sajuInfo})});
+  const {tid, next_redirect_pc_url} = await res.json();
+
+
+  location.href = next_redirect_pc_url;
 }
 
 // 후원 모달 관련
@@ -364,5 +417,23 @@ document.getElementById('donationModal').addEventListener('click', function(e) {
     closeDonationModal();
   }
 });
+
+function toggleCnText() {
+  const cn = document.getElementById('cnText');
+  if (cn.classList.contains('hidden')) {
+    cn.classList.remove('hidden');
+  } else {
+    cn.classList.add('hidden');
+  }
+}
+
+function toggleSamhyeongOriginal() {
+  const el = document.getElementById('samhyeongOriginalText');
+  if (el.classList.contains('hidden')) {
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
+}
 </script>
 {% endblock %}
