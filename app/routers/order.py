@@ -8,7 +8,7 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Body
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -128,3 +128,33 @@ async def mypage_orders(
         "request": request,
         "orders": orders
     })
+
+################################################################################
+# 4) 결제용 연락처 저장
+################################################################################
+@router.post("/save-contact")
+async def save_contact(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
+):
+    email = payload.get("email")
+    phone = payload.get("phone")
+
+    order = (
+        db.query(Order)
+        .filter(Order.user_id == user.id, Order.status == "pending")
+        .order_by(Order.created_at.desc())
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="진행 중인 주문이 없습니다.")
+
+    if email:
+        order.pdf_send_email = email
+    if phone:
+        order.pdf_send_phone = phone
+
+    db.commit()
+
+    return JSONResponse({"ok": True})
