@@ -170,13 +170,24 @@ class SajuAnalysisCache(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     orders = relationship("Order", back_populates="analysis_cache")
 
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)  # 상품명 (예: '기초 사주 분석')
+    description = Column(Text)  # 설명
+    price = Column(Integer, nullable=False)  # 단가 (원화)
+    code = Column(String(50), unique=True, nullable=False)  # 예: 'basic_saju', 'premium_love'
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class Order(Base):
     """주문 테이블"""
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("blog_users.id"))
-    product_name = Column(String(100), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"))  # 여기에 연결
     amount = Column(Integer, nullable=False)  # 금액
     kakao_tid = Column(String(100), unique=True, nullable=False)  # 카카오 결제 ID
     status = Column(Enum("pending", "paid", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
@@ -185,3 +196,5 @@ class Order(Base):
 
     analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
     user = relationship("User")
+    product = relationship("Product")
+    
