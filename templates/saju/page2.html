@@ -386,7 +386,7 @@ async function startPremiumPurchase() {
   // if (!userEmail) { openEmailModal(); return; }
 
   // ② 서버에 주문 생성 요청
-  const res = await fetch("/api/order/create", {method:"POST", body:JSON.stringify({...sajuInfo})});
+  const res = await fetch("/order/create", {method:"POST", body:JSON.stringify({...sajuInfo})});
   const {tid, next_redirect_pc_url} = await res.json();
 
 
