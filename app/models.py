@@ -193,7 +193,7 @@ class Order(Base):
     saju_key = Column(String(100), nullable=False)  # 사주 캐시 키
     pdf_send_email = Column(String(100), nullable=True)  # PDF 리포트 발송 이메일
     pdf_send_phone = Column(String(50), nullable=True)  # PDF 발송용 전화번호
-    status = Column(Enum("pending", "paid", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
+    status = Column(Enum("pending", "paid","progress","success", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
     analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)  # 사주 분석 캐시 ID
     report_html = Column(String(255), nullable=True)  # 생성된 HTML 리포트 경로
     report_pdf = Column(String(255), nullable=True)   # 생성된 PDF 리포트 경로
@@ -202,4 +202,3 @@ class Order(Base):
     analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
     user = relationship("User")
     product = relationship("Product")
-    

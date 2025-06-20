@@ -118,14 +118,14 @@ def generate_full_report(self, order_id: int, saju_key: str):
     
     try:
         # 진행 상황 업데이트
-        self.update_state(state='PROGRESS', meta={'current': 1, 'total': 6, 'status': '주문 정보 확인 중...'})
+        self.update_state(state='progress', meta={'current': 1, 'total': 6, 'status': '주문 정보 확인 중...'})
         
         order = db.query(Order).filter(Order.id == order_id).first()
         if not order:
             raise Exception(f'Order {order_id} not found')
 
         # 프롬프트 로드
-        self.update_state(state='PROGRESS', meta={'current': 2, 'total': 6, 'status': 'AI 모델 준비 중...'})
+        self.update_state(state='progress', meta={'current': 2, 'total': 6, 'status': 'AI 모델 준비 중...'})
         
         prompt = load_prompt()
         if not prompt:
@@ -135,7 +135,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
             raise Exception('Ollama connection failed')
 
         # 사주 계산
-        self.update_state(state='PROGRESS', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
+        self.update_state(state='progress', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
         
         birthdate_str, birth_hour, gender = saju_key.split('_')
         birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
@@ -150,7 +150,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         )
 
         # AI 분석 실행
-        self.update_state(state='PROGRESS', meta={'current': 4, 'total': 6, 'status': 'AI 심층 분석 중...'})
+        self.update_state(state='progress', meta={'current': 4, 'total': 6, 'status': 'AI 심층 분석 중...'})
         
         analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=result_text)
         if not analysis_result:
@@ -167,7 +167,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         order.analysis_cache_id = cache.id
 
         # HTML & PDF 생성
-        self.update_state(state='PROGRESS', meta={'current': 5, 'total': 6, 'status': '리포트 파일 생성 중...'})
+        self.update_state(state='progress', meta={'current': 5, 'total': 6, 'status': '리포트 파일 생성 중...'})
         
         # 리포트 템플릿 생성 (더 예쁘게)
         html_content = f"""
@@ -217,7 +217,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         db.commit()
 
         # 이메일 발송
-        self.update_state(state='PROGRESS', meta={'current': 6, 'total': 6, 'status': '이메일 발송 중...'})
+        self.update_state(state='progress', meta={'current': 6, 'total': 6, 'status': '이메일 발송 중...'})
         
         if order.pdf_send_email:
             email_subject = '🔮 사주팔자 심층 분석 리포트가 준비되었습니다'
@@ -265,5 +265,5 @@ def test_task(self, name: str):
     import time
     for i in range(5):
         time.sleep(1)
-        self.update_state(state='PROGRESS', meta={'current': i+1, 'total': 5, 'status': f'Processing {name}...'})
+        self.update_state(state='progress', meta={'current': i+1, 'total': 5, 'status': f'Processing {name}...'})
     return {'status': 'Task completed!', 'name': name}
