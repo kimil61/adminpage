@@ -202,9 +202,14 @@
         <strong class="text-purple-800">고서 원문 + AI 심층 리포트 (PDF)</strong>를 받아보세요.<br>
         당신만을 위한 <em>격국·용신·대운 15쪽 완전판</em>이 이메일로 즉시 전송됩니다.
       </p>
-      <button
+      <!-- <button
         class="w-full py-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200"
         onclick="startPremiumPurchase()">
+        🚀 ₩1,900 결제하고 심화 PDF 받기
+      </button> -->
+      <button 
+        id="premiumPurchaseBtn"
+        class="w-full py-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200">
         🚀 ₩1,900 결제하고 심화 PDF 받기
       </button>
       <p class="text-xs text-gray-500 mt-3">
@@ -258,6 +263,8 @@
 </div>
 {% endblock %}
 
+<!-- templates/saju/page2.html의 JavaScript 부분 수정 -->
+
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
@@ -275,6 +282,16 @@
 <script>
 let aiAnalysisCached = null;
 
+// 사주 정보를 안전하게 설정 (JSON 필터 사용)
+const sajuInfo = {
+  birthdate: {{ request.session.get('birthdate', '')|tojson }},
+  birthhour: {{ request.session.get('birthhour', 12)|tojson }},
+  gender: {{ request.session.get('gender', '')|tojson }},
+  name: {{ name|tojson }}
+};
+
+console.log('사주 정보:', sajuInfo); // 디버깅용
+
 // 페이지 로딩 애니메이션
 window.addEventListener('load', function() {
   setTimeout(() => {
@@ -288,57 +305,28 @@ window.addEventListener('load', function() {
       origin: { y: 0.6 }
     });
     
-    // 환영 배너 표시
+    // 환영 배너 표시 (있는 경우)
     const banner = document.getElementById('welcomeBanner');
-    banner.style.display = 'block';
-    
-    setTimeout(() => {
-      banner.style.display = 'none';
-    }, 4000);
-    
+    if (banner) {
+      banner.style.display = 'block';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 4000);
+    }
   }, 3000);
 });
-
-// 탭 전환 함수
-function showTab(button, tabId) {
-  /* 모든 탭 버튼 비활성화 */
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    btn.classList.remove('active', 'border-purple-700');
-    btn.classList.add('border-transparent');
-  });
-
-  /* 모든 탭 콘텐츠 숨김 */
-  document.querySelectorAll('.tab-content').forEach(content => {
-    content.classList.remove('block', 'active');
-    content.classList.add('hidden');
-  });
-
-  /* 클릭된 탭 버튼 활성화 */
-  if (button) {
-    button.classList.add('active', 'border-purple-700');
-    button.classList.remove('border-transparent');
-  }
-
-  /* 선택된 탭 콘텐츠 표시 */
-  const target = document.getElementById(tabId);
-  if (target) {
-    target.classList.remove('hidden');
-    target.classList.add('block', 'active');
-  }
-}
 
 // AI 분석 로드
 async function loadAIAnalysis() {
   const btn = document.getElementById('aiAnalysisBtn');
   const spinner = document.getElementById('aiLoadingSpinner');
   const result = document.getElementById('aiAnalysisResult');
-  //const donationSection = document.getElementById('donationSection');
   const premiumSection = document.getElementById('premiumSection');
   
   if (aiAnalysisCached) {
     result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + aiAnalysisCached;
     result.style.display = 'block';
-    premiumSection.style.display = 'block';
+    if (premiumSection) premiumSection.style.display = 'block';
     return;
   }
   
@@ -361,7 +349,7 @@ async function loadAIAnalysis() {
       aiAnalysisCached = data.result;
       result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + data.result;
       result.style.display = 'block';
-      premiumSection.style.display = 'block';
+      if (premiumSection) premiumSection.style.display = 'block';
     } else if (data.error) {
       result.innerHTML = '<p style="color: red;">AI 분석 중 오류가 발생했습니다: ' + data.error + '</p>';
       result.style.display = 'block';
@@ -380,19 +368,98 @@ async function loadAIAnalysis() {
   }
 }
 
-// 구매버튼 클릭 시
-async function startPremiumPurchase() {
-  // // ① 이메일 존재 검사
-  // if (!userEmail) { openEmailModal(); return; }
+// 구매버튼 클릭 시 (이벤트 처리 수정)
+async function startPremiumPurchase(event) {
+  // 사주 정보 검증
+  if (!sajuInfo.birthdate || !sajuInfo.gender) {
+    alert('사주 정보가 없습니다. 다시 입력해주세요.');
+    window.location.href = '/saju/page1';
+    return;
+  }
 
-  // ② 서버에 주문 생성 요청
-  const res = await fetch("/order/create", {method:"POST", body:JSON.stringify({...sajuInfo})});
-  const {tid, next_redirect_pc_url} = await res.json();
+  // 이벤트가 없으면 버튼을 직접 찾기
+  let button = null;
+  if (event && event.target) {
+    button = event.target;
+  } else {
+    button = document.querySelector('button[onclick*="startPremiumPurchase"]');
+  }
 
+  try {
+    // 로딩 표시
+    const originalText = button ? button.textContent : '';
+    if (button) {
+      button.disabled = true;
+      button.textContent = '주문 생성 중...';
+    }
 
-  location.href = next_redirect_pc_url;
+    // 사주 키 생성
+    const sajuKey = `${sajuInfo.birthdate}_${sajuInfo.birthhour}_${sajuInfo.gender}`;
+    console.log('사주 키:', sajuKey); // 디버깅용
+
+    // 주문 생성 요청
+    const response = await fetch("/order/create", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        saju_key: sajuKey
+      })
+    });
+
+    // 응답 확인
+    const contentType = response.headers.get('content-type');
+    console.log('응답 타입:', contentType);
+    console.log('응답 상태:', response.status);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('주문 생성 성공:', data);
+      
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        alert('주문이 생성되었습니다: ' + data.message);
+      }
+    } else {
+      // 에러 응답 처리
+      let errorMessage = '알 수 없는 오류';
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } else {
+          const errorText = await response.text();
+          console.error('HTML 에러 응답:', errorText.substring(0, 200));
+          errorMessage = `서버 오류 (${response.status})`;
+        }
+      } catch (parseError) {
+        console.error('에러 파싱 실패:', parseError);
+      }
+      
+      alert('주문 생성 실패: ' + errorMessage);
+      
+      // 버튼 복원
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+  } catch (error) {
+    console.error('결제 오류:', error);
+    alert('결제 처리 중 오류가 발생했습니다: ' + error.message);
+    
+    // 버튼 복원
+    if (button) {
+      button.disabled = false;
+      button.textContent = '🚀 ₩1,900 결제하고 심화 PDF 받기';
+    }
+  }
 }
 
+// 연락처 저장 함수 (필요시)
 async function saveUserContact() {
   const email = document.getElementById('emailInput').value;
   const phone = document.getElementById('phoneInput').value;
@@ -401,57 +468,83 @@ async function saveUserContact() {
     await fetch('/order/save-contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, phone })
     });
     document.getElementById('infoModal').classList.add('hidden');
     startPremiumPurchase();
   } catch (err) {
-    console.error('contact save error', err);
+    console.error('연락처 저장 오류', err);
     alert('연락처 저장에 실패했습니다.');
   }
 }
 
 // 후원 모달 관련
 function showDonationModal() {
-  document.getElementById('donationModal').style.display = 'block';
-  
-  // Google Analytics 이벤트 (선택사항)
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'click_donate', {
-      event_category: 'engagement',
-      event_label: '후원버튼',
-      value: 1
-    });
+  const modal = document.getElementById('donationModal');
+  if (modal) {
+    modal.style.display = 'block';
+    
+    // Google Analytics 이벤트 (선택사항)
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'click_donate', {
+        event_category: 'engagement',
+        event_label: '후원버튼',
+        value: 1
+      });
+    }
   }
 }
 
 function closeDonationModal() {
-  document.getElementById('donationModal').style.display = 'none';
+  const modal = document.getElementById('donationModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 // 모달 외부 클릭 시 닫기
-document.getElementById('donationModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeDonationModal();
-  }
-});
+const donationModal = document.getElementById('donationModal');
+if (donationModal) {
+  donationModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeDonationModal();
+    }
+  });
+}
 
 function toggleCnText() {
   const cn = document.getElementById('cnText');
-  if (cn.classList.contains('hidden')) {
-    cn.classList.remove('hidden');
-  } else {
-    cn.classList.add('hidden');
+  if (cn) {
+    if (cn.classList.contains('hidden')) {
+      cn.classList.remove('hidden');
+    } else {
+      cn.classList.add('hidden');
+    }
   }
 }
 
 function toggleSamhyeongOriginal() {
   const el = document.getElementById('samhyeongOriginalText');
-  if (el.classList.contains('hidden')) {
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
+  if (el) {
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
   }
 }
 </script>
+
+<!-- JavaScript에서 이벤트 리스너 추가 -->
+<script>
+// 기존 JavaScript 끝에 추가
+document.addEventListener('DOMContentLoaded', function() {
+  const premiumBtn = document.getElementById('premiumPurchaseBtn');
+  if (premiumBtn) {
+    premiumBtn.addEventListener('click', startPremiumPurchase);
+  }
+});
+</script>
 {% endblock %}
+

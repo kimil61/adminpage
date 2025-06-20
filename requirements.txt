@@ -21,3 +21,8 @@ celery==5.3.6
 pdfkit
 fpdf2==2.7.6
 weasyprint==65.1
+redis==4.6.0
+wkhtmltopdf==0.2
+celery[redis]==5.3.6
+pdfkit
+fpdf

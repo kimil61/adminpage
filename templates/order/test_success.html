@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}주문 생성 완료 - My Website{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center py-20">
+    <h1 class="text-3xl font-bold text-green-800 mb-4">✅ 주문이 생성되었습니다!</h1>
+    
+    <div class="bg-green-50 p-6 rounded-xl mb-8">
+        <h2 class="text-xl font-semibold mb-4">주문 정보</h2>
+        <div class="text-left space-y-2">
+            <p><strong>주문 번호:</strong> {{ order.id }}</p>
+            <p><strong>상품:</strong> AI 심층 사주 리포트</p>
+            <p><strong>금액:</strong> {{ order.amount }}원</p>
+            <p><strong>사주 키:</strong> {{ order.saju_key }}</p>
+            <p><strong>상태:</strong> {{ order.status }}</p>
+            <p><strong>주문 시간:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        </div>
+    </div>
+    
+    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+        <p class="text-blue-800">
+            🚧 <strong>개발 중:</strong> 카카오페이 연동 전 테스트 페이지입니다.<br>
+            실제 결제는 아직 진행되지 않습니다.
+        </p>
+    </div>
+    
+    <div class="space-y-4">
+        <a href="/order/mypage" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+            구매 내역 확인
+        </a>
+        <br>
+        <a href="/saju/page1" class="inline-block text-blue-600 hover:underline">
+            새로운 사주 보기
+        </a>
+    </div>
+</div>
+{% endblock %}
