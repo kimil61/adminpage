@@ -1,7 +1,7 @@
 """주문 / 결제 Router - 간소화 버전"""
 
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Request, Body, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, Body, Query, Header
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -24,12 +24,18 @@ router = APIRouter(prefix="/order", tags=["Order"])
 async def create_order(
     request: Request,
     payload: dict = Body(...),
+    csrf_token: str = Header(None, alias="X-CSRF-Token"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
     """주문 생성 - 일단 간단하게 성공 응답만"""
     try:
         logger.info(f"주문 생성 요청: user_id={user.id}, payload={payload}")
+        
+        # CSRF 검증
+        session_token = request.session.get("csrf_token") if hasattr(request, "session") else None
+        if not csrf_token or csrf_token != session_token:
+            raise HTTPException(status_code=403, detail="CSRF token invalid or missing.")
         
         saju_key = payload.get("saju_key")
         if not saju_key:

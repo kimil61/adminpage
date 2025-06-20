@@ -219,7 +219,13 @@ def get_twelve_gods_by_day_branch(day_branch):
     for i, label in enumerate(twelve_gods_labels):
         result[label] = order[i]
     return result
-
+    
+# Helper to get saju_key from session
+def get_saju_key_from_session(session) -> str:
+    birthdate = session.get("birthdate", "")
+    birthhour = int(session.get("birthhour", 12))
+    gender = session.get("gender", "unknown")
+    return f"{birthdate}_{birthhour}_{gender}"
 # 역방향 십이신살 매핑
 reverse_twelve_gods_table = {
     '寅午戌': {
@@ -749,7 +755,14 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     
     # 상세 사주 정보 계산
     saju_info = get_saju_details(pillars)
-    
+    saju_key = get_saju_key_from_session(request.session)
+
+    # ----- CSRF Token -----
+    csrf_token = request.session.get("csrf_token")
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(16)
+        request.session["csrf_token"] = csrf_token
+
     # 일주 해석
     ilju = pillars["day"]
     ilju_interpretation = get_ilju_interpretation(ilju)
@@ -778,6 +791,8 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
         "name": name,
         "pillars": pillars,
         "saju_info": saju_info,
+        "saju_key": saju_key,
+        "csrf_token": csrf_token,
         "ilju": ilju,
         "ilju_interpretation": ilju_interpretation,
         "saju_analyzer_result": saju_analyzer_result,
@@ -805,8 +820,8 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     birthdate_str = request.session.get("birthdate")
     birth_hour = int(request.session.get("birthhour", 12))
 
-    gender = request.session.get("gender", "unknown")
-    saju_key = f"{birthdate_str}_{birth_hour}_{gender}"
+    # gender = request.session.get("gender", "unknown")
+    saju_key = get_saju_key_from_session(request.session)
 
     # DB 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
@@ -963,8 +978,8 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
     birthdate_str = request.session.get("birthdate")
     birth_hour = int(request.session.get("birthhour", 12))
 
-    gender = request.session.get("gender", "unknown")
-    saju_key = f"{birthdate_str}_{birth_hour}_{gender}"
+    # gender = request.session.get("gender", "unknown")
+    saju_key = get_saju_key_from_session(request.session)
 
     # DB 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()

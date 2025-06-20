@@ -192,7 +192,7 @@
       <div id="aiAnalysisResult" style="display: none;" class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6"></div>
     </div>
 
-        <!-- 프리미엄 PDF 구매 CTA -->
+    <!-- 프리미엄 PDF 구매 CTA -->
     <div class="text-center mt-10 p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl" id="premiumSection" style="display: none;">
       <h3 class="text-amber-800 font-extrabold text-2xl mb-3">
         이 무료 해석, 마음에 드셨나요? 🔮
@@ -202,11 +202,7 @@
         <strong class="text-purple-800">고서 원문 + AI 심층 리포트 (PDF)</strong>를 받아보세요.<br>
         당신만을 위한 <em>격국·용신·대운 15쪽 완전판</em>이 이메일로 즉시 전송됩니다.
       </p>
-      <!-- <button
-        class="w-full py-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200"
-        onclick="startPremiumPurchase()">
-        🚀 ₩1,900 결제하고 심화 PDF 받기
-      </button> -->
+      <!-- onclick 제거하고 id 사용 -->
       <button 
         id="premiumPurchaseBtn"
         class="w-full py-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200">
@@ -263,7 +259,7 @@
 </div>
 {% endblock %}
 
-<!-- templates/saju/page2.html의 JavaScript 부분 수정 -->
+<!-- templates/saju/page2.html의 JavaScript 부분 완전 수정 -->
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -284,13 +280,17 @@ let aiAnalysisCached = null;
 
 // 사주 정보를 안전하게 설정 (JSON 필터 사용)
 const sajuInfo = {
-  birthdate: {{ request.session.get('birthdate', '')|tojson }},
-  birthhour: {{ request.session.get('birthhour', 12)|tojson }},
-  gender: {{ request.session.get('gender', '')|tojson }},
-  name: {{ name|tojson }}
+  birthdate: "{{ birthdate.strftime('%Y-%m-%d') }}",
+  birthhour: {{ birth_hour }},
+  gender: "{{ request.session.get('gender', '') }}",
+  name: "{{ name }}",
+  saju_key: "{{ saju_key }}"
 };
 
-console.log('사주 정보:', sajuInfo); // 디버깅용
+// 서버에서 전달한 CSRF 토큰 (주문 생성 시 필요)
+const csrfToken = "{{ csrf_token if csrf_token is defined else '' }}";
+
+//console.log('사주 정보:', sajuInfo); // 디버깅용
 
 // 페이지 로딩 애니메이션
 window.addEventListener('load', function() {
@@ -394,19 +394,24 @@ async function startPremiumPurchase(event) {
     }
 
     // 사주 키 생성
-    const sajuKey = `${sajuInfo.birthdate}_${sajuInfo.birthhour}_${sajuInfo.gender}`;
-    console.log('사주 키:', sajuKey); // 디버깅용
+    // const sajuKey = `${sajuInfo.birthdate}_${sajuInfo.birthhour}_${sajuInfo.gender}`;
+    // console.log('사주 키:', sajuKey); // 디버깅용
+
+    // 서버가 기대하는 payload
+    const requestPayload = {
+      saju_key: sajuInfo.saju_key
+    };
+    console.log('전송할 payload:', requestPayload); // 디버깅용
 
     // 주문 생성 요청
     const response = await fetch("/order/create", {
       method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken   // CSRF 방어용
       },
       credentials: 'include',
-      body: JSON.stringify({
-        saju_key: sajuKey
-      })
+      body: JSON.stringify(requestPayload)  // 수정된 부분
     });
 
     // 응답 확인
