@@ -1,4 +1,4 @@
-<!-- templates/enhanced_report_base.html -->
+<!-- templates/enhanced_report_base.html - 개선된 버전 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -6,256 +6,495 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user_name }}님의 프리미엄 사주팔자 리포트</title>
     <style>
-        body {
-            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-            line-height: 1.6;
+        /* 폰트 설정 - 한글 호환성 강화 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        * {
             margin: 0;
-            padding: 20px;
-            color: #333;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            line-height: 1.8;
+            color: #2d3748;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         .report-container {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 900px;
+            margin: 2rem auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
         
+        /* 커버 페이지 */
         .cover-page {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
+            padding: 3rem 2.5rem;
             text-align: center;
             position: relative;
+            overflow: hidden;
         }
         
         .cover-page::before {
             content: '✨';
             position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 30px;
+            top: 2rem;
+            left: 2rem;
+            font-size: 2.5rem;
             opacity: 0.7;
+            animation: sparkle 2s ease-in-out infinite alternate;
         }
         
         .cover-page::after {
             content: '🔮';
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 30px;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2.5rem;
             opacity: 0.7;
+            animation: sparkle 2s ease-in-out infinite alternate-reverse;
+        }
+        
+        @keyframes sparkle {
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.1); }
         }
         
         .cover-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: -0.5px;
         }
         
         .cover-subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-            margin: 0 0 30px 0;
+            font-size: 1.25rem;
+            opacity: 0.95;
+            margin: 0 0 2rem 0;
+            font-weight: 300;
         }
         
+        .purchase-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            display: inline-block;
+        }
+        
+        /* 메인 콘텐츠 */
         .content-section {
-            padding: 30px 40px;
+            padding: 3rem 2.5rem 2rem;
         }
         
         .section-header {
             display: flex;
             align-items: center;
-            margin: 40px 0 20px 0;
-            padding-bottom: 10px;
+            margin: 3rem 0 1.5rem 0;
+            padding-bottom: 1rem;
             border-bottom: 3px solid #8B5CF6;
+            background: linear-gradient(90deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header:first-child {
+            margin-top: 0;
         }
         
         .section-icon {
-            font-size: 28px;
-            margin-right: 15px;
+            font-size: 2rem;
+            margin-right: 1rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
         
         .section-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #7C3AED;
-            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #2d3748;
+            letter-spacing: -0.5px;
         }
         
+        /* 정보 카드 */
         .info-card {
-            background: #FFF7ED;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 20px 0;
-            border-left: 5px solid #8B5CF6;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         
+        .info-card h3 {
+            margin: 0 0 1.5rem 0;
+            color: #4a5568;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* 사주팔자 테이블 */
         .pillars-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         
         .pillars-table th {
-            background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
-            font-weight: bold;
+            padding: 1.2rem;
             text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
         }
         
         .pillars-table td {
-            padding: 20px;
+            padding: 1.5rem;
             text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            border: 1px solid #E5E7EB;
-            background: white;
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: #2d3748;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .pillars-table .day-pillar {
-            background: linear-gradient(135deg, #E8F2FF, #F0F9FF) !important;
-            color: #1E40AF;
+        .day-pillar {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        
+        /* 오행 밸런스 차트 섹션 */
+        .balance-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .balance-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            white-space: nowrap;
         }
         
         .chart-container {
-            text-align: center;
-            margin: 25px 0;
+            max-width: 500px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
         }
         
         .chart-container img {
             max-width: 100%;
             height: auto;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
         }
         
-        .calendar-wrapper {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        
-        .mini-cal {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        
-        .mini-cal th, .mini-cal td {
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 13px;
-            border: 1px solid #D1D5DB;
-        }
-        
-        .mini-cal th {
-            background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
-            font-weight: bold;
-            color: #374151;
-        }
-        
-        .checklist-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        
-        .checklist-table th {
-            background: linear-gradient(135deg, #059669, #047857);
-            color: white;
-            padding: 15px;
-            font-weight: bold;
-        }
-        
-        .checklist-table td {
-            padding: 15px;
-            border: 1px solid #E5E7EB;
-            background: white;
-        }
-        
-        .checklist-table tr:nth-child(even) td {
-            background: #F9FAFB;
-        }
-        
-        .ai-analysis {
-            background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
-            border-left: 5px solid #0EA5E9;
-            padding: 30px;
-            margin: 25px 0;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        
-        .ai-analysis h3 {
-            color: #0F172A;
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .ai-analysis h3::before {
-            content: '🤖';
-            margin-right: 10px;
-            font-size: 24px;
-        }
-        
-        .footer-section {
-            background: linear-gradient(135deg, #1F2937, #374151);
-            color: white;
-            padding: 30px 40px;
-            text-align: center;
-        }
-        
-        .footer-section h3 {
-            margin: 0 0 15px 0;
-            font-size: 20px;
-        }
-        
-        .footer-section p {
-            margin: 5px 0;
-            opacity: 0.9;
-        }
-        
-        .divider {
-            height: 3px;
-            background: linear-gradient(90deg, #8B5CF6, #06B6D4, #10B981);
-            margin: 30px 0;
-        }
-        
+        /* 하이라이트 박스 */
         .highlight-box {
-            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-            border: 2px solid #F59E0B;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7e2 100%);
+            padding: 1.5rem;
             border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
+            margin: 1.5rem 0;
+            border-left: 5px solid #e53e3e;
+            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.1);
         }
         
         .highlight-box h4 {
-            color: #92400E;
-            margin: 0 0 10px 0;
-            font-size: 18px;
+            margin: 0 0 0.75rem 0;
+            color: #c53030;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .highlight-box p {
+            margin: 0;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        
+        /* 체크리스트 테이블 */
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .checklist-table th {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .checklist-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        
+        .checklist-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        /* 구분선 */
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+            margin: 3rem 0;
+            border-radius: 1px;
+        }
+        
+        /* 액션 버튼들 */
+        .action-buttons {
+            background: #f8fafc;
+            padding: 2.5rem;
+            border-radius: 16px;
+            text-align: center;
+            margin: 2rem 0 0 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin: 0.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #4fd1c7 0%, #81e6d9 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .report-container {
+                margin: 1rem;
+                border-radius: 16px;
+            }
+            
+            .cover-page {
+                padding: 2rem 1.5rem;
+            }
+            
+            .cover-title {
+                font-size: 2rem;
+            }
+            
+            .content-section {
+                padding: 2rem 1.5rem;
+            }
+            
+            .section-header {
+                padding: 1rem;
+                margin: 2rem 0 1rem 0;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .info-card {
+                padding: 1.5rem;
+            }
+            
+            .pillars-table th,
+            .pillars-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                display: block;
+                margin: 0.5rem 0;
+                width: 100%;
+            }
         }
         
         /* 프린트 최적화 */
         @media print {
-            body { background: white; padding: 0; }
-            .report-container { box-shadow: none; }
-            .section-header { page-break-after: avoid; }
-            .info-card { page-break-inside: avoid; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                font-size: 12px !important;
+                line-height: 1.4 !important;
+            }
+            
+            .report-container {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+            }
+            
+            .cover-page {
+                page-break-inside: avoid !important;
+                height: auto !important;
+                padding: 2rem !important;
+            }
+            
+            .content-section {
+                padding: 1rem !important;
+            }
+            
+            .section-header {
+                page-break-inside: avoid !important; /* allow page to break *before* the header if needed */
+                margin: 1rem 0 0.5rem 0 !important;
+                padding: 0.5rem !important;
+            }
+            
+            .info-card {
+                page-break-inside: avoid !important;
+                margin: 0.5rem 0 !important;
+                padding: 1rem !important;
+            }
+            
+            .chart-container {
+                page-break-inside: avoid !important;
+                max-width: 100% !important;
+                margin: 1rem 0 !important;
+            }
+            
+            .action-buttons {
+                display: none !important;
+            }
+            
+            .divider {
+                margin: 1rem 0 !important;
+                height: 1px !important;
+            }
+            
+            /* 테이블 최적화 */
+            .pillars-table,
+            .checklist-table {
+                page-break-inside: avoid !important;
+                font-size: 11px !important;
+            }
+            
+            .pillars-table th,
+            .pillars-table td,
+            .checklist-table th,
+            .checklist-table td {
+                padding: 0.5rem !important;
+            }
+        }
+        
+        /* 추가 애니메이션 */
+        .info-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 스크롤 시 부드러운 효과 */
+        .section-header {
+            animation: slideInLeft 0.8s ease-out;
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
     </style>
 </head>
@@ -264,10 +503,10 @@
         <!-- 커버 페이지 -->
         <div class="cover-page">
             <h1 class="cover-title">🔮 프리미엄 사주 리포트</h1>
-            <p class="cover-subtitle">AI 심층 분석 + 전통 명리학 해석</p>
-            {% if executive_summary %}
-                {{ executive_summary|safe }}
-            {% endif %}
+            <p class="cover-subtitle">{{ user_name }}님의 AI 심층 분석 + 전통 명리학 해석</p>
+            <div class="purchase-badge">
+                💎 Premium Report ₩1,900
+            </div>
         </div>
 
         <!-- 메인 콘텐츠 -->
@@ -277,11 +516,11 @@
             {% if pillars %}
             <div class="section-header">
                 <span class="section-icon">📅</span>
-                <h2 class="section-title">사주팔자 정보</h2>
+                <h2 class="section-title">{{ user_name }}님의 사주팔자</h2>
             </div>
             
             <div class="info-card">
-                <h3 style="margin: 0 0 20px 0; color: #7C3AED;">네 기둥 (四柱)</h3>
+                <h3>🏛️ 사주 (四柱)</h3>
                 <table class="pillars-table">
                     <tr>
                         <th>년주 (年柱)</th>
@@ -298,14 +537,21 @@
                 </table>
                 <div class="highlight-box">
                     <h4>🎯 핵심 포인트</h4>
-                    <p>일주 <strong>{{ pillars.day }}</strong>가 당신의 본질적 성향을 나타냅니다</p>
+                    <p>일주 <strong>{{ pillars.day }}</strong>가 {{ user_name }}님의 본질적 성향을 나타냅니다. 이를 중심으로 전체적인 운세 흐름을 파악할 수 있습니다.</p>
                 </div>
             </div>
             {% endif %}
 
-            <!-- 운세 요약 -->
-            {% if fortune_summary %}
-            {{ fortune_summary|safe }}
+            <!-- AI 분석 결과 -->
+            {% if analysis %}
+            <div class="section-header">
+                <span class="section-icon">🧠</span>
+                <h2 class="section-title">AI 심층 분석</h2>
+            </div>
+            
+            <div class="info-card">
+                {{ analysis|safe }}
+            </div>
             {% endif %}
 
             <div class="divider"></div>
@@ -317,53 +563,57 @@
                 <h2 class="section-title">오행 밸런스 분석</h2>
             </div>
             
-            <div class="info-card">
-                <div class="chart-container">
-                    <img src="{{ radar_base64 }}" alt="오행 밸런스 차트">
+            <div class="balance-section">
+                <div class="balance-title">
+                    <span>🌟</span>
+                    <span>{{ user_name }}님의 오행 분포</span>
                 </div>
                 
-                {% if elem_dict_kr %}
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #7C3AED; margin-bottom: 15px;">📊 세부 분포</h4>
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
-                        {% for element, count in elem_dict_kr.items() %}
-                        <div style="text-align: center; padding: 15px; background: #F8FAFC; border-radius: 8px; border: 2px solid #E2E8F0;">
-                            <div style="font-size: 24px; margin-bottom: 5px;">
-                                {% if element == '목' %}🌳{% elif element == '화' %}🔥{% elif element == '토' %}🌍{% elif element == '금' %}⚡{% else %}💧{% endif %}
-                            </div>
-                            <strong style="color: #374151;">{{ element }}</strong><br>
-                            <span style="font-size: 18px; font-weight: bold; color: #7C3AED;">{{ count }}개</span>
+                <div class="chart-container">
+                    <img src="{{ radar_base64 }}" alt="오행 밸런스 차트" style="width: 100%; height: auto;">
+                </div>
+                
+                <div class="info-card" style="margin-top: 2rem; text-align: left;">
+                    <h3>📊 분석 해석</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        {% for element, count in element_counts.items() %}
+                        <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid 
+                            {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
+                            <strong style="color: 
+                                {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
+                                {{ element }}({{ element|safe }})
+                            </strong>
+                            <span style="float: right; font-weight: bold;">{{ count }}개</span>
+                            <br>
+                            <small style="color: #6b7280; line-height: 1.4;">
+                                {% if element == '목' %}
+                                    성장, 창조, 유연성
+                                {% elif element == '화' %}
+                                    열정, 활동성, 표현력
+                                {% elif element == '토' %}
+                                    안정, 신뢰, 포용력
+                                {% elif element == '금' %}
+                                    결단, 정의, 완성
+                                {% else %}
+                                    지혜, 적응, 소통
+                                {% endif %}
+                            </small>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
-                {% endif %}
             </div>
             {% endif %}
 
             <div class="divider"></div>
 
-            <!-- 2025년 월별 운세 -->
-            {% if calendar_html %}
+            <!-- 월별 운세 -->
+            {% if monthly_fortune %}
             <div class="section-header">
                 <span class="section-icon">📅</span>
-                <h2 class="section-title">2025년 월별 운세 캘린더</h2>
+                <h2 class="section-title">2025년 월별 운세</h2>
             </div>
-            
-            <div class="info-card">
-                <div class="calendar-wrapper">
-                    {{ calendar_html|safe }}
-                    <div style="margin-top: 20px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
-                        <strong style="color: #374151;">🔍 운세 읽는 법:</strong>
-                        <div style="margin-top: 10px; display: flex; justify-content: space-around; font-size: 14px;">
-                            <span style="color: #059669;"><strong>● 좋음:</strong> 적극 추진</span>
-                            <span style="color: #D97706;"><strong>▲ 주의:</strong> 신중하게</span>
-                            <span style="color: #DC2626;"><strong>■ 조심:</strong> 보수적으로</span>
-                            <span style="color: #6B7280;"><strong>○ 평상:</strong> 현상유지</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {{ monthly_fortune|safe }}
             {% endif %}
 
             <div class="divider"></div>
@@ -387,7 +637,7 @@
             </div>
             
             <div class="info-card">
-                <h3 style="margin: 0 0 20px 0; color: #059669;">🎯 30일 실천 체크리스트</h3>
+                <h3>🎯 30일 실천 체크리스트</h3>
                 <table class="checklist-table">
                     <tr>
                         <th style="width: 20%;">카테고리</th>
@@ -396,56 +646,111 @@
                     </tr>
                     {% for item in checklist %}
                     <tr>
-                        <td style="font-weight: bold; color: #059669;">{{ item.cat }}</td>
+                        <td style="font-weight: 600; color: #48bb78;">{{ item.cat }}</td>
                         <td style="text-align: left;">{{ item.action }}</td>
-                        <td style="text-align: center; font-size: 20px;">☐</td>
+                        <td style="text-align: center; font-size: 1.5rem;">☐</td>
                     </tr>
                     {% endfor %}
                 </table>
-                <div style="margin-top: 15px; padding: 15px; background: #ECFDF5; border-radius: 8px; border-left: 4px solid #10B981;">
-                    <p style="margin: 0; font-size: 14px; color: #065F46;">
-                        <strong>💡 활용 팁:</strong> 리포트를 인쇄하여 체크박스를 하나씩 체크해보세요! 
-                        작은 실천이 큰 변화를 만듭니다.
+                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #f0fff4; border-radius: 12px; border-left: 4px solid #48bb78;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #22543d; line-height: 1.6;">
+                        <strong>💡 활용 팁:</strong> 이 리포트를 인쇄하여 체크박스를 하나씩 체크해보세요! 
+                        작은 실천이 큰 변화를 만듭니다. 매주 점검하며 자신만의 성장 스토리를 만들어가세요. 🌟
                     </p>
                 </div>
             </div>
             {% endif %}
 
-            <div class="divider"></div>
-
-            <!-- AI 심층 분석 -->
-            {% if analysis_result %}
-            <div class="section-header">
-                <span class="section-icon">🤖</span>
-                <h2 class="section-title">AI 심층 해석</h2>
-            </div>
-            
-            <div class="ai-analysis">
-                <h3>전문가급 AI 분석 결과</h3>
-                <div style="font-size: 16px; line-height: 1.8;">
-                    {{ analysis_result|safe }}
+            <!-- 웹 전용 액션 버튼들 -->
+            <div class="action-buttons">
+                <h3 style="margin: 0 0 1.5rem 0; color: #4a5568;">리포트를 어떻게 활용하시겠어요?</h3>
+                
+                <a href="/order/mypage" class="btn btn-primary">
+                    📋 구매 내역 확인
+                </a>
+                
+                <button onclick="window.print()" class="btn btn-secondary">
+                    🖨️ 인쇄하기
+                </button>
+                
+                <a href="/saju/page1" class="btn btn-outline">
+                    🔮 새로운 사주 보기
+                </a>
+                
+                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #edf2f7; border-radius: 12px; border-left: 4px solid #667eea;">
+                    <small style="color: #2d3748; display: block; margin-bottom: 0.5rem;">
+                        <strong>💡 활용 팁:</strong>
+                    </small>
+                    <small style="color: #4a5568; line-height: 1.6;">
+                        이 리포트를 인쇄해서 보관하시거나, 중요한 결정을 내릴 때 참고자료로 활용해보세요. 
+                        가족이나 친구들과 함께 보시면 더욱 재미있을 거예요! 
+                        정기적으로 다시 읽어보며 성장하는 모습을 확인해보세요. 🌟
+                    </small>
                 </div>
-            </div>
-            {% endif %}
-
-        </div>
-
-        <!-- 푸터 -->
-        <div class="footer-section">
-            <h3>🔮 감사합니다!</h3>
-            <p><strong>📞 궁금한 점이 있으시면 언제든 연락주세요</strong></p>
-            <p>본 리포트는 AI 분석과 전통 명리학을 결합한 결과이며, 참고용으로 활용해주시기 바랍니다.</p>
-            <p style="font-size: 12px; margin-top: 20px; opacity: 0.7;">
-                © 2025 SkyLoom | 생성일: {{ "now"|strftime("%Y년 %m월 %d일 %H시 %M분") }}
-            </p>
-            <div style="margin-top: 15px; font-size: 14px;">
-                <span style="margin: 0 10px;">✨</span>
-                <span style="margin: 0 10px;">🔮</span>
-                <span style="margin: 0 10px;">🌟</span>
-                <span style="margin: 0 10px;">💫</span>
-                <span style="margin: 0 10px;">⭐</span>
             </div>
         </div>
     </div>
+    
+    <script>
+        // 페이지 로드 시 부드러운 애니메이션
+        document.addEventListener('DOMContentLoaded', function() {
+            // 스크롤 시 부드러운 애니메이션
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            // 애니메이션 대상 요소들 관찰
+            document.querySelectorAll('.info-card, .balance-section').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+            
+            // 버튼 클릭 효과
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (this.onclick) return;
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+            
+            // 인쇄 전 알림
+            window.addEventListener('beforeprint', function() {
+                console.log('인쇄 준비 중...');
+            });
+            
+            // 인쇄 후 메시지
+            window.addEventListener('afterprint', function() {
+                alert('인쇄가 완료되었습니다! 언제든지 다시 확인해보세요. 😊');
+            });
+        });
+        
+        // 차트 로딩 에러 처리
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                this.style.display = 'none';
+                const errorMsg = document.createElement('p');
+                errorMsg.textContent = '차트를 불러오는 중 문제가 발생했습니다.';
+                errorMsg.style.color = '#e53e3e';
+                errorMsg.style.textAlign = 'center';
+                errorMsg.style.padding = '2rem';
+                this.parentNode.appendChild(errorMsg);
+            });
+        });
+    </script>
 </body>
 </html>

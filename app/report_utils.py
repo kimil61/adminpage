@@ -11,25 +11,58 @@ from datetime import datetime
 
 # 한글 폰트 설정
 def setup_korean_font():
-    """한글 폰트 설정"""
-    try:
-        # Windows 환경
-        if os.name == 'nt':
-            font_path = 'C:/Windows/Fonts/malgun.ttf'  # 맑은 고딕
-            if os.path.exists(font_path):
-                fm.fontManager.addfont(font_path)
-                plt.rcParams['font.family'] = 'Malgun Gothic'
-            else:
-                plt.rcParams['font.family'] = 'DejaVu Sans'
-        else:
-            # Linux/Mac 환경
-            plt.rcParams['font.family'] = 'DejaVu Sans'
-        
-        plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
-        
-    except Exception as e:
-        print(f"폰트 설정 실패: {e}")
-        plt.rcParams['font.family'] = 'DejaVu Sans'
+    """
+    Robust Korean font setup for matplotlib.
+    1) Try to register well‑known system font files.
+    2) Fallback to font family names that may already exist in the OS.
+    """
+    import matplotlib as mpl
+    from matplotlib import font_manager
+    import platform
+    import pathlib
+
+    # ---------- 1. Candidate font files ----------
+    font_files = [
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",        # Ubuntu/Debian Nanum
+        "/usr/share/fonts/truetype/noto/NotoSansKR-Regular.otf",  # Noto Sans (Linux)
+        "/Library/Fonts/AppleSDGothicNeo.ttc",                    # macOS user
+        "/System/Library/Fonts/AppleSDGothicNeo.ttc",             # macOS system
+        "C:/Windows/Fonts/malgun.ttf",                            # Windows Malgun Gothic
+    ]
+
+    registered_font_name = None
+
+    for fp in font_files:
+        if pathlib.Path(fp).is_file():
+            try:
+                font_manager.fontManager.addfont(fp)
+                registered_font_name = font_manager.FontProperties(fname=fp).get_name()
+                break
+            except Exception:
+                continue
+
+    # ---------- 2. Fallback by family name ----------
+    if registered_font_name is None:
+        fallback_names = [
+            "NanumGothic",
+            "Malgun Gothic",
+            "Apple SD Gothic Neo",
+            "Noto Sans CJK KR",
+        ]
+        for fam in fallback_names:
+            try:
+                mpl.rcParams["font.family"] = fam
+                registered_font_name = fam
+                break
+            except Exception:
+                continue
+
+    # ---------- 3. Final fallback ----------
+    if registered_font_name is None:
+        registered_font_name = "DejaVu Sans"
+
+    mpl.rcParams["font.family"] = registered_font_name
+    mpl.rcParams["axes.unicode_minus"] = False
 
 def radar_chart_base64(ratios: dict[str, int]) -> str:
     """오행 분포를 레이더 차트로 생성하여 base64 반환"""
