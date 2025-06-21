@@ -459,21 +459,33 @@ def analyze_four_pillars_with_branches(year_gan, year_branch, month_gan, month_b
     print("희신:", ', '.join(heesin_list) if heesin_list else '없음')
     print("기신:", ', '.join(gishin_list) if gishin_list else '없음')
 
-def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branch, day_gan, day_branch, hour_gan, hour_branch):
-    lines = []
-    # ── NEW: 오행 분포 계산 ─────────────────
-    elements_kr = ['목', '화', '토', '금', '수']
-    counts = {k: 0 for k in elements_kr}
+def analyze_four_pillars_to_string(
+    year_gan, year_branch,
+    month_gan, month_branch,
+    day_gan, day_branch,
+    hour_gan, hour_branch,
+):
+    """
+    Returns
+    -------
+    tuple (dict, str)
+        counts_kr : {'목':n, '화':n, '토':n, '금':n, '수':n}
+        full_text : legacy multiline explanation text
+    """
+    # ── 오행 분포 계산 ─────────────────────────
+    counts_kr = {'목': 0, '화': 0, '토': 0, '금': 0, '수': 0}
+    for ch in [
+        year_gan, year_branch,
+        month_gan, month_branch,
+        day_gan, day_branch,
+        hour_gan, hour_branch,
+    ]:
+        elem = element_map.get(ch)  # element_map must exist globally
+        if elem:
+            counts_kr[elem[0]] += 1
+    # ─────────────────────────────────────────
 
-    for ch in [year_gan, year_branch, month_gan, month_branch,
-               day_gan, day_branch, hour_gan, hour_branch]:
-        el_tuple = element_map.get(ch)  # element_map 글로벌 변수
-        if el_tuple:
-            counts[el_tuple[0]] += 1
-
-    elem_line = "오행 분포: " + ", ".join([f"{k}:{v}" for k, v in counts.items()])
-    # ───────────────────────────────────────
-
+    lines: list[str] = []
     lines.append("=== 사주 정보 ===")
     lines.append(f"년주: {year_gan} {year_branch} (지장간: {', '.join(branch_hidden_stems.get(year_branch, []))})")
     lines.append(f"월주: {month_gan} {month_branch} (지장간: {', '.join(branch_hidden_stems.get(month_branch, []))})")
@@ -501,7 +513,7 @@ def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branc
     lines.append("기신: " + (', '.join(gishin_list) if gishin_list else '없음'))
 
     full_text = "\n".join(lines)
-    return elem_line, full_text
+    return counts_kr, full_text
 
 ## 끝
 #####################################################################
