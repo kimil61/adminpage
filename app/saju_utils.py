@@ -14,35 +14,22 @@ class SajuKeyManager:
         "America/Los_Angeles": "PST", "Europe/Paris": "CET"
     }
     
-    @classmethod
-    def build_saju_key(cls, 
-                      birth_date: str,  # YYYY-MM-DD
-                      birth_hour: Optional[int],  # 0-23 or None
-                      gender: str,  # male/female
-                      calendar: str = "SOL",  # SOL/LUN
-                      timezone: str = "Asia/Seoul") -> str:
+    @staticmethod
+    def build_saju_key(
+        birth_date: str,
+        birth_hour: int | None,
+        gender: str,
+        calendar: str = "SOL",
+        timezone: str = "Asia/Seoul",
+    ) -> str:
         """
-        사주 키 생성
-        
-        Returns:
-            예: S_19840601_20_KST_M
+        Return global-unique saju_key
+        Format: {CAL}_{YYYYMMDD}_{HH|UH}_{TZ}_{SEX}
         """
-        # 달력 코드
-        cal_code = "S" if calendar == "SOL" else "L"
-        
-        # 날짜 코드 (하이픈 제거)
-        date_code = birth_date.replace("-", "")
-        
-        # 시간 코드
-        hour_code = f"{birth_hour:02d}" if birth_hour is not None else "UH"
-        
-        # 시간대 코드
-        tz_code = cls.TIMEZONE_MAP.get(timezone, timezone.replace("/", "-")[:6])
-        
-        # 성별 코드
-        sex_code = {"male": "M", "female": "F"}.get(gender, "U")
-        
-        return f"{cal_code}_{date_code}_{hour_code}_{tz_code}_{sex_code}"
+        hour_part = f"{int(birth_hour):02d}" if birth_hour is not None else "UH"
+        tz_part   = timezone.replace("/", "-")
+        sex_part  = {"male": "M", "female": "F"}.get(gender.lower(), "U")
+        return f"{calendar}_{birth_date.replace('-', '')}_{hour_part}_{tz_part}_{sex_part}"
     
     @classmethod
     def parse_saju_key(cls, saju_key: str) -> dict:
@@ -64,20 +51,20 @@ class SajuKeyManager:
         except Exception as e:
             raise ValueError(f"Failed to parse saju_key: {e}")
     
-    @classmethod
-    def convert_lunar_to_solar(cls, lunar_date: str) -> str:
-        """음력을 양력으로 변환"""
+    @staticmethod
+    def convert_lunar_to_solar(date_str: str) -> str | None:
+        """음력 YYYY-MM-DD → 양력 YYYY-MM-DD (sxtwl 이용)"""
         try:
-            year, month, day = map(int, lunar_date.split("-"))
-            
-            # sxtwl을 사용한 음력→양력 변환
-            lunar = sxtwl.fromLunar(year, month, day, False)  # 평달 기준
-            solar_date = f"{lunar.getSolar().year:04d}-{lunar.getSolar().month:02d}-{lunar.getSolar().day:02d}"
-            
-            return solar_date
+            y, m, d = map(int, date_str.split("-"))
+            day = sxtwl.fromLunar(y, m, d, False)  # 윤달 아님 가정
+            return (
+                f"{day.getSolarYear():04d}-"
+                f"{day.getSolarMonth():02d}-"
+                f"{day.getSolarDay():02d}"
+            )
         except Exception as e:
             print(f"음력 변환 실패: {e}")
-            return lunar_date  # 실패 시 원본 반환
+            return None
     
     @classmethod
     def normalize_birth_time(cls, 
@@ -119,30 +106,34 @@ class SajuKeyManager:
             year, month, day = map(int, birth_date.split("-"))
             return datetime(year, month, day, hour or 12, 0, 0)
     
-    @classmethod
-    def get_birth_info_for_calculation(cls, saju_key: str) -> Tuple[datetime, str, str]:
+    @staticmethod
+    def get_birth_info_for_calculation(saju_key: str):
         """
-        사주 키로부터 사주 계산에 필요한 정보 추출
-        
-        Returns:
-            (계산용_datetime, 원본_날짜, 성별)
+        Parse saju_key → (datetime[KST], original_date_str, gender)
         """
-        parsed = cls.parse_saju_key(saju_key)
-        
-        # 음력인 경우 양력으로 변환
-        if parsed["calendar"] == "LUN":
-            solar_date = cls.convert_lunar_to_solar(parsed["birth_date"])
-        else:
-            solar_date = parsed["birth_date"]
-        
-        # 시간 정규화
-        calc_datetime = cls.normalize_birth_time(
-            solar_date, 
-            parsed["birth_hour"], 
-            parsed["timezone"]
-        )
-        
-        return calc_datetime, parsed["birth_date"], parsed["gender"]
+        try:
+            cal, ymd, hour_part, tz_part, sex = saju_key.split("_", 4)
+            gender = "male" if sex == "M" else "female" if sex == "F" else "unknown"
+            hour = 12 if hour_part == "UH" else int(hour_part)
+
+            year, month, day = int(ymd[:4]), int(ymd[4:6]), int(ymd[6:8])
+            orig_date = f"{year:04d}-{month:02d}-{day:02d}"
+
+            # 음력 → 양력
+            if cal == "LUN":
+                solar = SajuKeyManager.convert_lunar_to_solar(orig_date)
+                if solar:
+                    year, month, day = map(int, solar.split("-"))
+
+            local_tz = pytz.timezone(tz_part.replace("-", "/"))
+            dt_local = local_tz.localize(datetime(year, month, day, hour, 0, 0))
+            dt_kst   = dt_local.astimezone(pytz.timezone("Asia/Seoul"))
+
+            return dt_kst, orig_date, gender
+        except Exception as e:
+            print(f"SajuKeyManager.parse 오류: {e}")
+            fallback = pytz.timezone("Asia/Seoul").localize(datetime(1984, 1, 1, 12))
+            return fallback, "1984-01-01", "unknown"
 
 # 사용 예시
 if __name__ == "__main__":
