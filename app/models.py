@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Date, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -108,11 +108,16 @@ class SajuUser(Base):
     birthdate = Column(String(20))  # YYYY-MM-DD 형식
     birthhour = Column(Integer)
     gender = Column(String(10))
+    # 달력 / 시간대 및 원본·변환 날짜
+    calendar = Column(Enum("SOL", "LUN", name="calendar_enum"), default="SOL")
+    timezone = Column(String(50), default="Asia/Seoul")
+    birth_date_original = Column(Date)      # 사용자가 입력한 원본 날짜
+    birth_date_converted = Column(Date)     # (음력 → 양력 등) 변환된 날짜
     session_token = Column(String(255), unique=True)
     first_visit = Column(DateTime, default=datetime.utcnow)
     last_visit = Column(DateTime, default=datetime.utcnow)
     visit_count = Column(Integer, default=1)
-    saju_key = Column(String(100), nullable=True)
+    saju_key = Column(String(120), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")

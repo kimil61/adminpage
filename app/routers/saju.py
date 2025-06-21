@@ -875,6 +875,7 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     })
 
 # AI 사주 분석 초기버전 API
+@router.post("/api/saju_ai_analysis")
 async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     """AI 사주 분석 API (글로벌 캐싱 버전)"""
     
