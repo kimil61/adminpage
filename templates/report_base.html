@@ -1,43 +1,114 @@
 <!-- templates/report_base.html -->
-{% macro section(title) -%}
-  <h2>{{ title }}</h2>
-{%- endmacro %}
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<style>
-  body { font-family:'Malgun Gothic',sans-serif; line-height:1.6; margin:40px; }
-  h1 { color:#8B5CF6; text-align:center; }
-  h2 { color:#7C3AED; margin-top:32px; margin-bottom:12px; }
-  .mini-cal td { padding:3px 6px; text-align:center; font-size:11px; }
-  .card { background:#FFF7ED; border-radius:8px; padding:12px; width:46%; display:inline-block; }
-  .checklist td { padding:4px 6px; font-size:12px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user_name }}님의 사주팔자 리포트</title>
 </head>
 <body>
-  <h1>🔮 {{ user_name }} 님 맞춤 사주 리포트</h1>
+    <h1>🔮 {{ user_name }}님 맞춤 사주 리포트</h1>
+    
+    <!-- 사주 기본 정보 -->
+    {% if pillars %}
+    <h2>📅 사주팔자 정보</h2>
+    <div class="card">
+        <h3>네 기둥 (四柱)</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 10px; border: 1px solid #ddd;">년주</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">월주</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">일주</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">시주</th>
+            </tr>
+            <tr>
+                <td style="padding: 15px; border: 1px solid #ddd; text-align: center; font-size: 18px; font-weight: bold;">{{ pillars.year }}</td>
+                <td style="padding: 15px; border: 1px solid #ddd; text-align: center; font-size: 18px; font-weight: bold;">{{ pillars.month }}</td>
+                <td style="padding: 15px; border: 1px solid #ddd; text-align: center; font-size: 18px; font-weight: bold; background-color: #E8F2FF;">{{ pillars.day }}</td>
+                <td style="padding: 15px; border: 1px solid #ddd; text-align: center; font-size: 18px; font-weight: bold;">{{ pillars.hour }}</td>
+            </tr>
+        </table>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">※ 일주({{ pillars.day }})가 본인의 핵심 성향을 나타냅니다.</p>
+    </div>
+    {% endif %}
 
-  {{ section('내 오행 밸런스') }}
-  <img src="{{ radar_base64 }}" width="320">
+    <!-- 오행 밸런스 -->
+    {% if radar_base64 %}
+    <h2>⚖️ 내 오행 밸런스</h2>
+    <div class="card">
+        <img src="{{ radar_base64 }}" alt="오행 밸런스 차트" style="max-width: 400px;">
+        {% if elem_dict_kr %}
+        <div style="margin-top: 15px;">
+            <h4>오행 분포:</h4>
+            <ul style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; list-style: none; padding: 0;">
+                {% for element, count in elem_dict_kr.items() %}
+                <li style="text-align: center; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+                    <strong>{{ element }}</strong><br>{{ count }}개
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
-  {{ section('2025 GOOD / CAUTION 달력') }}
-  {{ calendar_html|safe }}
+    <!-- 2025년 월별 운세 달력 -->
+    {% if calendar_html %}
+    <h2>📅 2025년 월별 운세 달력</h2>
+    <div class="card">
+        {{ calendar_html|safe }}
+        <div style="margin-top: 15px; font-size: 12px; color: #666;">
+            <strong>범례:</strong> 
+            <span style="background-color: #DCFCE7; padding: 2px 6px; border-radius: 3px;">좋음</span>
+            <span style="background-color: #FEFCE8; padding: 2px 6px; border-radius: 3px;">주의</span>
+            <span style="background-color: #FEE2E2; padding: 2px 6px; border-radius: 3px;">조심</span>
+        </div>
+    </div>
+    {% endif %}
 
-  {{ section('행운 키워드') }}
-  {{ keyword_html|safe }}
+    <!-- 행운 키워드 -->
+    {% if keyword_html %}
+    <h2>🍀 행운 키워드</h2>
+    {{ keyword_html|safe }}
+    {% endif %}
 
-  {{ section('Next-Step Checklist') }}
-  <table class="checklist" border="1">
-    <tr><th>카테고리</th><th>실천 항목</th><th>완료</th></tr>
-    {% for row in checklist %}
-      <tr><td>{{ row.cat }}</td><td>{{ row.action }}</td><td>☐</td></tr>
-    {% endfor %}
-  </table>
+    <!-- Next-Step 체크리스트 -->
+    {% if checklist %}
+    <h2>✅ 2025년 실천 체크리스트</h2>
+    <div class="card">
+        <table class="checklist">
+            <tr>
+                <th style="width: 20%;">카테고리</th>
+                <th style="width: 60%;">실천 항목</th>
+                <th style="width: 20%; text-align: center;">완료</th>
+            </tr>
+            {% for item in checklist %}
+            <tr>
+                <td style="font-weight: bold; color: #7C3AED;">{{ item.cat }}</td>
+                <td>{{ item.action }}</td>
+                <td style="text-align: center; font-size: 16px;">☐</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p style="margin-top: 15px; font-size: 12px; color: #666;">
+            ※ 체크박스를 체크하며 하나씩 실천해보세요!
+        </p>
+    </div>
+    {% endif %}
 
-  <p style="margin-top:40px; text-align:center; color:#6B7280; font-size:11px;">
-     본 리포트는 AI 분석 결과이며 참고용입니다.
-  </p>
+    <!-- AI 심층 분석 결과 -->
+    {% if analysis_result %}
+    <h2>🤖 AI 심층 해석</h2>
+    <div class="ai-analysis">
+        {{ analysis_result|safe }}
+    </div>
+    {% endif %}
+
+    <!-- 푸터 -->
+    <div class="footer-note">
+        <p><strong>📞 문의사항이 있으시면 언제든 연락주세요!</strong></p>
+        <p>본 리포트는 AI 분석 결과이며 참고용으로 활용해주시기 바랍니다.</p>
+        <p style="font-size: 10px; margin-top: 10px;">© 2025 SkyLoom | 생성일: {{ "now"|strftime("%Y-%m-%d %H:%M") }}</p>
+    </div>
 </body>
 </html>
