@@ -6,12 +6,12 @@ from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Order, Product, User
+from app.models import Order, Product, User, SajuAnalysisCache
 from app.template import templates
 from app.dependencies import get_current_user
 import logging
 from celery.result import AsyncResult
-
+import markdown
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -99,7 +99,7 @@ async def test_success_page(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """개선된 테스트 성공 페이지 - 실제 AI 결과 표시"""
+    """개선된 테스트 성공 페이지 - 실제 AI 분석 결과 표시"""
     order = db.query(Order).filter(
         Order.id == order_id, 
         Order.user_id == user.id
@@ -112,6 +112,8 @@ async def test_success_page(
         # 필요한 import들
         from app.saju_utils import SajuKeyManager
         from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
+        from app.routers.saju import load_prompt, ai_sajupalja_with_ollama, test_ollama_connection
+        from app.tasks import generate_enhanced_report_html
         from app.models import SajuUser, SajuAnalysisCache
         from app.report_utils import radar_chart_base64
         
@@ -132,182 +134,167 @@ async def test_success_page(
         user_name = saju_user.name if saju_user and saju_user.name else "고객"
         
         # 🎯 실제 AI 분석 결과 가져오기
-        ai_analysis = None
+        dummy_analysis = None
+        
+        # 1. 캐시에서 기존 AI 분석 확인
         cached_analysis = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
         
         if cached_analysis and cached_analysis.analysis_full:
-            # 기존 AI 분석이 있는 경우
-            ai_analysis = cached_analysis.analysis_full
+            # 캐시된 AI 분석이 있으면 사용
+            dummy_analysis = cached_analysis.analysis_full
+            print(f"✅ 캐시된 AI 분석 사용: {order.saju_key}")
         else:
-            # AI 분석이 없는 경우 - 즉시 생성하거나 더미 표시
+            # 2. 캐시가 없으면 즉시 AI 생성 시도
             try:
-                from app.routers.saju import load_prompt, ai_sajupalja_with_ollama, test_ollama_connection
+                print(f"🤖 새로운 AI 분석 생성 시도: {order.saju_key}")
                 
                 # Ollama 연결 확인
                 if test_ollama_connection():
                     prompt = load_prompt()
                     if prompt:
-                        # 사주 정보 조합
+                        # 사주 정보를 AI 입력용 텍스트로 조합
                         combined_text = "\n".join([
                             "오행 분포:",
                             ", ".join([f"{k}:{v}" for k, v in elem_dict_kr.items()]),
                             "",
-                            result_text,
+                            result_text,  # 사주 기본 해석
                         ])
                         
                         # AI 분석 실행
-                        ai_analysis = ai_sajupalja_with_ollama(prompt=prompt, content=combined_text)
+                        ai_result = ai_sajupalja_with_ollama(prompt=prompt, content=combined_text)
                         
-                        if ai_analysis:
-                            # 새 분석 결과 캐시에 저장
+                        if ai_result:
+                            # 새 분석 결과를 캐시에 저장
                             if cached_analysis:
-                                cached_analysis.analysis_full = ai_analysis
+                                cached_analysis.analysis_full = ai_result
                             else:
                                 new_cache = SajuAnalysisCache(
                                     saju_key=order.saju_key,
-                                    analysis_full=ai_analysis
+                                    analysis_full=ai_result
                                 )
                                 db.add(new_cache)
                             db.commit()
                             
+                            dummy_analysis = ai_result
+                            print(f"✅ 새 AI 분석 생성 완료 및 캐시 저장")
+                        else:
+                            print(f"❌ AI 분석 생성 실패")
+                    else:
+                        print(f"❌ 프롬프트 로드 실패")
+                else:
+                    print(f"❌ Ollama 연결 실패")
+                    
             except Exception as e:
-                print(f"AI 분석 생성 실패: {e}")
+                print(f"❌ AI 분석 생성 중 오류: {e}")
         
-        # AI 분석이 없는 경우 더미 데이터 사용
-        if not ai_analysis:
-            ai_analysis = f"""
-            <h3 style="color: #667eea; margin-bottom: 1.5rem;">🔮 {user_name}님만을 위한 AI 심층 분석</h3>
-            
-            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border-left: 4px solid #0ea5e9;">
-                <p><strong style="color: #0369a1;">🌟 전체적인 운명의 흐름:</strong><br>
-                {user_name}님의 사주를 종합적으로 분석한 결과, <strong style="color: #dc2626;">{list(elem_dict_kr.keys())[0]} 기운이 강한 특성</strong>을 보이고 있습니다. 
-                이는 창의적이고 진취적인 성향으로 나타나며, 새로운 도전을 두려워하지 않는 추진력을 의미합니다.</p>
+
+        # 🍀 행운 키워드 생성
+        lucky_keywords = ["성장", "도전", "소통", "안정", "창조", "조화", "발전", "인내"]
+        selected_keywords = [lucky_keywords[i] for i in range(0, min(4, len(lucky_keywords)), 2)]
+        
+        keyword_html = f"""
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+            {' '.join([f'''
+            <div style="background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌟</div>
+                <div style="font-size: 1.2rem; font-weight: 600;">{keyword}</div>
+                <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">핵심 키워드</div>
             </div>
-            
-            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border-left: 4px solid #10b981;">
-                <p><strong style="color: #047857;">💰 재물운과 사업운:</strong><br>
-                2025년 하반기부터 재물운이 점진적으로 상승하는 흐름을 보입니다. 특히 인맥을 통한 기회가 많아질 것으로 예상되며, 
-                꾸준한 노력이 결실을 맺는 시기입니다.</p>
+            ''' for keyword in selected_keywords])}
+        </div>
+        
+        <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; margin-top: 1rem; border-left: 4px solid #8b5cf6;">
+            <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                <strong style="color: #8b5cf6;">💡 활용법:</strong> 
+                이 키워드들을 일상에서 의식적으로 떠올려보세요. 
+                중요한 결정을 내릴 때나 새로운 일을 시작할 때 참고하시면 도움이 될 것입니다.
+            </p>
+        </div>
+        """
+        
+        # 📅 월별 운세 생성
+        months = [
+            ("1월", "새로운 시작", "좋음", "#10b981"),
+            ("2월", "인간관계 확장", "보통", "#f59e0b"), 
+            ("3월", "창의적 아이디어", "좋음", "#10b981"),
+            ("4월", "재정 관리 중요", "주의", "#ef4444"),
+            ("5월", "건강 관리", "보통", "#f59e0b"),
+            ("6월", "새로운 도전", "좋음", "#10b981"),
+            ("7월", "여름 휴식기", "보통", "#f59e0b"),
+            ("8월", "인내의 시기", "주의", "#ef4444"),
+            ("9월", "수확의 계절", "좋음", "#10b981"),
+            ("10월", "안정된 발전", "좋음", "#10b981"),
+            ("11월", "마무리 준비", "보통", "#f59e0b"),
+            ("12월", "성과 정리", "좋음", "#10b981")
+        ]
+        
+        monthly_fortune = f"""
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0;">
+            {' '.join([f'''
+            <div style="background: white; border: 2px solid {color}; border-radius: 12px; padding: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; font-size: 1.1rem; color: {color};">{month}</span>
+                    <span style="background: {color}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">{status}</span>
+                </div>
+                <p style="margin: 0; color: #4a5568; line-height: 1.5;">{desc}</p>
             </div>
-            
-            <div style="background: linear-gradient(135deg, #fef7cd 0%, #fde047 100%); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border-left: 4px solid #eab308;">
-                <p><strong style="color: #a16207;">❤️ 인간관계와 사랑운:</strong><br>
-                올해는 새로운 인연을 만날 가능성이 높은 해입니다. 기존 관계에서도 더욱 깊어지는 계기가 생길 것이며, 
-                진솔한 소통이 관계 발전의 열쇠가 됩니다.</p>
-            </div>
-            
-            <div style="background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%); padding: 1.5rem; border-radius: 12px; margin: 1rem 0; border-left: 4px solid #ef4444;">
-                <p><strong style="color: #b91c1c;">⚠️ 주의사항과 조언:</strong><br>
-                성급한 결정보다는 신중한 판단이 필요한 시기입니다. 특히 큰 투자나 이직 결정은 충분한 정보 수집 후 진행하시기 바랍니다. 
-                건강관리에도 각별한 주의를 기울이세요.</p>
-            </div>
-            
-            <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                <p style="color: #64748b; font-style: italic;">
-                ⚠️ AI 분석을 로딩 중입니다. 실제 AI 분석 결과는 PDF 리포트에서 확인하실 수 있습니다.
-                </p>
-            </div>
-            """
+            ''' for month, desc, status, color in months])}
+        </div>
+        
+        <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 12px; margin-top: 1rem; border-left: 4px solid #0ea5e9;">
+            <p style="margin: 0; color: #0c4a6e; line-height: 1.6;">
+                <strong>📊 운세 가이드:</strong> 
+                <span style="color: #10b981;"><strong>● 좋음:</strong> 적극 추진</span> | 
+                <span style="color: #f59e0b;"><strong>▲ 보통:</strong> 신중하게</span> | 
+                <span style="color: #ef4444;"><strong>■ 주의:</strong> 보수적으로</span>
+            </p>
+        </div>
+        """
+        
+        # ✅ 실천 체크리스트 생성
+        checklist_items = [
+            {"cat": "💰 재물", "action": "가계부 작성하여 수입/지출 관리하기"},
+            {"cat": "❤️ 인간관계", "action": "가족/친구와 깊은 대화 나누기"}, 
+            {"cat": "🎯 목표", "action": "월간 목표 설정하고 주간 점검하기"},
+            {"cat": "💪 건강", "action": "규칙적인 운동 루틴 만들기"},
+            {"cat": "📚 학습", "action": "새로운 기술이나 지식 하나 익히기"},
+            {"cat": "🧘 마음", "action": "명상이나 독서로 내면 성찰하기"}
+        ]
         
         # 오행 차트 생성
-        elem_dict_eng = {
-            '목': 'Wood', '화': 'Fire', '토': 'Earth', 
-            '금': 'Metal', '수': 'Water'
-        }
-        chart_data = {elem_dict_eng.get(k, k): v for k, v in elem_dict_kr.items()}
-        chart_base64 = radar_chart_base64(chart_data)
-        
-        # 템플릿에 전달할 데이터
-        context = {
-            "request": request,
-            "order": order,
-            "user_name": user_name,
-            "pillars": pillars,
-            "elem_dict_kr": elem_dict_kr,
-            "ai_analysis": ai_analysis,  # 실제 AI 분석 결과
-            "chart_base64": chart_base64,
-            "birthdate_str": orig_date.strftime('%Y년 %m월 %d일'),
-            "gender_kr": "남성" if gender == "male" else "여성",
-        }
-        
-        return templates.TemplateResponse("order/test_success_enhanced.html", context)
-        
-    except Exception as e:
-        print(f"test_success_page 오류: {e}")
-        # 오류 발생 시 기본 페이지로 폴백
-        return templates.TemplateResponse("order/test_success.html", {
-            "request": request,
-            "order": order
-        })
-
-# 🎯 추가: AI 분석 재생성 API
-@router.post("/regenerate-ai/{order_id}")
-async def regenerate_ai_analysis(
-    order_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
-):
-    """AI 분석 재생성"""
-    order = db.query(Order).filter(
-        Order.id == order_id, 
-        Order.user_id == user.id
-    ).first()
-    
-    if not order:
-        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
-    
-    try:
-        from app.routers.saju import load_prompt, ai_sajupalja_with_ollama, test_ollama_connection
-        from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
-        from app.saju_utils import SajuKeyManager
-        from app.models import SajuAnalysisCache
-        
-        # Ollama 연결 확인
-        if not test_ollama_connection():
-            return {"success": False, "message": "AI 서버에 연결할 수 없습니다."}
-        
-        # 사주 계산
-        calc_datetime, orig_date, gender = SajuKeyManager.get_birth_info_for_calculation(order.saju_key)
-        pillars = calculate_four_pillars(calc_datetime)
-        elem_dict_kr, result_text = analyze_four_pillars_to_string(
-            pillars['year'][0], pillars['year'][1],
-            pillars['month'][0], pillars['month'][1], 
-            pillars['day'][0], pillars['day'][1],
-            pillars['hour'][0], pillars['hour'][1],
+        try:
+            radar_base64_img = radar_chart_base64(elem_dict_kr)
+        except Exception as e:
+            print(f"차트 생성 실패: {e}")
+            radar_base64_img = None
+        analysis_html = markdown.markdown(dummy_analysis) if dummy_analysis else None
+        # 🎨 개선된 HTML 템플릿 렌더링
+        return templates.TemplateResponse(
+            "enhanced_report_base.html",
+            {
+                "request": request,
+                "user_name": user_name,
+                "pillars": pillars,
+                "analysis": analysis_html,  # 실제 AI 분석 또는 더미 데이터
+                "element_counts": elem_dict_kr,
+                "radar_base64": radar_base64_img,
+                "monthly_fortune": monthly_fortune,
+                "keyword_html": keyword_html,
+                "checklist": checklist_items,
+                "order": order
+            }
         )
         
-        # AI 분석 실행
-        prompt = load_prompt()
-        combined_text = "\n".join([
-            "오행 분포:",
-            ", ".join([f"{k}:{v}" for k, v in elem_dict_kr.items()]),
-            "",
-            result_text,
-        ])
-        
-        ai_analysis = ai_sajupalja_with_ollama(prompt=prompt, content=combined_text)
-        
-        if ai_analysis:
-            # 캐시 업데이트
-            cached_analysis = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
-            if cached_analysis:
-                cached_analysis.analysis_full = ai_analysis
-            else:
-                new_cache = SajuAnalysisCache(
-                    saju_key=order.saju_key,
-                    analysis_full=ai_analysis
-                )
-                db.add(new_cache)
-            db.commit()
-            
-            return {"success": True, "message": "AI 분석이 재생성되었습니다.", "analysis": ai_analysis}
-        else:
-            return {"success": False, "message": "AI 분석 생성에 실패했습니다."}
-            
     except Exception as e:
-        return {"success": False, "message": f"오류가 발생했습니다: {str(e)}"}
-    
-    
+        logger.error(f"리포트 생성 실패: {str(e)}")
+        return templates.TemplateResponse(
+            "errors/500.html",
+            {"request": request, "error": str(e)},
+            status_code=500
+        )
+
+
+
 ################################################################################
 # 3) 마이페이지 구매내역 (간소화)
 ################################################################################

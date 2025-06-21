@@ -542,20 +542,6 @@
             </div>
             {% endif %}
 
-            <!-- AI 분석 결과 -->
-            {% if analysis %}
-            <div class="section-header">
-                <span class="section-icon">🧠</span>
-                <h2 class="section-title">AI 심층 분석</h2>
-            </div>
-            
-            <div class="info-card">
-                {{ analysis|safe }}
-            </div>
-            {% endif %}
-
-            <div class="divider"></div>
-
             <!-- 오행 밸런스 분석 -->
             {% if radar_base64 %}
             <div class="section-header">
@@ -606,6 +592,22 @@
             {% endif %}
 
             <div class="divider"></div>
+
+            <!-- AI 분석 결과 -->
+            {% if analysis %}
+            <div class="section-header">
+                <span class="section-icon">🧠</span>
+                <h2 class="section-title">AI 심층 분석</h2>
+            </div>
+            
+            <div class="info-card">
+                {{ analysis|safe }}
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
+            
 
             <!-- 월별 운세 -->
             {% if monthly_fortune %}
