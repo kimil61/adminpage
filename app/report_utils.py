@@ -1,4 +1,4 @@
-# app/report_utils.py
+# app/report_utils.py (기존 파일에 추가)
 import io
 import base64
 import matplotlib.pyplot as plt
@@ -6,6 +6,8 @@ import matplotlib.font_manager as fm
 import numpy as np
 import pandas as pd
 import os
+import random
+from datetime import datetime
 
 # 한글 폰트 설정
 def setup_korean_font():
@@ -282,3 +284,270 @@ def generate_fortune_summary(elem_dict_kr: dict) -> str:
     except Exception as e:
         print(f"운세 요약 생성 실패: {e}")
         return ""
+    
+def generate_2025_fortune_calendar(elem_dict_kr: dict) -> str:
+    """2025년 월별 운세 달력 생성 (오행 기반 알고리즘)"""
+    try:
+        months = ['1월', '2월', '3월', '4월', '5월', '6월', 
+                 '7월', '8월', '9월', '10월', '11월', '12월']
+        
+        # 오행 기반 운세 생성 알고리즘
+        def calculate_fortune_by_element(month_idx, category):
+            """오행 분포를 기반으로 월별 운세 계산"""
+            wood = elem_dict_kr.get('목', 0)
+            fire = elem_dict_kr.get('화', 0)
+            earth = elem_dict_kr.get('토', 0)
+            metal = elem_dict_kr.get('금', 0)
+            water = elem_dict_kr.get('수', 0)
+            
+            # 계절별 기본 점수 (봄=목, 여름=화, 가을=금, 겨울=수)
+            season_bonus = {
+                'love': [wood*0.3, wood*0.5, fire*0.4, fire*0.6, fire*0.8, fire*0.6, 
+                        fire*0.4, earth*0.3, metal*0.4, metal*0.6, water*0.3, water*0.5],
+                'money': [water*0.4, earth*0.5, wood*0.6, wood*0.8, fire*0.6, fire*0.4,
+                         metal*0.3, metal*0.5, metal*0.7, earth*0.6, water*0.5, water*0.3],
+                'career': [metal*0.3, water*0.4, wood*0.7, wood*0.6, fire*0.5, earth*0.4,
+                          earth*0.6, metal*0.6, metal*0.8, water*0.4, water*0.6, earth*0.5]
+            }
+            
+            base_score = season_bonus[category][month_idx]
+            # 랜덤 요소 추가 (개인차)
+            random.seed(month_idx + sum(elem_dict_kr.values()) * (1 if category == 'love' else 2 if category == 'money' else 3))
+            variance = random.uniform(-0.3, 0.3)
+            final_score = base_score + variance
+            
+            # 점수를 심볼로 변환
+            if final_score >= 1.5:
+                return 'G'  # Good
+            elif final_score >= 0.8:
+                return 'Y'  # Caution
+            elif final_score >= 0.3:
+                return '-'  # Normal
+            else:
+                return 'R'  # Risk
+        
+        # 카테고리별 연간 운세 생성
+        fortune_data = {
+            'Love': [calculate_fortune_by_element(i, 'love') for i in range(12)],
+            'Money': [calculate_fortune_by_element(i, 'money') for i in range(12)],
+            'Career': [calculate_fortune_by_element(i, 'career') for i in range(12)]
+        }
+        
+        return month_heat_table(fortune_data)
+        
+    except Exception as e:
+        print(f"운세 달력 생성 실패: {e}")
+        return '<p>월별 운세를 생성할 수 없습니다.</p>'
+
+def generate_lucky_keywords(elem_dict_kr: dict, birth_month: int = 6) -> tuple[str, list[int], str]:
+    """오행 기반 행운 키워드 생성"""
+    try:
+        # 가장 강한 오행 찾기
+        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        
+        # 오행별 행운 키워드 매핑
+        element_keywords = {
+            '목': {'colors': ['초록', '연두', '갈색'], 'stones': ['에메랄드', '말라카이트', '아벤투린']},
+            '화': {'colors': ['빨강', '주황', '분홍'], 'stones': ['루비', '가넷', '카넬리안']},
+            '토': {'colors': ['노랑', '베이지', '갈색'], 'stones': ['황수정', '호박', '타이거아이']},
+            '금': {'colors': ['흰색', '은색', '회색'], 'stones': ['다이아몬드', '수정', '문스톤']},
+            '수': {'colors': ['파랑', '검정', '자주'], 'stones': ['사파이어', '청금석', '자수정']}
+        }
+        
+        # 행운 숫자 생성 (오행 + 생월 기반)
+        base_numbers = {
+            '목': [1, 3, 8], '화': [2, 7, 9], '토': [5, 6, 8], 
+            '금': [4, 7, 9], '수': [1, 6, 9]
+        }
+        
+        lucky_color = random.choice(element_keywords[max_element]['colors'])
+        lucky_stone = random.choice(element_keywords[max_element]['stones'])
+        
+        # 개인화된 행운 숫자
+        lucky_numbers = base_numbers[max_element].copy()
+        if birth_month not in lucky_numbers:
+            lucky_numbers.append(birth_month)
+        
+        return lucky_color, lucky_numbers[:3], lucky_stone
+        
+    except Exception as e:
+        print(f"행운 키워드 생성 실패: {e}")
+        return '자주색', [3, 7, 9], '자수정'
+
+def generate_action_checklist(elem_dict_kr: dict) -> list[dict]:
+    """오행 기반 실천 체크리스트 생성"""
+    try:
+        # 가장 약한 오행 찾기 (보완 필요)
+        min_element = min(elem_dict_kr, key=elem_dict_kr.get)
+        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        
+        # 오행별 맞춤 조언
+        element_advice = {
+            '목': {
+                'habit': '매일 15분 산책하며 자연 관찰하기 🌱',
+                'money': '장기 투자 계획 세우고 월 적금 시작하기 💰',
+                'relationship': '새로운 모임이나 동호회 참여하기 🤝',
+                'health': '스트레칭과 요가로 유연성 기르기 🧘',
+                'growth': '새로운 기술이나 언어 배우기 📚'
+            },
+            '화': {
+                'habit': '일찍 자고 일찍 일어나는 수면 패턴 만들기 ⏰',
+                'money': '충동구매 줄이고 가계부 작성하기 📊',
+                'relationship': '가족, 친구와 정기 모임 갖기 ❤️',
+                'health': '명상이나 심호흡으로 마음 안정 찾기 🧘‍♀️',
+                'growth': '감정 일기 쓰며 자기 이해 높이기 ✍️'
+            },
+            '토': {
+                'habit': '정리정돈과 미니멀 라이프 실천하기 🏠',
+                'money': '비상금 모으고 안전한 투자 위주로 하기 🛡️',
+                'relationship': '진솔한 대화 시간 늘리기 💬',
+                'health': '규칙적인 식사와 영양 관리하기 🥗',
+                'growth': '독서와 깊이 있는 사고 시간 갖기 📖'
+            },
+            '금': {
+                'habit': '계획표 작성하고 체계적으로 실행하기 📅',
+                'money': '투자 포트폴리오 다양화하기 📈',
+                'relationship': '약속 시간 잘 지키고 신뢰 쌓기 ⏱️',
+                'health': '근력 운동으로 체력 기르기 💪',
+                'growth': '전문 분야 깊이 있게 공부하기 🎯'
+            },
+            '수': {
+                'habit': '충분한 수분 섭취와 휴식 취하기 💧',
+                'money': '다양한 수입원 개발하기 🌊',
+                'relationship': '경청하는 습관 기르기 👂',
+                'health': '스트레스 해소 방법 찾기 🎵',
+                'growth': '창의적 취미 활동 시작하기 🎨'
+            }
+        }
+        
+        # 부족한 오행의 조언을 우선 선택
+        advice = element_advice.get(min_element, element_advice['목'])
+        
+        checklist = [
+            {'cat': '습관 개선', 'action': advice['habit']},
+            {'cat': '재물 관리', 'action': advice['money']},
+            {'cat': '인간관계', 'action': advice['relationship']},
+            {'cat': '건강 관리', 'action': advice['health']},
+            {'cat': '자기계발', 'action': advice['growth']},
+        ]
+        
+        return checklist
+        
+    except Exception as e:
+        print(f"체크리스트 생성 실패: {e}")
+        return [
+            {'cat': '습관 개선', 'action': '매일 아침 10분 명상하기 🧘'},
+            {'cat': '재물 관리', 'action': '월 소비 예산 5% 줄이기 💰'},
+            {'cat': '인간관계', 'action': '매주 가족/친구에게 안부 묻기 📞'},
+            {'cat': '건강 관리', 'action': '주 3회 이상 운동하기 🏃'},
+            {'cat': '자기계발', 'action': '한 달에 책 1권 읽기 📚'},
+        ]
+
+def create_executive_summary(user_name: str, birthdate: str, pillars: dict, elem_dict_kr: dict) -> str:
+    """임원급 요약 정보 생성"""
+    try:
+        # 오행 기반 핵심 특성 분석
+        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        min_element = min(elem_dict_kr, key=elem_dict_kr.get)
+        
+        element_traits = {
+            '목': '성장지향적, 창의적',
+            '화': '열정적, 사교적', 
+            '토': '안정적, 신뢰감',
+            '금': '체계적, 원칙적',
+            '수': '지혜로운, 유연한'
+        }
+        
+        # 연도별 띠 계산
+        birth_year = int(birthdate.split('-')[0])
+        zodiac_animals = ['원숭이', '닭', '개', '돼지', '쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양']
+        zodiac = zodiac_animals[birth_year % 12]
+        
+        # 3줄 요약 생성
+        summary_lines = [
+            f"🔥 {element_traits.get(max_element, '균형잡힌')} 성향이 강한 {zodiac}띠",
+            f"💰 2025년 하반기 {max_element} 기운으로 성장 기회",
+            f"❤️ {min_element} 에너지 보완으로 관계운 상승"
+        ]
+        
+        html = f'''
+        <div class="executive-summary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin: 20px 0;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 24px; font-weight: bold;">{user_name} 님</h2>
+                <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">{birthdate} • {pillars.get('day', '')} 일주 • {zodiac}띠</p>
+                <div style="height: 2px; background: rgba(255,255,255,0.3); margin: 15px auto; width: 80%;"></div>
+            </div>
+            <div style="font-size: 16px; line-height: 1.8;">
+                {'<br>'.join(summary_lines)}
+            </div>
+        </div>
+        '''
+        
+        return html
+        
+    except Exception as e:
+        print(f"요약 정보 생성 실패: {e}")
+        return f'<div class="executive-summary"><h2>{user_name} 님의 사주 리포트</h2></div>'
+
+def enhanced_radar_chart_base64(elem_dict_kr: dict) -> str:
+    """향상된 레이더 차트 (설명 포함)"""
+    try:
+        setup_korean_font()
+        
+        # 기본 레이더 차트 생성
+        labels_kr = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)']
+        values = [elem_dict_kr.get(k, 0) for k in ['목', '화', '토', '금', '수']]
+        
+        if all(v == 0 for v in values):
+            values = [1] * 5
+        
+        values += values[:1]  # 원형으로 닫기
+        angles = np.linspace(0, 2 * np.pi, len(values))
+        
+        # 차트 생성
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), 
+                                       gridspec_kw={'width_ratios': [2, 1]})
+        
+        # 레이더 차트
+        ax1 = plt.subplot(121, projection='polar')
+        ax1.fill(angles, values, alpha=0.25, color='#8B5CF6')
+        ax1.plot(angles, values, linewidth=3, color='#7C3AED', marker='o', markersize=8)
+        ax1.set_xticks(angles[:-1])
+        ax1.set_xticklabels(labels_kr, fontsize=12, fontweight='bold')
+        ax1.set_ylim(0, max(values[:-1]) + 1 if max(values[:-1]) > 0 else 5)
+        ax1.grid(True, alpha=0.3)
+        ax1.set_title('오행 밸런스', fontsize=16, fontweight='bold', pad=20)
+        
+        # 텍스트 설명
+        ax2.axis('off')
+        max_element = max(['목', '화', '토', '금', '수'], key=lambda x: elem_dict_kr.get(x, 0))
+        min_element = min(['목', '화', '토', '금', '수'], key=lambda x: elem_dict_kr.get(x, 0))
+        
+        explanation = [
+            f"🔥 가장 강함: {max_element} ({elem_dict_kr.get(max_element, 0)}개)",
+            f"💧 보완 필요: {min_element} ({elem_dict_kr.get(min_element, 0)}개)",
+            "",
+            "📊 해석:",
+            f"• {max_element} 기운이 강해 관련 특성 부각",
+            f"• {min_element} 에너지 보완으로 균형 개선",
+            "• 전체적 조화로 운세 상승 가능"
+        ]
+        
+        for i, line in enumerate(explanation):
+            ax2.text(0.05, 0.9 - i*0.12, line, fontsize=11, 
+                    transform=ax2.transAxes, fontweight='bold' if line.startswith(('🔥', '💧', '📊')) else 'normal')
+        
+        # 이미지 저장
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
+        plt.close(fig)
+        
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        return f"data:image/png;base64,{img_base64}"
+        
+    except Exception as e:
+        print(f"향상된 레이더 차트 생성 실패: {e}")
+        return radar_chart_base64({'Wood': elem_dict_kr.get('목', 0), 'Fire': elem_dict_kr.get('화', 0), 
+                                  'Earth': elem_dict_kr.get('토', 0), 'Metal': elem_dict_kr.get('금', 0), 
+                                  'Water': elem_dict_kr.get('수', 0)})

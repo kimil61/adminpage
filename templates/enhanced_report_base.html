@@ -1,0 +1,451 @@
+<!-- templates/enhanced_report_base.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user_name }}님의 프리미엄 사주팔자 리포트</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .report-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .cover-page {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .cover-page::before {
+            content: '✨';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 30px;
+            opacity: 0.7;
+        }
+        
+        .cover-page::after {
+            content: '🔮';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            opacity: 0.7;
+        }
+        
+        .cover-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+        
+        .cover-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin: 0 0 30px 0;
+        }
+        
+        .content-section {
+            padding: 30px 40px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #8B5CF6;
+        }
+        
+        .section-icon {
+            font-size: 28px;
+            margin-right: 15px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7C3AED;
+            margin: 0;
+        }
+        
+        .info-card {
+            background: #FFF7ED;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #8B5CF6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .pillars-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .pillars-table th {
+            background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .pillars-table td {
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid #E5E7EB;
+            background: white;
+        }
+        
+        .pillars-table .day-pillar {
+            background: linear-gradient(135deg, #E8F2FF, #F0F9FF) !important;
+            color: #1E40AF;
+        }
+        
+        .chart-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .calendar-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .mini-cal {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .mini-cal th, .mini-cal td {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            border: 1px solid #D1D5DB;
+        }
+        
+        .mini-cal th {
+            background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+            font-weight: bold;
+            color: #374151;
+        }
+        
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .checklist-table th {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+        }
+        
+        .checklist-table td {
+            padding: 15px;
+            border: 1px solid #E5E7EB;
+            background: white;
+        }
+        
+        .checklist-table tr:nth-child(even) td {
+            background: #F9FAFB;
+        }
+        
+        .ai-analysis {
+            background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+            border-left: 5px solid #0EA5E9;
+            padding: 30px;
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .ai-analysis h3 {
+            color: #0F172A;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ai-analysis h3::before {
+            content: '🤖';
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        
+        .footer-section {
+            background: linear-gradient(135deg, #1F2937, #374151);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .footer-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+        }
+        
+        .footer-section p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+        
+        .divider {
+            height: 3px;
+            background: linear-gradient(90deg, #8B5CF6, #06B6D4, #10B981);
+            margin: 30px 0;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border: 2px solid #F59E0B;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .highlight-box h4 {
+            color: #92400E;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        
+        /* 프린트 최적화 */
+        @media print {
+            body { background: white; padding: 0; }
+            .report-container { box-shadow: none; }
+            .section-header { page-break-after: avoid; }
+            .info-card { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- 커버 페이지 -->
+        <div class="cover-page">
+            <h1 class="cover-title">🔮 프리미엄 사주 리포트</h1>
+            <p class="cover-subtitle">AI 심층 분석 + 전통 명리학 해석</p>
+            {% if executive_summary %}
+                {{ executive_summary|safe }}
+            {% endif %}
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="content-section">
+            
+            <!-- 사주팔자 기본 정보 -->
+            {% if pillars %}
+            <div class="section-header">
+                <span class="section-icon">📅</span>
+                <h2 class="section-title">사주팔자 정보</h2>
+            </div>
+            
+            <div class="info-card">
+                <h3 style="margin: 0 0 20px 0; color: #7C3AED;">네 기둥 (四柱)</h3>
+                <table class="pillars-table">
+                    <tr>
+                        <th>년주 (年柱)</th>
+                        <th>월주 (月柱)</th>
+                        <th>일주 (日柱)</th>
+                        <th>시주 (時柱)</th>
+                    </tr>
+                    <tr>
+                        <td>{{ pillars.year }}</td>
+                        <td>{{ pillars.month }}</td>
+                        <td class="day-pillar">{{ pillars.day }}</td>
+                        <td>{{ pillars.hour }}</td>
+                    </tr>
+                </table>
+                <div class="highlight-box">
+                    <h4>🎯 핵심 포인트</h4>
+                    <p>일주 <strong>{{ pillars.day }}</strong>가 당신의 본질적 성향을 나타냅니다</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 운세 요약 -->
+            {% if fortune_summary %}
+            {{ fortune_summary|safe }}
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- 오행 밸런스 분석 -->
+            {% if radar_base64 %}
+            <div class="section-header">
+                <span class="section-icon">⚖️</span>
+                <h2 class="section-title">오행 밸런스 분석</h2>
+            </div>
+            
+            <div class="info-card">
+                <div class="chart-container">
+                    <img src="{{ radar_base64 }}" alt="오행 밸런스 차트">
+                </div>
+                
+                {% if elem_dict_kr %}
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #7C3AED; margin-bottom: 15px;">📊 세부 분포</h4>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
+                        {% for element, count in elem_dict_kr.items() %}
+                        <div style="text-align: center; padding: 15px; background: #F8FAFC; border-radius: 8px; border: 2px solid #E2E8F0;">
+                            <div style="font-size: 24px; margin-bottom: 5px;">
+                                {% if element == '목' %}🌳{% elif element == '화' %}🔥{% elif element == '토' %}🌍{% elif element == '금' %}⚡{% else %}💧{% endif %}
+                            </div>
+                            <strong style="color: #374151;">{{ element }}</strong><br>
+                            <span style="font-size: 18px; font-weight: bold; color: #7C3AED;">{{ count }}개</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- 2025년 월별 운세 -->
+            {% if calendar_html %}
+            <div class="section-header">
+                <span class="section-icon">📅</span>
+                <h2 class="section-title">2025년 월별 운세 캘린더</h2>
+            </div>
+            
+            <div class="info-card">
+                <div class="calendar-wrapper">
+                    {{ calendar_html|safe }}
+                    <div style="margin-top: 20px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
+                        <strong style="color: #374151;">🔍 운세 읽는 법:</strong>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-around; font-size: 14px;">
+                            <span style="color: #059669;"><strong>● 좋음:</strong> 적극 추진</span>
+                            <span style="color: #D97706;"><strong>▲ 주의:</strong> 신중하게</span>
+                            <span style="color: #DC2626;"><strong>■ 조심:</strong> 보수적으로</span>
+                            <span style="color: #6B7280;"><strong>○ 평상:</strong> 현상유지</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- 행운 키워드 -->
+            {% if keyword_html %}
+            <div class="section-header">
+                <span class="section-icon">🍀</span>
+                <h2 class="section-title">2025년 행운 키워드</h2>
+            </div>
+            {{ keyword_html|safe }}
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- 실천 체크리스트 -->
+            {% if checklist %}
+            <div class="section-header">
+                <span class="section-icon">✅</span>
+                <h2 class="section-title">맞춤형 실천 가이드</h2>
+            </div>
+            
+            <div class="info-card">
+                <h3 style="margin: 0 0 20px 0; color: #059669;">🎯 30일 실천 체크리스트</h3>
+                <table class="checklist-table">
+                    <tr>
+                        <th style="width: 20%;">카테고리</th>
+                        <th style="width: 65%;">실천 항목</th>
+                        <th style="width: 15%;">완료</th>
+                    </tr>
+                    {% for item in checklist %}
+                    <tr>
+                        <td style="font-weight: bold; color: #059669;">{{ item.cat }}</td>
+                        <td style="text-align: left;">{{ item.action }}</td>
+                        <td style="text-align: center; font-size: 20px;">☐</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <div style="margin-top: 15px; padding: 15px; background: #ECFDF5; border-radius: 8px; border-left: 4px solid #10B981;">
+                    <p style="margin: 0; font-size: 14px; color: #065F46;">
+                        <strong>💡 활용 팁:</strong> 리포트를 인쇄하여 체크박스를 하나씩 체크해보세요! 
+                        작은 실천이 큰 변화를 만듭니다.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- AI 심층 분석 -->
+            {% if analysis_result %}
+            <div class="section-header">
+                <span class="section-icon">🤖</span>
+                <h2 class="section-title">AI 심층 해석</h2>
+            </div>
+            
+            <div class="ai-analysis">
+                <h3>전문가급 AI 분석 결과</h3>
+                <div style="font-size: 16px; line-height: 1.8;">
+                    {{ analysis_result|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- 푸터 -->
+        <div class="footer-section">
+            <h3>🔮 감사합니다!</h3>
+            <p><strong>📞 궁금한 점이 있으시면 언제든 연락주세요</strong></p>
+            <p>본 리포트는 AI 분석과 전통 명리학을 결합한 결과이며, 참고용으로 활용해주시기 바랍니다.</p>
+            <p style="font-size: 12px; margin-top: 20px; opacity: 0.7;">
+                © 2025 SkyLoom | 생성일: {{ "now"|strftime("%Y년 %m월 %d일 %H시 %M분") }}
+            </p>
+            <div style="margin-top: 15px; font-size: 14px;">
+                <span style="margin: 0 10px;">✨</span>
+                <span style="margin: 0 10px;">🔮</span>
+                <span style="margin: 0 10px;">🌟</span>
+                <span style="margin: 0 10px;">💫</span>
+                <span style="margin: 0 10px;">⭐</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
