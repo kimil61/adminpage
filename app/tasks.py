@@ -6,6 +6,7 @@ from app.celery_app import celery_app
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Order, SajuAnalysisCache
+from app.models import SajuUser  # 사주 입력 정보
 from app.routers.saju import (
     load_prompt,
     test_ollama_connection,
@@ -212,8 +213,13 @@ def generate_full_report(self, order_id: int, saju_key: str):
             autoescape=select_autoescape(['html'])
         )
         tpl = env.get_template('report_base.html')
+        # ── 고객 이름 결정 ─────────────────────
+        saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
+        user_name = saju_user.name if saju_user and getattr(saju_user, "name", None) else "고객"
+        # ──────────────────────────────────────
+
         html_content = tpl.render(
-            user_name   = getattr(order, 'buyer_name', None) or getattr(order, 'name', None) or '고객',
+            user_name   = user_name,
             radar_base64= radar_base64,
             calendar_html= calendar_html,
             keyword_html = keyword_html,

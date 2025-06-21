@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -99,6 +99,9 @@ class FilteredContent(Base):
 class SajuUser(Base):
     """사주 사용자 테이블"""
     __tablename__ = "saju_users"
+    __table_args__ = (
+        UniqueConstraint("user_id", "saju_key", name="uniq_user_saju"),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100))
@@ -109,6 +112,7 @@ class SajuUser(Base):
     first_visit = Column(DateTime, default=datetime.utcnow)
     last_visit = Column(DateTime, default=datetime.utcnow)
     visit_count = Column(Integer, default=1)
+    saju_key = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")
