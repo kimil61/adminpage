@@ -21,6 +21,11 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
+# -------- NEW IMPORTS FOR REPORT RENDERING ------------
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from app.report_utils import radar_chart_base64, month_heat_table, keyword_card
+# ------------------------------------------------------
+
 # 로거 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -169,33 +174,46 @@ def generate_full_report(self, order_id: int, saju_key: str):
         # HTML & PDF 생성
         self.update_state(state='progress', meta={'current': 5, 'total': 6, 'status': '리포트 파일 생성 중...'})
         
-        # 리포트 템플릿 생성 (더 예쁘게)
-        html_content = f"""
-        <!DOCTYPE html>
-        <html lang="ko">
-        <head>
-            <meta charset="UTF-8">
-            <title>사주팔자 심층 분석 리포트</title>
-            <style>
-                body {{ font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; line-height: 1.6; margin: 40px; }}
-                h1 {{ color: #8B5CF6; text-align: center; margin-bottom: 30px; }}
-                h2 {{ color: #7C3AED; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; }}
-                .analysis {{ background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-                .footer {{ text-align: center; margin-top: 40px; color: #6B7280; font-size: 12px; }}
-            </style>
-        </head>
-        <body>
-            <h1>🔮 사주팔자 심층 분석 리포트</h1>
-            <div class="analysis">
-                {markdown(analysis_result.replace('\n', '\n\n'))}
-            </div>
-            <div class="footer">
-                <p>생성일: {datetime.now().strftime('%Y년 %m월 %d일')}</p>
-                <p>본 리포트는 AI 기반 분석 결과입니다.</p>
-            </div>
-        </body>
-        </html>
-        """
+        # ────────────────────────────────────────────────
+        #   리포트 템플릿 생성 (Jinja2 + report_utils)
+        # ────────────────────────────────────────────────
+        # 1) 데모/임시 데이터 준비 (후속 단계에서 실제 계산치로 교체)
+        ratios_demo = {'Wood': 25, 'Fire': 30, 'Earth': 20, 'Metal': 15, 'Water': 10}
+        radar_base64 = radar_chart_base64(ratios_demo)
+
+        status_demo = {
+            'Love':   ['G', 'R', '-', 'G', 'Y', '-', 'G', 'Y', '-', 'G', 'R', '-'],
+            'Money':  ['-', 'G', 'R', 'Y', '-', 'G', '-', 'G', 'Y', '-', 'G', 'R'],
+            'Career': ['Y', '-', 'G', 'G', 'R', '-', 'Y', '-', 'G', 'Y', '-', 'G'],
+        }
+        calendar_html = month_heat_table(status_demo)
+        keyword_html  = keyword_card('Burgundy', [3, 9], 'Garnet')
+
+        checklist = [
+            {'cat': '습관', 'action': '아침 10분 스트레칭'},
+            {'cat': '재물', 'action': '한 달 소비 5 % 줄이기'},
+            {'cat': '관계', 'action': '매일 감사 메시지 1건 보내기'},
+        ]
+
+        # 2) Jinja2 환경 & 템플릿 렌더링
+        env = Environment(
+            loader=FileSystemLoader('templates'),
+            autoescape=select_autoescape(['html'])
+        )
+        tpl = env.get_template('report_base.html')
+        html_content = tpl.render(
+            user_name   = order.buyer_name or '고객',
+            radar_base64= radar_base64,
+            calendar_html= calendar_html,
+            keyword_html = keyword_html,
+            checklist   = checklist,
+        )
+
+        # 3) AI 심층 분석 결과를 별도 섹션으로 추가
+        html_content += (
+            f"<hr><h2 style='color:#7C3AED;'>AI 심층 해석</h2>"
+            f"{markdown(analysis_result.replace('\\n', '\\n\\n'))}"
+        )
         
         # 파일 저장 경로
         output_dir = os.path.join('static', 'uploads', 'reports')

@@ -1,0 +1,43 @@
+<!-- templates/report_base.html -->
+{% macro section(title) -%}
+  <h2>{{ title }}</h2>
+{%- endmacro %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family:'Malgun Gothic',sans-serif; line-height:1.6; margin:40px; }
+  h1 { color:#8B5CF6; text-align:center; }
+  h2 { color:#7C3AED; margin-top:32px; margin-bottom:12px; }
+  .mini-cal td { padding:3px 6px; text-align:center; font-size:11px; }
+  .card { background:#FFF7ED; border-radius:8px; padding:12px; width:46%; display:inline-block; }
+  .checklist td { padding:4px 6px; font-size:12px; }
+</style>
+</head>
+<body>
+  <h1>🔮 {{ user_name }} 님 맞춤 사주 리포트</h1>
+
+  {{ section('내 오행 밸런스') }}
+  <img src="{{ radar_base64 }}" width="320">
+
+  {{ section('2025 GOOD / CAUTION 달력') }}
+  {{ calendar_html|safe }}
+
+  {{ section('행운 키워드') }}
+  {{ keyword_html|safe }}
+
+  {{ section('Next-Step Checklist') }}
+  <table class="checklist" border="1">
+    <tr><th>카테고리</th><th>실천 항목</th><th>완료</th></tr>
+    {% for row in checklist %}
+      <tr><td>{{ row.cat }}</td><td>{{ row.action }}</td><td>☐</td></tr>
+    {% endfor %}
+  </table>
+
+  <p style="margin-top:40px; text-align:center; color:#6B7280; font-size:11px;">
+     본 리포트는 AI 분석 결과이며 참고용입니다.
+  </p>
+</body>
+</html>
