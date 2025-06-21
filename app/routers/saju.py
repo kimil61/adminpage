@@ -18,6 +18,9 @@ import requests
 # Use SQLAlchemy ORM to query saju_wiki_contents
 from app.database import SessionLocal
 from app.models import SajuWikiContent
+from app.saju_utils import SajuKeyManager
+from sqlalchemy.exc import IntegrityError
+
 # 환경 변수 로드
 from dotenv import load_dotenv
 load_dotenv()
@@ -650,6 +653,7 @@ def generate_session_token(email):
     raw = f"{email}-{str(uuid.uuid4())}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
+
 # ai 사주분석 초기버전
 def generate_saju_analysis(birthdate, birth_hour):
     """GPT를 이용한 사주 분석"""
@@ -726,79 +730,117 @@ async def saju_page1_submit(
     birth_year: int = Form(...),
     birth_month: int = Form(...),
     birth_day: int = Form(...),
-    birthhour: int = Form(...),
+    birthhour: int = Form(None),
+    hour_unknown: bool = Form(False),  # 새로 추가
+    calendar: str = Form("SOL"),  # 새로 추가
+    timezone: str = Form("Asia/Seoul"),  # 새로 추가  
     db: Session = Depends(get_db)
 ):
-    """사주 입력 처리"""
-    birthdate = f"{birth_year:04d}-{birth_month:02d}-{birth_day:02d}"
-    # ── NEW: generate saju_key (date_hour_gender) ──
-    saju_key = f"{birthdate}_{birthhour}_{gender}"
+    """사주 입력 처리 (글로벌 캐싱 버전)"""
     
+    # 입력값 검증
+    if not gender or not birth_year or not birth_month or not birth_day:
+        raise HTTPException(status_code=400, detail="필수 입력값이 누락되었습니다.")
+    
+    # 출생 시간 처리
+    if hour_unknown:
+        birthhour = None
+    elif birthhour is None:
+        raise HTTPException(status_code=400, detail="출생 시간을 입력하거나 '모름'을 체크해주세요.")
+    
+    # 날짜 형식화
+    birthdate = f"{birth_year:04d}-{birth_month:02d}-{birth_day:02d}"
+    
+    # 🎯 글로벌 사주 키 생성
+    saju_key = SajuKeyManager.build_saju_key(
+        birth_date=birthdate,
+        birth_hour=birthhour,
+        gender=gender,
+        calendar=calendar,
+        timezone=timezone
+    )
+
+    
+    # 세션 토큰 생성
     session_token = generate_session_token(request.session.get("user_id"))
     
     # 세션에 정보 저장
-    request.session["session_token"] = session_token
-    request.session["name"] = name
-    request.session["gender"] = gender
-    request.session["birthdate"] = birthdate
-    request.session["birthhour"] = birthhour
-    request.session["saju_key"] = saju_key
-
-    # Save the submitted form data into the saju_users table using SQLAlchemy
-    new_user = SajuUser(
-        name=name,
-        gender=gender,
-        birthdate=birthdate,
-        birthhour=birthhour,
-        saju_key=saju_key,
-        session_token=session_token,
-        user_id=request.session.get("user_id")
-    )
-    db.add(new_user)
-    db.commit()
-
+    request.session.update({
+        "session_token": session_token,
+        "name": name,
+        "gender": gender,
+        "birthdate": birthdate,
+        "birthhour": birthhour,
+        "hour_unknown": hour_unknown,
+        "calendar": calendar,
+        "timezone": timezone,
+        "saju_key": saju_key
+    })
+    
+    # 사용자 기록 저장 (개별 기록은 유지)
+    try:
+        new_user = SajuUser(
+            name=name,
+            gender=gender,
+            birthdate=birthdate,
+            birthhour=birthhour,
+            calendar=calendar,
+            timezone=timezone,
+            birth_date_original=birthdate,
+            birth_date_converted=SajuKeyManager.convert_lunar_to_solar(birthdate) if calendar == "LUN" else birthdate,
+            saju_key=saju_key,
+            session_token=session_token,
+            user_id=request.session.get("user_id")
+        )
+        db.add(new_user)
+        db.commit()
+    except Exception as e:
+        print(f"사용자 기록 저장 실패 (무시): {e}")
+        db.rollback()
+    
     return RedirectResponse(url="/saju/page2", status_code=302)
 
 # ai 사주 결과 페이지
 @router.get("/page2", response_class=HTMLResponse)
 async def saju_page2(request: Request, db: Session = Depends(get_db)):
-    """사주 결과 페이지"""
+    """사주 결과 페이지 (글로벌 캐싱 버전)"""
+    
     if "session_token" not in request.session:
         return RedirectResponse(url="/login", status_code=302)
-
-    name = request.session.get("name", "손님")
-    birthdate_str = request.session.get("birthdate")
-    birth_hour = int(request.session.get("birthhour", 12))
-
-    try:
-        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
-    except:
-        birthdate = datetime.now()
-
-    # 사주 계산
-    pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
     
-    # 상세 사주 정보 계산
-    saju_info = get_saju_details(pillars)
-    # saju_key was already created in page1 and stored in session
+    # 세션에서 사주 키 가져오기
     saju_key = request.session.get("saju_key")
-
-    # ----- CSRF Token -----
+    if not saju_key:
+        return RedirectResponse(url="/saju/page1", status_code=302)
+    print("saju_key:", saju_key, flush=True)    
+    # 🔄 글로벌 캐시 확인 (다른 사용자가 이미 계산했을 수도 있음)
+    cached_analysis = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+    
+    name = request.session.get("name", "손님")
+    
+    # 사주 계산용 정보 추출
+    calc_datetime, orig_date, gender = SajuKeyManager.get_birth_info_for_calculation(saju_key)
+    
+    # 사주 계산
+    pillars = calculate_four_pillars(calc_datetime)
+    saju_info = get_saju_details(pillars)
+    
+    # CSRF 토큰
     csrf_token = request.session.get("csrf_token")
     if not csrf_token:
         csrf_token = secrets.token_urlsafe(16)
         request.session["csrf_token"] = csrf_token
-
+    
     # 일주 해석
     ilju = pillars["day"]
     ilju_interpretation = get_ilju_interpretation(ilju)
-
-    # 사주 분석
+    
+    # 기본 사주 분석
     analyzer = SajuAnalyzer()
     saju_analyzer_result = analyzer.analyze_saju(
         pillars['year'], pillars['month'], pillars['day'], pillars['hour']
     )
-
+    
     # 삼명통회 원문 해석
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
     ctext_explanation = None
@@ -811,7 +853,7 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     
     # 환경변수에서 후원 링크 가져오기
     coffee_link = os.getenv("BUY_ME_A_COFFEE_LINK", "https://www.buymeacoffee.com/yourname")
-
+    
     return templates.TemplateResponse("saju/page2.html", {
         "request": request,
         "name": name,
@@ -827,59 +869,47 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
         "ctext_kr_explained": safe_markdown(ctext_kr_explained),
         "coffee_link": coffee_link,
         "get_twelve_gods_by_day_branch": get_twelve_gods_by_day_branch,
-        "birth_hour": birth_hour,
-        "birthdate": birthdate
+        "birth_hour": calc_datetime.hour,
+        "birthdate": calc_datetime.date(),
+        "has_cached_analysis": bool(cached_analysis and cached_analysis.analysis_preview)
     })
 
 # AI 사주 분석 초기버전 API
-@router.post("/api/saju_ai_analysis")
 async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
-    """AI 사주 분석 API"""
-    request.session.pop("cached_saju_analysis", None)
-    # print("✅ OpenAI client is set:", bool(client))
-    #print("▶ client.api_key =", client.api_key)
-
-    if "session_token" not in request.session:
-        request.session["session_token"] = secrets.token_hex(16)
-
-    # === DB 캐시 확인 ===
-    birthdate_str = request.session.get("birthdate")
-    birth_hour = int(request.session.get("birthhour", 12))
-
-    # gender = request.session.get("gender", "unknown")
+    """AI 사주 분석 API (글로벌 캐싱 버전)"""
+    
     saju_key = request.session.get("saju_key")
-
-    # DB 캐시 확인
+    if not saju_key:
+        raise HTTPException(status_code=400, detail="사주 정보가 없습니다.")
+    
+    # 🔄 글로벌 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
     if cached_row and cached_row.analysis_preview:
         return {"result": safe_markdown(cached_row.analysis_preview)}
-
-    try:
-        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
-    except:
-        raise HTTPException(status_code=400, detail="Invalid birthdate")
-
-    # 사주팔자가져오기
-    pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
-    # saju_info = get_saju_details(pillars)
-
+    
+    # 캐시 미스 - 새로 계산
+    calc_datetime, orig_date, gender = SajuKeyManager.get_birth_info_for_calculation(saju_key)
+    
+    # 사주팔자 계산
+    pillars = calculate_four_pillars(calc_datetime)
+    
     # 원문 해석과 일주 해석 병합
     ilju = pillars["day"]
     ilju_interpretation = get_ilju_interpretation(ilju)
     ilju_kr = ilju_interpretation.get("kr", "")
-
-    # 삼명통회 해석  검색하여 가져오기
+    
+    # 삼명통회 해석 검색하여 가져오기
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
     ctext = ""
     if ctext_rows:
         ctext = "\n\n".join([row["content"] for row in ctext_rows])
-
+    
     # 오행/십성 분석
     analyzer = SajuAnalyzer()
     saju_analyzer_result = analyzer.analyze_saju(
         pillars['year'], pillars['month'], pillars['day'], pillars['hour']
     )
-
+    
     # GPT에게 전달할 통합 프롬프트 구성
     prompt = f"""
 당신은 사주 해석 전문가입니다.
@@ -892,7 +922,7 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
 
 이 정보를 종합하여, 이 사람의 인생 전반적 특성과 강점, 유의사항을 300자 내외로 종합 해석해주세요.
 """
-
+    
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -904,20 +934,58 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
             max_tokens=600
         )
         reply = format_fortune_text(response.choices[0].message.content)
-        # DB에 preview 저장 (analysis_preview 컬럼)
+        
+        # 🔄 글로벌 캐시에 저장 (동시성 고려)
         try:
             row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
             if row:
                 row.analysis_preview = reply
             else:
-                db.add(SajuAnalysisCache(
+                new_cache = SajuAnalysisCache(
                     saju_key=saju_key,
                     analysis_preview=reply
-                ))
+                )
+                db.add(new_cache)
             db.commit()
-        except Exception:
+        except IntegrityError:
+            # 동시 요청으로 다른 프로세스가 이미 삽입한 경우
             db.rollback()
+            cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
+            if cached_row and cached_row.analysis_preview:
+                reply = cached_row.analysis_preview
+        except Exception as e:
+            print(f"캐시 저장 실패 (무시): {e}")
+            db.rollback()
+        
         return {"result": safe_markdown(reply)}
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+# 통계 API 추가 (선택사항)
+@router.get("/api/stats")
+async def saju_stats(request: Request, db: Session = Depends(get_db)):
+    """사주 서비스 통계"""
+    try:
+        total_keys = db.query(SajuAnalysisCache).count()
+        total_users = db.query(SajuUser).count()
+        
+        # 인기 있는 생년 분포
+        popular_years = db.execute(text("""
+            SELECT YEAR(STR_TO_DATE(SUBSTRING_INDEX(saju_key, '_', -4), '%Y%m%d')) as birth_year, 
+                   COUNT(*) as count
+            FROM saju_analysis_cache 
+            GROUP BY birth_year 
+            ORDER BY count DESC 
+            LIMIT 10
+        """)).fetchall()
+        
+        return {
+            "total_unique_saju": total_keys,
+            "total_requests": total_users,
+            "cache_hit_ratio": round((total_keys / max(total_users, 1)) * 100, 1),
+            "popular_birth_years": [{"year": row[0], "count": row[1]} for row in popular_years]
+        }
     except Exception as e:
         return {"error": str(e)}
 

@@ -26,6 +26,27 @@
       </select>
     </div>
 
+    <!-- 달력 선택 (새로 추가) -->
+    <div class="mb-6">
+        <label class="block text-base font-medium text-gray-800 mb-2">달력 구분 *</label>
+        <div class="grid grid-cols-2 gap-4">
+            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition-colors">
+                <input type="radio" name="calendar" value="SOL" checked class="mr-3">
+                <div>
+                    <div class="font-medium">양력 📅</div>
+                    <div class="text-sm text-gray-600">일반적인 달력</div>
+                </div>
+            </label>
+            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition-colors">
+                <input type="radio" name="calendar" value="LUN" class="mr-3">
+                <div>
+                    <div class="font-medium">음력 🌙</div>
+                    <div class="text-sm text-gray-600">전통 음력 날짜</div>
+                </div>
+            </label>
+        </div>
+    </div>
+
     <div class="mb-6">
       <label class="block text-base font-medium text-gray-800 mb-2">생년월일 (양력) *</label>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -52,15 +73,48 @@
       </div>
     </div>
 
+    <!-- 출생 시간 (개선) -->
     <div class="mb-6">
-      <label class="block text-base font-medium text-gray-800 mb-2">출생 시간 *</label>
-      <select name="birthhour" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600" required>
-        <option value="">출생 시간을 선택해주세요</option>
-        <option value="12">모름</option>
-        {% for h in range(0, 24) %}
-          <option value="{{ h }}">{{ h }}시</option>
-        {% endfor %}
-      </select>
+        <label class="block text-base font-medium text-gray-800 mb-2">출생 시간 *</label>
+        
+        <!-- 시간 미상 체크박스 -->
+        <div class="mb-3">
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="hourUnknown" name="hour_unknown" class="rounded border-gray-300 text-purple-600 shadow-sm focus:ring-purple-500">
+                <span class="ml-2 text-sm text-gray-700">출생 시간을 모르겠어요 ⏰</span>
+            </label>
+        </div>
+        
+        <!-- 시간 선택 -->
+        <select name="birthhour" id="birthhourSelect" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600">
+            <option value="">출생 시간을 선택해주세요</option>
+            {% for h in range(0, 24) %}
+                <option value="{{ h }}">{{ h }}시 ({{ h if h <= 12 else h-12 }}{{ "오전" if h < 12 else "오후" }})</option>
+            {% endfor %}
+        </select>
+        
+        <div class="mt-2 text-sm text-gray-600">
+            💡 시간을 모르시면 위의 체크박스를 선택해주세요. 정오(12시) 기준으로 계산됩니다.
+        </div>
+    </div>
+
+    <!-- 시간대 선택 (새로 추가) -->
+    <div class="mb-6">
+        <label class="block text-base font-medium text-gray-800 mb-2">출생 지역 시간대</label>
+        <select name="timezone" id="timezoneSelect" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-600">
+            <option value="Asia/Seoul">🇰🇷 한국 (서울)</option>
+            <option value="Asia/Tokyo">🇯🇵 일본 (도쿄)</option>
+            <option value="Asia/Shanghai">🇨🇳 중국 (상하이)</option>
+            <option value="America/New_York">🇺🇸 미국 동부 (뉴욕)</option>
+            <option value="America/Los_Angeles">🇺🇸 미국 서부 (LA)</option>
+            <option value="Europe/London">🇬🇧 영국 (런던)</option>
+            <option value="Europe/Paris">🇫🇷 프랑스 (파리)</option>
+            <option value="Australia/Sydney">🇦🇺 호주 (시드니)</option>
+            <option value="UTC">🌍 협정세계시 (UTC)</option>
+        </select>
+        <div class="mt-2 text-sm text-gray-600">
+            🌏 태어난 곳의 현지 시간대를 선택해주세요. 사주 계산의 정확도에 영향을 줍니다.
+        </div>
     </div>
 
     <button type="submit" class="w-full py-5 mt-8 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
@@ -105,27 +159,27 @@
 
 {% block extra_scripts %}
 <script>
-// 폼 제출 시 로딩 표시
+// 폼 제출 시 로딩 표시 (기존 코드 유지)
 document.getElementById('sajuForm').addEventListener('submit', function() {
-  document.getElementById('loadingOverlay').style.display = 'flex';
+    document.getElementById('loadingOverlay').style.display = 'flex';
 });
 
-// 생년월일 유효성 검사
+// 생년월일 유효성 검사 (기존 코드 유지)
 function updateDays() {
-  const year = parseInt(document.getElementById('birthYear').value);
-  const month = parseInt(document.getElementById('birthMonth').value);
-  const daySelect = document.getElementById('birthDay');
-  
-  if (!year || !month) return;
-  
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const currentDay = daySelect.value;
-  
-  daySelect.innerHTML = '<option value="">일</option>';
-  for (let i = 1; i <= daysInMonth; i++) {
-    const selected = (i == currentDay) ? 'selected' : '';
-    daySelect.innerHTML += `<option value="${i}" ${selected}>${i}일</option>`;
-  }
+    const year = parseInt(document.getElementById('birthYear').value);
+    const month = parseInt(document.getElementById('birthMonth').value);
+    const daySelect = document.getElementById('birthDay');
+    
+    if (!year || !month) return;
+    
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const currentDay = daySelect.value;
+    
+    daySelect.innerHTML = '<option value="">일</option>';
+    for (let i = 1; i <= daysInMonth; i++) {
+        const selected = (i == currentDay) ? 'selected' : '';
+        daySelect.innerHTML += `<option value="${i}" ${selected}>${i}일</option>`;
+    }
 }
 
 document.getElementById('birthYear').addEventListener('change', updateDays);
@@ -135,5 +189,75 @@ document.getElementById('birthMonth').addEventListener('change', updateDays);
 window.addEventListener('DOMContentLoaded', function() {
   updateDays();
 });
+
+// 자동 시간대 감지
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const timezoneSelect = document.getElementById('timezoneSelect');
+        
+        // 사용자의 시간대가 옵션에 있으면 자동 선택
+        for (let option of timezoneSelect.options) {
+            if (option.value === userTimeZone) {
+                option.selected = true;
+                break;
+            }
+        }
+    } catch (e) {
+        console.log('시간대 자동 감지 실패:', e);
+    }
+});
+
+// 시간 미상 체크박스 처리
+document.getElementById('hourUnknown').addEventListener('change', function() {
+    const birthhourSelect = document.getElementById('birthhourSelect');
+    if (this.checked) {
+        birthhourSelect.disabled = true;
+        birthhourSelect.value = '';
+        birthhourSelect.style.opacity = '0.5';
+    } else {
+        birthhourSelect.disabled = false;
+        birthhourSelect.style.opacity = '1';
+    }
+});
+
+// 달력 선택에 따른 안내 메시지
+document.querySelectorAll('input[name="calendar"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const infoDiv = document.getElementById('calendarInfo') || createCalendarInfo();
+        
+        if (this.value === 'LUN') {
+            infoDiv.innerHTML = `
+                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center">
+                        <span class="text-blue-600 mr-2">ℹ️</span>
+                        <span class="text-sm text-blue-800">
+                            <strong>음력 선택:</strong> 전통 음력 날짜로 입력해주세요. 
+                            자동으로 양력으로 변환하여 계산합니다.
+                        </span>
+                    </div>
+                </div>
+            `;
+        } else {
+            infoDiv.innerHTML = `
+                <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-center">
+                        <span class="text-green-600 mr-2">✅</span>
+                        <span class="text-sm text-green-800">
+                            <strong>양력 선택:</strong> 일반적인 달력의 날짜를 입력해주세요.
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+    });
+});
+function createCalendarInfo() {
+    const infoDiv = document.createElement('div');
+    infoDiv.id = 'calendarInfo';
+    const calendarSection = document.querySelector('input[name="calendar"]').closest('.mb-6');
+    calendarSection.appendChild(infoDiv);
+    return infoDiv;
+}
 </script>
 {% endblock %}
