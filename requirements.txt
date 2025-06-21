@@ -27,3 +27,5 @@ celery[redis]==5.3.6
 pdfkit
 fpdf
 requests
+matplotlib
+pandas

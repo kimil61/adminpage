@@ -23,7 +23,7 @@ from email.mime.application import MIMEApplication
 
 # -------- NEW IMPORTS FOR REPORT RENDERING ------------
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from app.routers.report_utils import radar_chart_base64, month_heat_table, keyword_card
+from app.report_utils import radar_chart_base64, month_heat_table, keyword_card
 # ------------------------------------------------------
 
 # 로거 설정

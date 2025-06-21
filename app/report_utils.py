@@ -26,12 +26,35 @@ def radar_chart_base64(ratios: dict[str, int]) -> str:
 
 def month_heat_table(status: dict[str, list[str]]) -> str:
     """
-    {'Love':['G','R',…], 'Money':['-','G',…], 'Career':[…]} (G=Good, Y=Caution, R=Risk)
-    → 컬러 배경 셀 HTML
+    status example:
+        {
+          'Love':  ['G','R','-','G','Y','-','G','Y','-','G','R','-'],
+          'Money': ['-','G','R','Y','-','G','-','G','Y','-','G','R'],
+          'Career':['Y','-','G','G','R','-','Y','-','G','Y','-','G']
+        }
+    Returns an HTML table with colored cells.
     """
-    df = pd.DataFrame(status, index=['J','F','M','A','M','J','J','A','S','O','N','D']).T
-    color_map = {'G':'#DCFCE7', 'Y':'#FEFCE8', 'R':'#FEE2E2', '-':'#FFFFFF'}
-    styled = df.style.applymap(lambda v: f"background:{color_map.get(v,'#FFF')};")
+    import pandas as pd
+
+    # Unique column labels to avoid Styler errors
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    # Build DataFrame: rows = categories, columns = months
+    df = pd.DataFrame(status, dtype=str).T
+    df.columns = months  # rename columns for clarity & uniqueness
+
+    color_map = {
+        'G': '#DCFCE7',   # Good (green)
+        'Y': '#FEFCE8',   # Caution (yellow)
+        'R': '#FEE2E2',   # Risk (red)
+        '-': '#FFFFFF',   # Neutral / empty
+    }
+
+    # Apply background color to each cell
+    styled = df.style.applymap(lambda v: f"background:{color_map.get(v, '#FFFFFF')};")
+
+    # Convert to HTML
     return styled.to_html(classes="mini-cal", border=0)
 
 def keyword_card(color:str, numbers:list[int], stone:str) -> str:
