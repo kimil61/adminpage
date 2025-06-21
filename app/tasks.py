@@ -147,17 +147,30 @@ def generate_full_report(self, order_id: int, saju_key: str):
         birth_hour = int(birth_hour)
         
         pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
-        result_text = analyze_four_pillars_to_string(
+        elem_dict_kr, result_text  = analyze_four_pillars_to_string(
             pillars['year'][0], pillars['year'][1],
             pillars['month'][0], pillars['month'][1],
             pillars['day'][0], pillars['day'][1],
             pillars['hour'][0], pillars['hour'][1],
         )
+        combined_text = "\n".join([
+            "오행 분포:",
+            ", ".join([f"{k}:{v}" for k, v in elem_dict_kr.items()]),
+            "",
+            result_text,
+        ])
+        radar_base64 = radar_chart_base64({
+            'Wood': elem_dict_kr.get('목', 0),
+            'Fire': elem_dict_kr.get('화', 0),
+            'Earth': elem_dict_kr.get('토', 0),
+            'Metal': elem_dict_kr.get('금', 0),
+            'Water': elem_dict_kr.get('수', 0),
+        })
 
         # AI 분석 실행
         self.update_state(state='progress', meta={'current': 4, 'total': 6, 'status': 'AI 심층 분석 중...'})
         
-        analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=result_text)
+        analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=combined_text)
         if not analysis_result:
             raise Exception('Failed to generate AI analysis')
 
@@ -178,8 +191,6 @@ def generate_full_report(self, order_id: int, saju_key: str):
         #   리포트 템플릿 생성 (Jinja2 + report_utils)
         # ────────────────────────────────────────────────
         # 1) 데모/임시 데이터 준비 (후속 단계에서 실제 계산치로 교체)
-        ratios_demo = {'Wood': 25, 'Fire': 30, 'Earth': 20, 'Metal': 15, 'Water': 10}
-        radar_base64 = radar_chart_base64(ratios_demo)
 
         status_demo = {
             'Love':   ['G', 'R', '-', 'G', 'Y', '-', 'G', 'Y', '-', 'G', 'R', '-'],
@@ -202,7 +213,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         )
         tpl = env.get_template('report_base.html')
         html_content = tpl.render(
-            user_name   = order.buyer_name or '고객',
+            user_name   = getattr(order, 'buyer_name', None) or getattr(order, 'name', None) or '고객',
             radar_base64= radar_base64,
             calendar_html= calendar_html,
             keyword_html = keyword_html,

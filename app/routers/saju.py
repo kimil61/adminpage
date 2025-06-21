@@ -466,6 +466,19 @@ def analyze_four_pillars_with_branches(year_gan, year_branch, month_gan, month_b
 
 def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branch, day_gan, day_branch, hour_gan, hour_branch):
     lines = []
+    # ── NEW: 오행 분포 계산 ─────────────────
+    elements_kr = ['목', '화', '토', '금', '수']
+    counts = {k: 0 for k in elements_kr}
+
+    for ch in [year_gan, year_branch, month_gan, month_branch,
+               day_gan, day_branch, hour_gan, hour_branch]:
+        el_tuple = element_map.get(ch)  # element_map 글로벌 변수
+        if el_tuple:
+            counts[el_tuple[0]] += 1
+
+    elem_line = "오행 분포: " + ", ".join([f"{k}:{v}" for k, v in counts.items()])
+    # ───────────────────────────────────────
+
     lines.append("=== 사주 정보 ===")
     lines.append(f"년주: {year_gan} {year_branch} (지장간: {', '.join(branch_hidden_stems.get(year_branch, []))})")
     lines.append(f"월주: {month_gan} {month_branch} (지장간: {', '.join(branch_hidden_stems.get(month_branch, []))})")
@@ -492,7 +505,8 @@ def analyze_four_pillars_to_string(year_gan, year_branch, month_gan, month_branc
     lines.append("희신: " + (', '.join(heesin_list) if heesin_list else '없음'))
     lines.append("기신: " + (', '.join(gishin_list) if gishin_list else '없음'))
 
-    return "\n".join(lines)
+    full_text = "\n".join(lines)
+    return elem_line, full_text
 
 ## 끝
 #####################################################################
@@ -998,7 +1012,7 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
         pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
 
         # Use string-based analysis for result_text
-        result_text = analyze_four_pillars_to_string(
+        elem_line, result_text = analyze_four_pillars_to_string(
             pillars['year'][0], pillars['year'][1],
             pillars['month'][0], pillars['month'][1],
             pillars['day'][0], pillars['day'][1],
