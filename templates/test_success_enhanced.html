@@ -1,0 +1,237 @@
+<!-- templates/order/test_success_enhanced.html -->
+{% extends "base.html" %}
+
+{% block title %}AI 사주 분석 완료 - My Website{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- 헤더 섹션 -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">🔮 AI 사주 분석 완료</h1>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 inline-block">
+            <p class="text-green-800">
+                <strong>{{ user_name }}님</strong>의 개인 맞춤 사주 리포트가 준비되었습니다!
+            </p>
+            <p class="text-sm text-green-600 mt-1">
+                주문번호: {{ order.id }} | {{ birthdate_str }} {{ gender_kr }}
+            </p>
+        </div>
+    </div>
+
+    <!-- 사주 기본 정보 -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <!-- 사주팔자 -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                📅 사주팔자
+            </h2>
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <div class="bg-red-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">年柱</div>
+                    <div class="font-bold text-red-600">{{ pillars.year }}</div>
+                </div>
+                <div class="bg-yellow-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">月柱</div>
+                    <div class="font-bold text-yellow-600">{{ pillars.month }}</div>
+                </div>
+                <div class="bg-blue-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">日柱</div>
+                    <div class="font-bold text-blue-600">{{ pillars.day }}</div>
+                </div>
+                <div class="bg-green-50 p-3 rounded">
+                    <div class="text-sm text-gray-600">時柱</div>
+                    <div class="font-bold text-green-600">{{ pillars.hour }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오행 분포 차트 -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                📊 오행 밸런스
+            </h2>
+            {% if chart_base64 %}
+            <div class="text-center">
+                <img src="{{ chart_base64 }}" alt="오행 차트" class="mx-auto max-w-full h-auto">
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-5 gap-2 mt-4 text-center text-sm">
+                {% for element, count in elem_dict_kr.items() %}
+                <div class="bg-gray-50 p-2 rounded">
+                    <div class="font-semibold">{{ element }}</div>
+                    <div class="text-blue-600">{{ count }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 분석 결과 -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                🤖 AI 심층 분석 결과
+            </h2>
+            <button onclick="regenerateAI()" id="regenerateBtn" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                🔄 재생성
+            </button>
+        </div>
+        
+        <div id="aiAnalysisContent" class="prose max-w-none">
+            {{ ai_analysis|safe }}
+        </div>
+        
+        <!-- 로딩 상태 -->
+        <div id="aiLoadingState" class="hidden text-center py-8">
+            <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-blue-500 bg-blue-50">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                AI가 새로운 분석을 생성하고 있습니다...
+            </div>
+        </div>
+    </div>
+
+    <!-- 액션 버튼들 -->
+    <div class="bg-gray-50 rounded-lg p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📥 다음 단계</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+            <button onclick="generatePDF()" id="pdfBtn"
+                    class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+                📄 PDF 리포트 생성
+            </button>
+            <a href="/order/mypage" 
+               class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center flex items-center justify-center">
+                📋 구매 내역 확인
+            </a>
+            <a href="/saju/page1" 
+               class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center flex items-center justify-center">
+                🔮 새 사주 보기
+            </a>
+        </div>
+    </div>
+
+    <!-- 주문 정보 상세 -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📋 주문 정보</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <p><span class="font-semibold">주문 번호:</span> {{ order.id }}</p>
+                <p><span class="font-semibold">상품명:</span> AI 심층 사주 리포트</p>
+                <p><span class="font-semibold">금액:</span> {{ order.amount }}원</p>
+            </div>
+            <div class="space-y-2">
+                <p><span class="font-semibold">주문 시간:</span> {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <p><span class="font-semibold">상태:</span> 
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">{{ order.status }}</span>
+                </p>
+                <p><span class="font-semibold">사주 키:</span> 
+                    <code class="bg-gray-100 text-sm px-2 py-1 rounded">{{ order.saju_key }}</code>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+async function regenerateAI() {
+    const btn = document.getElementById('regenerateBtn');
+    const content = document.getElementById('aiAnalysisContent');
+    const loading = document.getElementById('aiLoadingState');
+    
+    // UI 상태 변경
+    btn.disabled = true;
+    btn.innerHTML = '⏳ 생성 중...';
+    content.classList.add('hidden');
+    loading.classList.remove('hidden');
+    
+    try {
+        const response = await fetch(`/order/regenerate-ai/{{ order.id }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            content.innerHTML = result.analysis;
+            showToast('AI 분석이 재생성되었습니다!', 'success');
+        } else {
+            showToast('AI 분석 재생성에 실패했습니다: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showToast('오류가 발생했습니다: ' + error.message, 'error');
+    } finally {
+        // UI 상태 복원
+        btn.disabled = false;
+        btn.innerHTML = '🔄 재생성';
+        content.classList.remove('hidden');
+        loading.classList.add('hidden');
+    }
+}
+
+async function generatePDF() {
+    const btn = document.getElementById('pdfBtn');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ PDF 생성 중...';
+    
+    try {
+        const response = await fetch(`/order/test-report/{{ order.id }}`);
+        const result = await response.json();
+        
+        if (result.task_id) {
+            showToast('PDF 생성이 시작되었습니다!', 'success');
+            // 태스크 상태 모니터링 시작
+            monitorTask(result.task_id);
+        } else {
+            showToast('PDF 생성 요청에 실패했습니다.', 'error');
+        }
+    } catch (error) {
+        showToast('오류가 발생했습니다: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '📄 PDF 리포트 생성';
+    }
+}
+
+async function monitorTask(taskId) {
+    const checkInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/order/task-status/${taskId}`);
+            const status = await response.json();
+            
+            if (status.state === 'success') {
+                clearInterval(checkInterval);
+                showToast('PDF 생성이 완료되었습니다!', 'success');
+            } else if (status.state === 'FAILURE') {
+                clearInterval(checkInterval);
+                showToast('PDF 생성에 실패했습니다: ' + status.status, 'error');
+            }
+            // progress 상태는 계속 체크
+        } catch (error) {
+            console.error('태스크 상태 확인 실패:', error);
+        }
+    }, 2000); // 2초마다 체크
+}
+
+function showToast(message, type) {
+    // 간단한 토스트 알림
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
