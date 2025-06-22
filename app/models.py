@@ -190,20 +190,28 @@ class Product(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+# app/models.py에서 Order 클래스만 수정
+
 class Order(Base):
     """주문 테이블"""
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("blog_users.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))  # 여기에 연결
+    product_id = Column(Integer, ForeignKey("products.id"))
     amount = Column(Integer, nullable=False)  # 금액
     kakao_tid = Column(String(100), unique=True, nullable=False)  # 카카오 결제 ID
     saju_key = Column(String(100), nullable=False)  # 사주 캐시 키
     pdf_send_email = Column(String(100), nullable=True)  # PDF 리포트 발송 이메일
     pdf_send_phone = Column(String(50), nullable=True)  # PDF 발송용 전화번호
-    status = Column(Enum("pending", "paid","progress","success", "refunded", "cancelled"), default="pending")  # 주문 상태 (예: pending, completed, cancelled)
-    analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)  # 사주 분석 캐시 ID
+    
+    # 🎯 새로 추가된 필드들
+    status = Column(Enum("pending", "paid", "cancelled", "refunded"), default="pending")
+    report_status = Column(Enum("pending", "generating", "completed", "failed"), default="pending")
+    celery_task_id = Column(String(200), nullable=True)  # Celery 태스크 ID
+    report_completed_at = Column(DateTime, nullable=True)  # 리포트 완성 시간
+    
+    analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)
     report_html = Column(String(255), nullable=True)  # 생성된 HTML 리포트 경로
     report_pdf = Column(String(255), nullable=True)   # 생성된 PDF 리포트 경로
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -211,3 +219,4 @@ class Order(Base):
     analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
     user = relationship("User")
     product = relationship("Product")
+    

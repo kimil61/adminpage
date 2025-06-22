@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user_name }}님의 AI 사주 리포트 - My Website{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- 헤더 섹션 -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-purple-800 mb-2">🔮 {{ user_name }}님의 AI 심층 사주 리포트</h1>
+        <p class="text-gray-600">주문번호: #{{ order.id }} | 생성일: {{ order.report_completed_at.strftime('%Y년 %m월 %d일') if order.report_completed_at else order.created_at.strftime('%Y년 %m월 %d일') }}</p>
+        
+        <!-- 액션 버튼들 -->
+        <div class="mt-6 space-x-4">
+            <button onclick="window.print()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                🖨️ 인쇄하기
+            </button>
+            <button onclick="shareByEmail()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                📧 이메일로 받기
+            </button>
+            <a href="/order/pdf/{{ order.id }}" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+                📄 PDF 다운로드
+            </a>
+        </div>
+    </div>
+
+    <!-- 사주 기본 정보 -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-center">🏛️ 사주팔자</h2>
+        <div class="grid grid-cols-4 gap-4 text-center">
+            <div class="bg-white rounded-lg p-4">
+                <h3 class="font-semibold text-purple-700 mb-2">년주 (年柱)</h3>
+                <div class="text-2xl font-bold">{{ pillars.year[0] }}</div>
+                <div class="text-lg text-gray-600">{{ pillars.year[1] }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4">
+                <h3 class="font-semibold text-blue-700 mb-2">월주 (月柱)</h3>
+                <div class="text-2xl font-bold">{{ pillars.month[0] }}</div>
+                <div class="text-lg text-gray-600">{{ pillars.month[1] }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4">
+                <h3 class="font-semibold text-green-700 mb-2">일주 (日柱)</h3>
+                <div class="text-2xl font-bold">{{ pillars.day[0] }}</div>
+                <div class="text-lg text-gray-600">{{ pillars.day[1] }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4">
+                <h3 class="font-semibold text-red-700 mb-2">시주 (時柱)</h3>
+                <div class="text-2xl font-bold">{{ pillars.hour[0] }}</div>
+                <div class="text-lg text-gray-600">{{ pillars.hour[1] }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 오행 밸런스 차트 -->
+    {% if radar_base64 %}
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-center">📊 오행 밸런스 분석</h2>
+        <div class="text-center">
+            <img src="data:image/png;base64,{{ radar_base64 }}" alt="오행 밸런스 차트" class="mx-auto max-w-md">
+        </div>
+        <div class="grid grid-cols-5 gap-2 mt-6 text-center text-sm">
+            {% for element, count in element_counts.items() %}
+            <div class="bg-gray-50 rounded-lg p-2">
+                <div class="font-semibold">{{ element }}</div>
+                <div class="text-lg font-bold text-purple-600">{{ count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- AI 심층 분석 결과 -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 flex items-center">
+            🤖 AI 심층 분석 결과
+            <span class="ml-3 text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">Premium</span>
+        </h2>
+        <div class="prose max-w-none">
+            {{ ai_analysis | safe }}
+        </div>
+    </div>
+
+    <!-- 구매 완료 메시지 -->
+    <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+        <div class="text-center">
+            <h3 class="text-xl font-semibold text-green-800 mb-2">✅ 리포트가 성공적으로 생성되었습니다!</h3>
+            <p class="text-green-700">이 리포트는 언제든지 마이페이지에서 다시 확인하실 수 있습니다.</p>
+        </div>
+    </div>
+
+    <!-- 하단 네비게이션 -->
+    <div class="text-center space-y-4">
+        <a href="/order/mypage" class="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+            📋 구매 내역으로 돌아가기
+        </a>
+        <br>
+        <a href="/saju/page1" class="inline-block text-purple-600 hover:underline">
+            새로운 사주 분석하기 →
+        </a>
+    </div>
+</div>
+
+<script>
+// 이메일 발송 기능
+function shareByEmail() {
+    const email = prompt('리포트를 받을 이메일 주소를 입력하세요:');
+    if (email && email.includes('@')) {
+        fetch(`/order/email/{{ order.id }}?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('이메일이 발송되었습니다!');
+                } else {
+                    alert('이메일 발송에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('이메일 발송 오류:', error);
+                alert('이메일 발송 중 오류가 발생했습니다.');
+            });
+    } else if (email) {
+        alert('올바른 이메일 주소를 입력해주세요.');
+    }
+}
+
+// 인쇄 스타일
+window.addEventListener('beforeprint', function() {
+    document.body.classList.add('printing');
+});
+
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('printing');
+});
+</script>
+
+<style>
+@media print {
+    .no-print, button, .space-x-4 {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .bg-gradient-to-r, .bg-white, .bg-green-50 {
+        background: white !important;
+        border: 1px solid #ccc !important;
+    }
+}
+</style>

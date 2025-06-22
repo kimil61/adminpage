@@ -347,6 +347,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
     db: Session = SessionLocal()
     
     try:
+        
         # 진행 상황 업데이트
         self.update_state(state='progress', meta={'current': 1, 'total': 6, 'status': '주문 정보 확인 중...'})
         
