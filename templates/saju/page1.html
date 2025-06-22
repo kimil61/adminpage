@@ -159,9 +159,17 @@
 
 {% block extra_scripts %}
 <script>
-// 폼 제출 시 로딩 표시 (기존 코드 유지)
-document.getElementById('sajuForm').addEventListener('submit', function() {
-    document.getElementById('loadingOverlay').style.display = 'flex';
+// 폼 제출 시 출생시간 체크 및 로딩 표시 (통합)
+document.getElementById('sajuForm').addEventListener('submit', function(e) {
+    const birthHourValue = document.getElementById('birthhourSelect').value;
+    const hourUnknownChecked = document.getElementById('hourUnknown').checked;
+
+    if (!birthHourValue && !hourUnknownChecked) {
+        e.preventDefault();
+        alert("출생 시간을 선택하거나 '모르겠어요'를 체크해주세요.");
+    } else {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    }
 });
 
 // 생년월일 유효성 검사 (기존 코드 유지)

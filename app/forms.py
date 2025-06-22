@@ -81,11 +81,18 @@ class InPostForm(Form):
 ##########
 # 사주
 class SajuForm(Form):
-    gender = SelectField("성별", choices=[("male", "남자"), ("female", "여자")])
-    birth_year = StringField("출생년도")
-    birth_month = StringField("출생월")
-    birth_day = StringField("출생일")
-    birth_hour = StringField("출생시")
+    gender       = SelectField('성별', choices=[('male', '남자'), ('female', '여자')])
+
+    # 출생일(연·월·일)
+    birth_year   = StringField('출생년도',  validators=[DataRequired()])
+    birth_month  = StringField('출생월',    validators=[DataRequired()])
+    birth_day    = StringField('출생일',    validators=[DataRequired()])
+
+    # ⏰ 시간 입력 → 선택 안 할 수도 있으므로 Optional
+    birthhour    = StringField('출생시',   validators=[Optional()])
+
+    # 🆕 “시간 미상” 체크박스
+    hour_unknown = BooleanField('시간 미상', default=False)
 
 
 class FilteredContentForm(Form):

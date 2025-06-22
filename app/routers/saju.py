@@ -737,53 +737,52 @@ async def saju_page1_submit(
     db: Session = Depends(get_db)
 ):
     """사주 입력 처리 (글로벌 캐싱 버전)"""
-    
+
     # 입력값 검증
     if not gender or not birth_year or not birth_month or not birth_day:
         raise HTTPException(status_code=400, detail="필수 입력값이 누락되었습니다.")
-    
-    # 출생 시간 처리
+
+    # 출생 시간 처리 (refactored to match latest logic)
     if hour_unknown:
-        birthhour = None
-    elif birthhour is None:
-        raise HTTPException(status_code=400, detail="출생 시간을 입력하거나 '모름'을 체크해주세요.")
-    
+        birth_hour = None
+    else:
+        birth_hour = birthhour or None
+
     # 날짜 형식화
     birthdate = f"{birth_year:04d}-{birth_month:02d}-{birth_day:02d}"
-    
+
     # 🎯 글로벌 사주 키 생성
     saju_key = SajuKeyManager.build_saju_key(
         birth_date=birthdate,
-        birth_hour=birthhour,
+        birth_hour=birth_hour,
         gender=gender,
         calendar=calendar,
         timezone=timezone
     )
 
-    
     # 세션 토큰 생성
     session_token = generate_session_token(request.session.get("user_id"))
-    
+
     # 세션에 정보 저장
     request.session.update({
         "session_token": session_token,
         "name": name,
         "gender": gender,
         "birthdate": birthdate,
-        "birthhour": birthhour,
+        "birthhour": birth_hour,
         "hour_unknown": hour_unknown,
         "calendar": calendar,
         "timezone": timezone,
         "saju_key": saju_key
     })
-    
+
     # 사용자 기록 저장 (개별 기록은 유지)
     try:
         new_user = SajuUser(
             name=name,
             gender=gender,
             birthdate=birthdate,
-            birthhour=birthhour,
+            birthhour=birth_hour,
             calendar=calendar,
             timezone=timezone,
             birth_date_original=birthdate,
@@ -797,7 +796,7 @@ async def saju_page1_submit(
     except Exception as e:
         print(f"사용자 기록 저장 실패 (무시): {e}")
         db.rollback()
-    
+
     return RedirectResponse(url="/saju/page2", status_code=302)
 
 # ai 사주 결과 페이지
