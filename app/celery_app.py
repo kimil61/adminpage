@@ -24,6 +24,7 @@ celery_app.conf.update(
     task_soft_time_limit=540,  # 9분 소프트 타임아웃
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    broker_connection_retry_on_startup=True,
 )
 
 # 태스크 스케줄링 (필요시)
