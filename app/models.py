@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Date, T
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
+from datetime import timezone
 
 class User(Base):
     __tablename__ = "blog_users"
@@ -13,7 +14,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     points = Column(Integer, default=0)  # 포인트 시스템 추가
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     posts = relationship("Post", back_populates="author")
 
@@ -24,7 +25,7 @@ class Category(Base):
     name = Column(String(100), unique=True, nullable=False)
     slug = Column(String(100), unique=True, nullable=False)
     description = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     posts = relationship("Post", back_populates="category")
 
@@ -44,8 +45,8 @@ class Post(Base):
     is_published = Column(Boolean, default=False)
     views = Column(Integer, default=0)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     published_at = Column(DateTime)
     
     author = relationship("User", back_populates="posts")
@@ -60,7 +61,7 @@ class Media(Base):
     file_type = Column(String(50))
     file_size = Column(Integer)
     file_path = Column(String(500))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")
@@ -77,8 +78,8 @@ class InPost(Base):
     gen_content1 = Column(Text)
     gen_content2 = Column(Text)
     gen_content3 = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class FilteredContent(Base):
@@ -92,7 +93,7 @@ class FilteredContent(Base):
     confidence_score = Column(Integer, nullable=True)  # MySQL float → use Float if high precision needed
     reasoning = Column(Text, nullable=True)
     suitable_for_blog = Column(Boolean, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 # app/models.py에 추가할 사주 관련 모델들
 
@@ -114,11 +115,11 @@ class SajuUser(Base):
     birth_date_original = Column(Date)      # 사용자가 입력한 원본 날짜
     birth_date_converted = Column(Date)     # (음력 → 양력 등) 변환된 날짜
     session_token = Column(String(255), unique=True)
-    first_visit = Column(DateTime, default=datetime.utcnow)
-    last_visit = Column(DateTime, default=datetime.utcnow)
+    first_visit = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    last_visit = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     visit_count = Column(Integer, default=1)
     saju_key = Column(String(120), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")
 
@@ -131,7 +132,7 @@ class SajuFortune(Base):
     menu = Column(String(50))  # 'basic', 'saju', 'love', etc.
     date = Column(String(20))  # YYYY-MM-DD 형식
     result = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class SajuInterpretation(Base):
     """사주 해석 데이터 테이블"""
@@ -143,7 +144,7 @@ class SajuInterpretation(Base):
     cn = Column(Text)  # 중국어 해석
     kr = Column(Text)  # 한국어 해석
     en = Column(Text)  # 영어 해석
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class MatchReport(Base):
     """궁합 리포트 캐시 테이블"""
@@ -152,7 +153,7 @@ class MatchReport(Base):
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(255), unique=True)  # 해시키
     report = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     
 
@@ -176,7 +177,7 @@ class SajuAnalysisCache(Base):
     saju_key = Column(String(100), unique=True, index=True)  # 예: "1984-06-01_13_male"
     analysis_preview = Column(Text, nullable=True)
     analysis_full = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     orders = relationship("Order", back_populates="analysis_cache")
 
 class Product(Base):
@@ -188,7 +189,7 @@ class Product(Base):
     price = Column(Integer, nullable=False)  # 단가 (원화)
     code = Column(String(50), unique=True, nullable=False)  # 예: 'basic_saju', 'premium_love'
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 # app/models.py에서 Order 클래스만 수정
 
@@ -209,14 +210,13 @@ class Order(Base):
     status = Column(Enum("pending", "paid", "cancelled", "refunded"), default="pending")
     report_status = Column(Enum("pending", "generating", "completed", "failed"), default="pending")
     celery_task_id = Column(String(200), nullable=True)  # Celery 태스크 ID
-    report_completed_at = Column(DateTime, nullable=True)  # 리포트 완성 시간
+    report_completed_at = Column(DateTime(timezone=True), nullable=True)  # 리포트 완성 시간
     
     analysis_cache_id = Column(Integer, ForeignKey("saju_analysis_cache.id"), nullable=True)
     report_html = Column(String(255), nullable=True)  # 생성된 HTML 리포트 경로
     report_pdf = Column(String(255), nullable=True)   # 생성된 PDF 리포트 경로
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     analysis_cache = relationship("SajuAnalysisCache", back_populates="orders")
     user = relationship("User")
     product = relationship("Product")
-    
