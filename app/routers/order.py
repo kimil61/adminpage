@@ -142,7 +142,7 @@ async def mypage_orders(
 ################################################################################
 # 3) 리포트 확인 페이지 (기존 test-success 대체)
 ################################################################################
-@router.get("/report/{order_id}", response_class=HTMLResponse)
+@router.get("/report/{order_id}")
 async def view_report(
     request: Request,
     order_id: int,
@@ -164,8 +164,8 @@ async def view_report(
         from app.saju_utils import SajuKeyManager
         from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
         from app.models import SajuUser, SajuAnalysisCache
-        from app.report_utils import radar_chart_base64
-        
+        from app.report_utils import radar_chart_base64,enhanced_radar_chart_base64, generate_2025_fortune_calendar
+        import markdown
         calc_datetime, orig_date, gender = SajuKeyManager.get_birth_info_for_calculation(order.saju_key)
         pillars = calculate_four_pillars(calc_datetime)
         elem_dict_kr, result_text = analyze_four_pillars_to_string(
@@ -182,23 +182,27 @@ async def view_report(
         # AI 분석 결과 (캐시에서)
         cached_analysis = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
         ai_analysis = cached_analysis.analysis_full if cached_analysis else "AI 분석 결과를 불러올 수 없습니다."
-        
+        ai_analysis_html = markdown.markdown(ai_analysis, extensions=['fenced_code', 'tables'])
         # 차트 및 기타 데이터 생성
         radar_base64_img = radar_chart_base64(elem_dict_kr)
-        
-        return templates.TemplateResponse("order/report_view.html", {
+        radar_base64 = enhanced_radar_chart_base64(elem_dict_kr)
+        calendar_html = generate_2025_fortune_calendar(elem_dict_kr)
+
+        return templates.TemplateResponse("enhanced_report_base.html", {
             "request": request,
             "user_name": user_name,
             "pillars": pillars,
-            "ai_analysis": ai_analysis,
-            "element_counts": elem_dict_kr,
-            "radar_base64": radar_base64_img,
-            "order": order
+            "radar_base64": radar_base64,
+            "calendar_html": calendar_html,
+            "ai_analysis": ai_analysis_html,
+            "elem_dict_kr": elem_dict_kr,
+            "birthdate": "1984-06-01"  # 실제 생년월일
+            # enhanced_report_base.html에서 요구하는 모든 변수들
         })
-        
     except Exception as e:
         logger.error(f"리포트 표시 실패: {str(e)}")
         raise HTTPException(500, f"리포트 표시 중 오류: {str(e)}")
+
 
 ################################################################################
 # 4) 주문 상태 확인 API (AJAX용)
