@@ -4,7 +4,7 @@
 """
 
 from app.database import engine, SessionLocal
-from app.models import Base, User, Category, Post
+from app.models import Base, User, Category, Post, Product
 from app.utils import hash_password
 from datetime import datetime
 
@@ -113,6 +113,20 @@ def setup_database():
                 post = Post(**post_data)
                 db.add(post)
         
+        # 사주 상품 등록
+        product = db.query(Product).filter(Product.code == "premium_saju").first()
+        if not product:
+            product = Product(
+                name="AI 심층 사주 리포트",
+                description="고서 원문 + AI 심층 분석",
+                price=1900,
+                code="premium_saju",
+                is_active=True,
+                created_at=datetime.utcnow()
+            )
+            db.add(product)
+            print("🛒 상품 등록됨: premium_saju")
+
         db.commit()
         print("📝 샘플 포스트 생성됨")
         
