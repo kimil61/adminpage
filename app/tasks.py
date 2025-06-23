@@ -12,9 +12,11 @@ from app.routers.saju import (
     calculate_four_pillars,
     analyze_four_pillars_to_string,
     ai_sajupalja_with_ollama,
+    ai_sajupalja_with_chatgpt
 )
 from markdown import markdown
 import pdfkit
+import asyncio
 from fpdf import FPDF
 import smtplib
 from email.mime.text import MIMEText
@@ -137,8 +139,11 @@ def generate_full_report(self, order_id: int, saju_key: str):
         if not prompt:
             raise Exception('Prompt file missing')
         
-        if not test_ollama_connection():
-            raise Exception('Ollama connection failed')
+        if not os.getenv('OPENAI_API_KEY'):
+            raise Exception('OpenAI API key not configured')
+
+        # if not test_ollama_connection():
+        #     raise Exception('Ollama connection failed')
 
         # 사주 계산
         self.update_state(state='progress', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
@@ -180,7 +185,10 @@ def generate_full_report(self, order_id: int, saju_key: str):
             result_text,
         ])
         
-        analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=combined_text)
+        # ai_sajupalja_with_chatgpt 는 비동기 함수이므로 여기서 실행 결과를 기다려 문자열을 받아야 합니다.
+        analysis_result = asyncio.run(
+            ai_sajupalja_with_chatgpt(prompt=prompt, content=combined_text)
+        )
         if not analysis_result:
             raise Exception('Failed to generate AI analysis')
 

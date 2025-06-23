@@ -1062,7 +1062,32 @@ def ai_sajupalja_with_ollama(prompt, content):
     except Exception as e:
         print(f"❌ 번역 중 오류: {e}")
         return None
-    
+
+
+# 기존 Ollama 함수 대신 OpenAI 함수 사용
+async def ai_sajupalja_with_chatgpt(prompt: str, content: str) -> str:
+    """ChatGPT 3.5를 사용하여 프롬프트에 기반하여 사주팔자 해석"""
+    try:
+        # OpenAI 클라이언트는 이미 상단에 있다고 가정
+        full_prompt = f"{prompt}\n\n다음 정보에 기반하여 사주팔자를 해석하세요:\n{content}"
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "당신은 전문 사주 해석가입니다."},
+                {"role": "user", "content": full_prompt}
+            ],
+            temperature=0.7,  # Ollama보다 약간 높은 창의성
+            max_tokens=3000   # 충분한 토큰 수
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        print(f"❌ ChatGPT API 오류: {e}")
+        return None
+
+
 @router.post("/api/saju_ai_analysis_2")
 async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)):
     """AI 사주 분석 API"""
@@ -1071,8 +1096,6 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
     # === DB 캐시 확인 ===
     birthdate_str = request.session.get("birthdate")
     birth_hour = int(request.session.get("birthhour", 12))
-
-    # gender = request.session.get("gender", "unknown")
     saju_key = request.session.get("saju_key")
 
     # DB 캐시 확인
@@ -1086,8 +1109,8 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
         if not prompt:
             return
         # 2. ollama 연결 테스트
-        if not test_ollama_connection():
-            return
+        if not client.api_key:
+            return {"error": "OpenAI API 키가 설정되지 않았습니다."}
         # 사주팔자가져오기
         pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
 
@@ -1097,7 +1120,11 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
             pillars['month'][0], pillars['month'][1],
             pillars['day'][0], pillars['day'][1],
             pillars['hour'][0], pillars['hour'][1])
-        analysis_result = ai_sajupalja_with_ollama(prompt=prompt, content=result_text)
+
+        analysis_result = await ai_sajupalja_with_chatgpt(prompt=prompt, content=result_text)
+        
+        if not analysis_result:
+            return {"error": "AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요."}
 
         # DB에 캐시 저장 (analysis_full 컬럼)
         existing = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
