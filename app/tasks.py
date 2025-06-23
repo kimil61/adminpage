@@ -64,6 +64,9 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
         # 6. 운세 요약 카드
         fortune_summary = generate_fortune_summary(elem_dict_kr)
         
+        # 7. AI 심층 분석 결과 markdown 변환
+        analysis_result_html = markdown(analysis_result.replace('\n', '\n\n'))
+        
         # Jinja2 환경 설정
         env = Environment(
             loader=FileSystemLoader('templates'),
