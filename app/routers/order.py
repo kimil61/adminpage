@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.database import get_db
-from app.models import Order, Product, User, SajuAnalysisCache
+from app.models import Order, Product, User, SajuAnalysisCache, SajuUser
 from app.template import templates
 from app.dependencies import get_current_user, get_current_user_optional
 from app.payments.kakaopay import (
@@ -310,10 +310,19 @@ async def order_mypage(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """마이페이지 - 구매 내역 조회"""
+    """마이페이지 - 구매 내역 조회 (개선된 버전)"""
     orders = db.query(Order).filter(
         Order.user_id == user.id
     ).order_by(Order.created_at.desc()).all()
+    
+    # 각 주문에 사용자 이름과 사주 요약 정보 추가
+    for order in orders:
+        # SajuUser에서 이름 찾기
+        saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
+        order.user_name = saju_user.name if saju_user and saju_user.name else None
+        
+        # 사주키를 사용자 친화적으로 변환
+        order.saju_summary = format_saju_key_for_display(order.saju_key)
     
     return templates.TemplateResponse("order/mypage.html", {
         "request": request,
@@ -321,6 +330,42 @@ async def order_mypage(
         "user": user
     })
 
+def format_saju_key_for_display(saju_key: str) -> str:
+    """
+    사주키를 사용자 친화적으로 변환
+    예: SOL_19840301_UH_Asia-Seoul_M -> "1984년 3월 1일생 남성"
+    """
+    try:
+        parts = saju_key.split('_')
+        if len(parts) >= 5:
+            calendar_type = parts[0]  # SOL/LUN
+            date_part = parts[1]      # 19840301
+            time_part = parts[2]      # UH (시간미상) or 숫자
+            timezone_part = parts[3]  # Asia-Seoul
+            gender = parts[4]         # M/F
+            
+            # 날짜 파싱
+            year = date_part[:4]
+            month = date_part[4:6]
+            day = date_part[6:8]
+            
+            # 성별 변환
+            gender_text = "남성" if gender == "M" else "여성"
+            
+            # 달력 타입
+            calendar_text = "음력" if calendar_type == "LUN" else "양력"
+            
+            # 시간 정보
+            if time_part == "UH":
+                time_text = "시간미상"
+            else:
+                time_text = f"{time_part}시"
+            
+            return f"{calendar_text} {year}년 {int(month)}월 {int(day)}일생 {gender_text}"
+        
+        return "사주 정보"  # 파싱 실패시 기본값
+    except:
+        return "사주 정보"
 ################################################################################
 # 7) 리포트 생성 재시도
 ################################################################################

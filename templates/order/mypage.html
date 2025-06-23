@@ -18,11 +18,20 @@
             <div class="bg-white rounded-xl shadow-md border p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-800">AI 심층 사주 리포트</h3>
+                        <!-- 개인화된 제목 -->
+                        <h3 class="text-xl font-semibold text-gray-800">
+                            {% if order.user_name %}
+                                {{ order.user_name }}님의 사주 리포트
+                            {% else %}
+                                고객님의 사주 리포트
+                            {% endif %}
+                        </h3>
                         <p class="text-gray-600">주문번호: #{{ order.id }}</p>
                         <p class="text-sm text-gray-500">{{ order.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
-                        {% if order.saju_key %}
-                        <p class="text-xs text-gray-400 mt-1">사주키: {{ order.saju_key }}</p>
+                        
+                        <!-- 사주 정보를 사용자 친화적으로 표시 -->
+                        {% if order.saju_summary %}
+                        <p class="text-xs text-gray-400 mt-1">{{ order.saju_summary }}</p>
                         {% endif %}
                     </div>
                     <div class="text-right">
@@ -32,90 +41,87 @@
                         
                         <!-- 결제 상태 -->
                         {% if order.status == "paid" %}
-                            <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mt-1">결제완료</span>
+                            <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">결제완료</span>
                         {% elif order.status == "pending" %}
-                            <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mt-1">결제대기</span>
-                        {% elif order.status == "cancelled" %}
-                            <span class="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm mt-1">취소됨</span>
+                            <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">결제대기</span>
                         {% else %}
-                            <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mt-1">{{ order.status }}</span>
+                            <span class="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">{{ order.status }}</span>
                         {% endif %}
                     </div>
                 </div>
                 
-                <!-- 리포트 상태별 UI -->
+                <!-- 🎯 리포트 상태별 UI -->
                 <div class="border-t pt-4">
-                    {% if order.status == "paid" %}
-                        {% if order.report_status == "pending" %}
-                            <div class="flex items-center space-x-3">
-                                <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
-                                <span class="text-gray-600">⏳ 리포트 생성 준비 중</span>
-                            </div>
-                        
-                        {% elif order.report_status == "generating" %}
-                            <div class="flex items-center space-x-3" id="generating-{{ order.id }}">
-                                <div class="w-4 h-4 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                                <span class="text-purple-600">🔄 AI 분석 생성 중... (2-3분 소요)</span>
-                            </div>
-                            <div class="mt-3 bg-purple-50 rounded-lg p-3">
-                                <div class="w-full bg-purple-200 rounded-full h-2">
-                                    <div class="bg-purple-600 h-2 rounded-full animate-pulse" style="width: 60%"></div>
-                                </div>
-                                <p class="text-xs text-purple-600 mt-2">고서 원문 분석 및 AI 해석 진행 중...</p>
-                            </div>
-                        
-                        {% elif order.report_status == "completed" %}
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-4 h-4 bg-green-500 rounded-full"></div>
-                                    <span class="text-green-600">✅ 리포트 생성 완료</span>
-                                    {% if order.report_completed_at %}
-                                    <span class="text-xs text-gray-500">{{ order.report_completed_at.strftime('%m/%d %H:%M') }}</span>
-                                    {% endif %}
-                                </div>
-                                <div class="space-x-2">
-                                    <a href="/order/report/{{ order.id }}" target="_blank" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-200">
-                                        📄 HTML 보기
-                                    </a>
-                                    {% if order.report_pdf %}
-                                    <a href="/order/download/{{ order.id }}?format=pdf" 
-                                       class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition duration-200">
-                                        PDF 다운로드
-                                    </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        
-                        {% elif order.report_status == "failed" %}
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-4 h-4 bg-red-500 rounded-full"></div>
-                                    <span class="text-red-600">❌ 리포트 생성 실패</span>
-                                </div>
-                                <button onclick="retryReport({{ order.id }})" 
-                                        class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition duration-200">
-                                    다시 시도
-                                </button>
-                            </div>
-                            <div class="mt-2 bg-red-50 rounded-lg p-3">
-                                <p class="text-xs text-red-600">생성 중 오류가 발생했습니다. 다시 시도해주세요.</p>
-                            </div>
-                        {% endif %}
-                    
-                    {% elif order.status == "pending" %}
-                        <div class="bg-yellow-50 rounded-lg p-3">
-                            <p class="text-yellow-700 text-sm">결제가 완료되지 않았습니다. 결제를 다시 진행해주세요.</p>
-                            <a href="/saju?retry={{ order.saju_key }}" 
-                               class="mt-2 inline-block bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition duration-200">
-                                결제 계속하기
-                            </a>
+                    {% if order.report_status == "pending" %}
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
+                            <span class="text-gray-600">⏳ 리포트 생성 대기 중</span>
                         </div>
                     
-                    {% else %}
-                        <div class="bg-gray-50 rounded-lg p-3">
-                            <p class="text-gray-600 text-sm">{{ order.status }} 상태입니다.</p>
+                    {% elif order.report_status == "generating" %}
+                        <div class="flex items-center space-x-3" id="generating-{{ order.id }}">
+                            <div class="w-4 h-4 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                            <span class="text-purple-600">🔄 AI 분석 생성 중... (2-3분 소요)</span>
+                        </div>
+                        <div class="mt-3 bg-purple-50 rounded-lg p-3">
+                            <div class="w-full bg-purple-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full animate-pulse" style="width: 60%"></div>
+                            </div>
+                            <p class="text-xs text-purple-600 mt-2">고서 원문 분석 및 AI 해석 진행 중...</p>
+                        </div>
+                    
+                    {% elif order.report_status == "completed" %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                                <span class="text-green-600">✅ 리포트 생성 완료</span>
+                                {% if order.report_completed_at %}
+                                <span class="text-xs text-gray-500">{{ order.report_completed_at.strftime('%m/%d %H:%M') }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="space-x-2">
+                                <a href="/order/report/{{ order.id }}" target="_blank" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-200">
+                                    📄 HTML 보기
+                                </a>
+                                {% if order.report_pdf %}
+                                <a href="/order/download/{{ order.id }}?format=pdf" 
+                                   class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition duration-200">
+                                    PDF 다운로드
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    
+                    {% elif order.report_status == "failed" %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                                <span class="text-red-600">❌ 리포트 생성 실패</span>
+                            </div>
+                            <button onclick="retryReport({{ order.id }})" 
+                                    class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition duration-200">
+                                다시 시도
+                            </button>
+                        </div>
+                        <div class="mt-2 bg-red-50 rounded-lg p-3">
+                            <p class="text-xs text-red-600">생성 중 오류가 발생했습니다. 다시 시도해주세요.</p>
                         </div>
                     {% endif %}
+                
+                {% elif order.status == "pending" %}
+                    <div class="bg-yellow-50 rounded-lg p-3">
+                        <p class="text-yellow-700 text-sm">결제가 완료되지 않았습니다. 결제를 다시 진행해주세요.</p>
+                        <a href="/saju?retry={{ order.saju_key }}" 
+                           class="mt-2 inline-block bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition duration-200">
+                            결제 계속하기
+                        </a>
+                    </div>
+                
+                {% else %}
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-gray-600 text-sm">{{ order.status }} 상태입니다.</p>
+                    </div>
+                {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -171,45 +177,33 @@ async function retryReport(orderId) {
     }
 }
 
-// 생성 중인 리포트들의 상태를 주기적으로 확인
-document.addEventListener('DOMContentLoaded', function() {
+// 🎯 실시간 상태 업데이트
+function checkGeneratingOrders() {
     const generatingElements = document.querySelectorAll('[id^="generating-"]');
     
-    if (generatingElements.length > 0) {
-        // 5초마다 상태 확인
-        const statusCheckInterval = setInterval(async () => {
-            let allCompleted = true;
-            
-            for (const element of generatingElements) {
-                const orderId = element.id.replace('generating-', '');
-                
-                try {
-                    const response = await fetch(`/order/status/${orderId}`);
-                    const data = await response.json();
-                    
-                    if (data.report_status === 'completed' || data.report_status === 'failed') {
-                        // 상태가 변경되면 페이지 새로고침
-                        window.location.reload();
-                        return;
-                    } else if (data.report_status === 'generating') {
-                        allCompleted = false;
-                    }
-                } catch (error) {
-                    console.error('상태 확인 실패:', error);
-                }
-            }
-            
-            // 모든 리포트가 완료되면 인터벌 정지
-            if (allCompleted) {
-                clearInterval(statusCheckInterval);
-            }
-        }, 5000);
+    generatingElements.forEach(element => {
+        const orderId = element.id.split('-')[1];
         
-        // 10분 후 자동 정지
-        setTimeout(() => {
-            clearInterval(statusCheckInterval);
-        }, 600000);
-    }
-});
+        fetch(`/order/status/${orderId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.report_status === 'completed') {
+                    // 페이지 새로고침해서 최신 상태 반영
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error('상태 확인 오류:', error));
+    });
+}
+
+// 5초마다 생성 중인 주문들 상태 확인
+setInterval(checkGeneratingOrders, 5000);
 </script>
+
+<style>
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
 {% endblock %}
