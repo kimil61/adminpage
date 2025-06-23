@@ -102,6 +102,39 @@ async def create_order(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"주문 실패: {str(e)}")
 
+## 주문 다시 생성
+@router.post("/retry/{order_id}")
+async def retry_report_generation(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """리포트 생성 재시도 API"""
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == user.id,
+        Order.report_status == "failed"
+    ).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="생성 실패한 리포트를 찾을 수 없습니다.")
+
+    # 리포트 상태 초기화
+    order.report_status = "generating"
+    order.report_completed_at = None
+
+    try:
+        from app.tasks import generate_full_report
+        task = generate_full_report.delay(order.id, order.saju_key)
+        order.celery_task_id = task.id
+        db.commit()
+        return JSONResponse({"success": True, "message": "리포트 재생성이 시작되었습니다."})
+    except Exception as e:
+        db.rollback()
+        logger.error(f"리포트 재생성 실패: {e}")
+        raise HTTPException(status_code=500, detail="리포트 재생성 중 오류 발생")
+
+
 ################################################################################
 # 2) 마이페이지 구매내역 (실시간 상태 업데이트)
 ################################################################################

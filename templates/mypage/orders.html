@@ -156,9 +156,22 @@ function shareReport(orderId) {
 // 리포트 재생성
 function retryReport(orderId) {
     if (confirm('리포트를 다시 생성하시겠습니까?')) {
-        // TODO: 재생성 API 호출
-        alert('리포트 재생성을 요청했습니다.');
-        window.location.reload();
+        fetch(`/order/retry/${orderId}`, {
+            method: "POST"
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || '리포트 재생성을 요청했습니다.');
+                window.location.reload();
+            } else {
+                alert('리포트 재생성 실패');
+            }
+        })
+        .catch(error => {
+            console.error('리포트 재생성 오류:', error);
+            alert('리포트 재생성 중 오류 발생');
+        });
     }
 }
 </script>
