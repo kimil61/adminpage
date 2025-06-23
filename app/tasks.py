@@ -143,9 +143,24 @@ def generate_full_report(self, order_id: int, saju_key: str):
         # 사주 계산
         self.update_state(state='progress', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
         
-        birthdate_str, birth_hour, gender = saju_key.split('_')
+        # saju_key 형식 파싱 (3조각: yyyy-mm-dd_hour_gender  |  5조각: CAL_yyyymmdd_HH/UH_TZ_G)
+        parts = saju_key.split('_')
+
+        if len(parts) == 5:
+            calendar, birth_raw, hour_part, tz_part, gender = parts
+            birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
+            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        elif len(parts) == 3:
+            birthdate_str, hour_part, gender = parts
+            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        else:
+            raise ValueError(f"잘못된 saju_key 형식: {saju_key}")
+
+        # 출생 시간이 정해지지 않았으면 정오(12시)로 대체
+        if birth_hour is None:
+            birth_hour = 12
+
         birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
-        birth_hour = int(birth_hour)
         
         pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
         elem_dict_kr, result_text = analyze_four_pillars_to_string(
