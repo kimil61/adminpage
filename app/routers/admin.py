@@ -144,7 +144,7 @@ async def admin_create_post_submit(
         category_id=category_id if category_id > 0 else None,
         is_published=is_published,
         featured_image=featured_image_url,
-        published_at=datetime.utcnow() if is_published else None
+        published_at=datetime.now() if is_published else None
     )
     
     db.add(new_post)
@@ -225,9 +225,9 @@ async def admin_edit_post_submit(
     post.excerpt = excerpt
     post.category_id = category_id if category_id > 0 else None
     post.is_published = is_published
-    post.updated_at = datetime.utcnow()
+    post.updated_at = datetime.now()
     if is_published and not post.published_at:
-        post.published_at = datetime.utcnow()
+        post.published_at = datetime.now()
 
     db.commit()
     flash_message(request, "포스트가 수정되었습니다.", "success")

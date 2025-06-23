@@ -80,7 +80,7 @@ def setup_database():
                 "category_id": tech_category.id if tech_category else None,
                 "author_id": admin.id,
                 "is_published": True,
-                "published_at": datetime.utcnow()
+                "published_at": datetime.now()
             },
             {
                 "title": "웹사이트 개발 후기",
@@ -103,7 +103,7 @@ def setup_database():
                 "category_id": daily_category.id if daily_category else None,
                 "author_id": admin.id,
                 "is_published": True,
-                "published_at": datetime.utcnow()
+                "published_at": datetime.now()
             }
         ]
         
@@ -122,7 +122,7 @@ def setup_database():
                 price=1900,
                 code="premium_saju",
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now()
             )
             db.add(product)
             print("🛒 상품 등록됨: premium_saju")

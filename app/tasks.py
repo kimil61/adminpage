@@ -258,7 +258,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         #     send_email_improved(order.pdf_send_email, email_subject, email_body, attachments)
         # AI 분석 완료 후 상태 업데이트
         order.report_status = "completed"
-        order.report_completed_at = datetime.utcnow()
+        order.report_completed_at = datetime.now()
         db.commit()
 
         logger.info(f"🎉 리포트 생성 완료: order_id={order_id}")
@@ -326,7 +326,7 @@ def cleanup_old_cache():
     """오래된 캐시 정리 태스크"""
     db = SessionLocal()
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        cutoff_date = datetime.now() - timedelta(days=30)
         old_cache = db.query(SajuAnalysisCache).filter(
             SajuAnalysisCache.created_at < cutoff_date
         ).delete()
