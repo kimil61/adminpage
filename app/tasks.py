@@ -229,10 +229,9 @@ def generate_full_report(self, order_id: int, saju_key: str):
         # pdf_success = html_to_pdf_improved(html_content, pdf_path)
         
         # 파일 경로 업데이트
-        # order.report_html = html_path
-        # if pdf_success:
-        #     order.report_pdf = pdf_path
-        # db.commit()
+        order.report_html = html_path
+
+        db.commit()
 
         # 이메일 발송
         # self.update_state(state='progress', meta={'current': 6, 'total': 6, 'status': '이메일 발송 중...'})
