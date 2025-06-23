@@ -594,14 +594,14 @@
             <div class="divider"></div>
 
             <!-- AI 분석 결과 -->
-            {% if ai_analysis %}
+            {% if analysis_result %}
             <div class="section-header">
                 <span class="section-icon">🧠</span>
                 <h2 class="section-title">AI 심층 분석</h2>
             </div>
             
             <div class="info-card">
-                {{ ai_analysis|safe }}
+                {{ analysis_result|safe }}
             </div>
             {% endif %}
 
