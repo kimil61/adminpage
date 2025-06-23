@@ -78,9 +78,9 @@ async def kakao_ready(
             "quantity": 1,
             "total_amount": amount,
             "tax_free_amount": 0,
-            "approval_url": f"{SITE_URL}/order/approve",
-            "cancel_url": f"{SITE_URL}/order/cancel",
-            "fail_url": f"{SITE_URL}/order/fail"
+            "approval_url": f"{SITE_URL}/order/approve?order_id={order_id}",
+            "cancel_url": f"{SITE_URL}/order/cancel?order_id={order_id}",
+            "fail_url": f"{SITE_URL}/order/fail?order_id={order_id}"
         }
         
         # API 헤더
