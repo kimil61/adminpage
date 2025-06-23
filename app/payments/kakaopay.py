@@ -16,14 +16,16 @@ logger = logging.getLogger(__name__)
 
 # 카카오페이 API 설정
 KAKAOPAY_API_HOST = "https://open-api.kakaopay.com"
-KAKAO_CID = os.getenv("KAKAO_CID", "CT00000000")  # 실제 가맹점 코드
-SECRET_KEY = os.getenv("KAKAO_SECRET_KEY")  # 실제 시크릿 키
 SITE_URL = os.getenv("SITE_URL", "https://sazu.mp4korea.com")
 
-# 테스트용 설정 (개발 시에만 사용)
-if os.getenv("ENVIRONMENT", "production") == "development":
-    KAKAO_CID = "TC0ONETIME"  # 테스트용 CID
+# 환경별 CID, SECRET_KEY 분기
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
+if ENVIRONMENT == "development":
+    KAKAO_CID = "TC0ONETIME"
     SECRET_KEY = os.getenv("KAKAO_SECRET_KEY_DEV", "DEV_SECRET_KEY")
+else:
+    KAKAO_CID = os.getenv("KAKAO_CID", "CT00000000")
+    SECRET_KEY = os.getenv("KAKAO_SECRET_KEY")
 
 
 class KakaoPayError(Exception):
