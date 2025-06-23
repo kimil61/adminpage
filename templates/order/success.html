@@ -1,0 +1,102 @@
+<!-- templates/order/success.html -->
+{% extends "base.html" %}
+
+{% block title %}결제 완료 - My Website{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <!-- 성공 아이콘 -->
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">🎉 결제가 완료되었습니다!</h1>
+        
+        <div class="bg-blue-50 rounded-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-3">주문 정보</h2>
+            <div class="space-y-2 text-left">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">주문번호:</span>
+                    <span class="font-semibold">#{{ order.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">상품명:</span>
+                    <span class="font-semibold">AI 심층 사주 리포트</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">결제금액:</span>
+                    <span class="font-semibold text-blue-600">{{ "{:,}".format(order.amount) }}원</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">결제시간:</span>
+                    <span class="font-semibold">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 리포트 생성 상태 -->
+        <div class="bg-purple-50 rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-semibold text-purple-800 mb-3">🤖 AI 리포트 생성 중</h3>
+            <p class="text-purple-700 mb-4">고서 원문 분석과 AI 해석을 진행하고 있습니다. (약 2-3분 소요)</p>
+            
+            <div class="w-full bg-purple-200 rounded-full h-3 mb-3">
+                <div class="bg-purple-600 h-3 rounded-full animate-pulse" style="width: 30%"></div>
+            </div>
+            
+            <p class="text-sm text-purple-600">완료되면 마이페이지에서 확인하실 수 있습니다.</p>
+        </div>
+        
+        <div class="space-y-3">
+            <a href="/order/mypage" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 inline-block">
+                마이페이지에서 확인하기
+            </a>
+            <a href="/saju" class="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-block">
+                사주 페이지로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// 5초마다 리포트 상태 확인
+let statusCheckInterval = setInterval(async () => {
+    try {
+        const response = await fetch(`/order/status/{{ order.id }}`);
+        const data = await response.json();
+        
+        if (data.report_status === 'completed') {
+            clearInterval(statusCheckInterval);
+            // 완료 알림 표시
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
+            alertDiv.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <div>
+                        <p class="font-semibold">리포트 완성!</p>
+                        <p class="text-sm">마이페이지에서 확인하세요.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+    } catch (error) {
+        console.error('상태 확인 실패:', error);
+    }
+}, 5000);
+
+// 10분 후 자동 정지
+setTimeout(() => {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+}, 600000);
+</script>
+{% endblock %}

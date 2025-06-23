@@ -1,17 +1,21 @@
-# app/routers/order.py - 완전히 새로 작성
+# app/routers/order.py - 카카오페이 결제 플로우 버전
 
-"""주문 / 결제 / 구매내역 Router - 개선된 버전"""
+"""주문 / 결제 / 구매내역 Router - 카카오페이 연동 버전"""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, Body, Query, Header
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
-from celery.result import AsyncResult
+from typing import Optional
 
 from app.database import get_db
 from app.models import Order, Product, User, SajuAnalysisCache
 from app.template import templates
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_optional
+from app.payments.kakaopay import (
+    kakao_ready, kakao_approve, verify_payment, 
+    KakaoPayError, get_payment_method_name, is_mobile_user_agent
+)
 import logging
 
 # 로깅 설정
@@ -21,23 +25,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/order", tags=["Order"])
 
 ################################################################################
-# 1) 주문 생성
+# 1) 주문 생성 - 카카오페이 결제창 호출
 ################################################################################
 @router.post("/create")
 async def create_order(
     request: Request,
     payload: dict = Body(...),
-    csrf_token: str = Header(None, alias="X-CSRF-Token"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """주문 생성 후 바로 마이페이지로 리다이렉트"""
+    """주문 생성 후 카카오페이 결제창 URL 반환"""
     try:
-        # CSRF 검증
-        session_token = request.session.get("csrf_token") if hasattr(request, "session") else None
-        if not csrf_token or csrf_token != session_token:
-            raise HTTPException(status_code=403, detail="CSRF token invalid")
-        
         saju_key = payload.get("saju_key")
         if not saju_key:
             raise HTTPException(status_code=400, detail="사주 정보가 필요합니다.")
@@ -51,6 +49,19 @@ async def create_order(
         if existing:
             raise HTTPException(status_code=400, detail="이미 구매한 리포트입니다.")
         
+        # 진행 중인 주문이 있는지 체크 (30분 이내)
+        recent_pending = db.query(Order).filter(
+            Order.user_id == user.id,
+            Order.saju_key == saju_key,
+            Order.status == "pending",
+            Order.created_at > datetime.now() - timedelta(minutes=30)
+        ).first()
+        
+        if recent_pending:
+            # 기존 pending 주문이 있으면 삭제하고 새로 생성
+            db.delete(recent_pending)
+            db.commit()
+        
         # 상품 조회/생성
         product = db.query(Product).filter(Product.code == "premium_saju").first()
         if not product:
@@ -63,46 +74,256 @@ async def create_order(
             )
             db.add(product)
             db.commit()
+            db.refresh(product)
         
-        # 주문 생성
+        # 임시 주문 생성 (status=pending)
         order = Order(
             user_id=user.id,
             product_id=product.id,
             amount=product.price,
             saju_key=saju_key,
-            status="paid",  # 🎯 테스트용으로 바로 paid로 설정
-            report_status="generating",  # 🎯 바로 생성 중으로 설정
-            kakao_tid="temp_" + str(datetime.now().timestamp())
+            status="pending",  # 결제 대기 상태
+            report_status="pending",
+            kakao_tid=""  # 아직 TID 없음
         )
         db.add(order)
         db.commit()
+        db.refresh(order)
         
-        # 🎯 백그라운드 AI 리포트 생성 시작
+        # 카카오페이 결제 준비 API 호출
         try:
-            from app.tasks import generate_full_report
-            task = generate_full_report.delay(order.id, order.saju_key)
-            order.celery_task_id = task.id
+            kakao_response = await kakao_ready(
+                order_id=order.id,
+                amount=product.price,
+                user_email=user.email,
+                partner_user_id=str(user.id)
+            )
+            
+            # TID 저장
+            order.kakao_tid = kakao_response["tid"]
             db.commit()
-            logger.info(f"Celery 태스크 시작: {task.id}")
-        except Exception as e:
-            logger.error(f"Celery 태스크 시작 실패: {e}")
-        
-        # 🎯 바로 마이페이지로 리다이렉트
-        return JSONResponse({
-            "success": True,
-            "order_id": order.id,
-            "message": "결제가 완료되었습니다! AI 리포트를 생성 중입니다.",
-            "redirect_url": "/order/mypage"
-        })
+            
+            # User-Agent로 모바일/PC 구분
+            user_agent = request.headers.get("user-agent", "")
+            is_mobile = is_mobile_user_agent(user_agent)
+            
+            # 적절한 결제 URL 선택
+            if is_mobile:
+                redirect_url = kakao_response["next_redirect_mobile_url"]
+            else:
+                redirect_url = kakao_response["next_redirect_pc_url"]
+            
+            logger.info(f"주문 생성 성공: order_id={order.id}, tid={order.kakao_tid}")
+            
+            return JSONResponse({
+                "success": True,
+                "order_id": order.id,
+                "tid": order.kakao_tid,
+                "redirect_url": redirect_url,
+                "is_mobile": is_mobile,
+                "message": "카카오페이 결제창으로 이동합니다."
+            })
+            
+        except KakaoPayError as e:
+            logger.error(f"카카오페이 ready API 실패: {e.message}")
+            # 실패한 주문 삭제
+            db.delete(order)
+            db.commit()
+            raise HTTPException(status_code=400, detail=f"결제 준비 실패: {e.message}")
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"주문 생성 실패: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"주문 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"주문 생성 실패: {str(e)}")
 
-## 주문 다시 생성
+################################################################################
+# 2) 결제 승인 콜백 - 카카오페이에서 리다이렉트
+################################################################################
+@router.get("/approve")
+async def kakao_approve_callback(
+    request: Request,
+    pg_token: str = Query(...),
+    order_id: int = Query(...),
+    db: Session = Depends(get_db)
+):
+    """카카오페이 결제 승인 콜백"""
+    try:
+        # 주문 조회
+        order = db.query(Order).filter(
+            Order.id == order_id,
+            Order.status == "pending"
+        ).first()
+        
+        if not order:
+            logger.error(f"주문을 찾을 수 없음: order_id={order_id}")
+            return RedirectResponse(
+                url="/order/fail?message=주문을 찾을 수 없습니다.",
+                status_code=302
+            )
+        
+        # 주문 타임아웃 체크 (30분)
+        if (datetime.now() - order.created_at).total_seconds() > 1800:
+            logger.error(f"주문 시간 초과: order_id={order_id}")
+            order.status = "cancelled"
+            db.commit()
+            return RedirectResponse(
+                url="/order/fail?message=결제 시간이 초과되었습니다.",
+                status_code=302
+            )
+        
+        # 카카오페이 승인 API 호출
+        try:
+            approve_response = await kakao_approve(
+                tid=order.kakao_tid,
+                pg_token=pg_token,
+                order_id=order.id,
+                partner_user_id=str(order.user_id)
+            )
+            
+            # 결제 검증
+            verify_payment(order.amount, approve_response)
+            
+            # 주문 상태 업데이트
+            order.status = "paid"
+            order.report_status = "generating"
+            db.commit()
+            
+            # 백그라운드 리포트 생성 시작
+            try:
+                from app.tasks import generate_full_report
+                task = generate_full_report.delay(order.id, order.saju_key)
+                order.celery_task_id = task.id
+                db.commit()
+                logger.info(f"리포트 생성 태스크 시작: task_id={task.id}")
+            except Exception as e:
+                logger.error(f"리포트 생성 태스크 시작 실패: {e}")
+                # 태스크 실패해도 결제는 완료로 처리
+            
+            # 결제 성공 로그
+            payment_method = get_payment_method_name(approve_response.get("payment_method_type", ""))
+            paid_amount = approve_response.get("amount", {}).get("total", 0)
+            logger.info(f"결제 승인 성공: order_id={order.id}, amount={paid_amount}, method={payment_method}")
+            
+            # 성공 페이지로 리다이렉트
+            return RedirectResponse(
+                url=f"/order/success?order_id={order.id}",
+                status_code=302
+            )
+            
+        except KakaoPayError as e:
+            logger.error(f"카카오페이 승인 실패: order_id={order_id}, error={e.message}")
+            order.status = "cancelled"
+            db.commit()
+            return RedirectResponse(
+                url=f"/order/fail?message={e.message}",
+                status_code=302
+            )
+        
+    except Exception as e:
+        logger.error(f"결제 승인 처리 중 오류: {e}")
+        return RedirectResponse(
+            url="/order/fail?message=결제 처리 중 오류가 발생했습니다.",
+            status_code=302
+        )
+
+################################################################################
+# 3) 결제 취소 콜백
+################################################################################
+@router.get("/cancel")
+async def kakao_cancel_callback(
+    request: Request,
+    order_id: int = Query(None),
+    db: Session = Depends(get_db)
+):
+    """카카오페이 결제 취소 콜백"""
+    if order_id:
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if order and order.status == "pending":
+            order.status = "cancelled"
+            db.commit()
+            logger.info(f"결제 취소: order_id={order_id}")
+    
+    return templates.TemplateResponse("order/cancel.html", {
+        "request": request,
+        "message": "결제가 취소되었습니다."
+    })
+
+################################################################################
+# 4) 결제 실패 콜백
+################################################################################
+@router.get("/fail")
+async def kakao_fail_callback(
+    request: Request,
+    order_id: int = Query(None),
+    message: str = Query("결제가 실패했습니다."),
+    db: Session = Depends(get_db)
+):
+    """카카오페이 결제 실패 콜백"""
+    if order_id:
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if order and order.status == "pending":
+            order.status = "cancelled"
+            db.commit()
+            logger.info(f"결제 실패: order_id={order_id}")
+    
+    return templates.TemplateResponse("order/fail.html", {
+        "request": request,
+        "message": message
+    })
+
+################################################################################
+# 5) 결제 성공 페이지
+################################################################################
+@router.get("/success", response_class=HTMLResponse)
+async def payment_success(
+    request: Request,
+    order_id: int = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_optional)
+):
+    """결제 성공 페이지"""
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.status == "paid"
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+    
+    # 본인 주문이 아니면 접근 제한 (로그인한 경우만)
+    if user and order.user_id != user.id:
+        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+    
+    return templates.TemplateResponse("order/success.html", {
+        "request": request,
+        "order": order
+    })
+
+################################################################################
+# 6) 마이페이지 - 구매 내역
+################################################################################
+@router.get("/mypage", response_class=HTMLResponse)
+async def order_mypage(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """마이페이지 - 구매 내역 조회"""
+    orders = db.query(Order).filter(
+        Order.user_id == user.id
+    ).order_by(Order.created_at.desc()).all()
+    
+    return templates.TemplateResponse("order/mypage.html", {
+        "request": request,
+        "orders": orders,
+        "user": user
+    })
+
+################################################################################
+# 7) 리포트 생성 재시도
+################################################################################
 @router.post("/retry/{order_id}")
 async def retry_report_generation(
     order_id: int,
@@ -113,6 +334,7 @@ async def retry_report_generation(
     order = db.query(Order).filter(
         Order.id == order_id,
         Order.user_id == user.id,
+        Order.status == "paid",
         Order.report_status == "failed"
     ).first()
 
@@ -122,123 +344,28 @@ async def retry_report_generation(
     # 리포트 상태 초기화
     order.report_status = "generating"
     order.report_completed_at = None
+    order.celery_task_id = None
 
     try:
         from app.tasks import generate_full_report
         task = generate_full_report.delay(order.id, order.saju_key)
         order.celery_task_id = task.id
         db.commit()
-        return JSONResponse({"success": True, "message": "리포트 재생성이 시작되었습니다."})
-    except Exception as e:
-        db.rollback()
-        logger.error(f"리포트 재생성 실패: {e}")
-        raise HTTPException(status_code=500, detail="리포트 재생성 중 오류 발생")
-
-
-################################################################################
-# 2) 마이페이지 구매내역 (실시간 상태 업데이트)
-################################################################################
-@router.get("/mypage", response_class=HTMLResponse)
-async def mypage_orders(
-    request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
-):
-    """구매 내역 페이지 - 실시간 상태 업데이트"""
-    orders = (
-        db.query(Order)
-        .filter(Order.user_id == user.id)
-        .order_by(Order.created_at.desc())
-        .all()
-    )
-    
-    # 🎯 각 주문의 실시간 상태 체크
-    for order in orders:
-        if order.report_status == "generating" and order.celery_task_id:
-            try:
-                task_result = AsyncResult(order.celery_task_id)
-                if task_result.ready():
-                    if task_result.successful():
-                        order.report_status = "completed"
-                        order.report_completed_at = datetime.utcnow()
-                    else:
-                        order.report_status = "failed"
-                    db.commit()
-            except Exception as e:
-                logger.error(f"태스크 상태 확인 실패: {e}")
-    
-    return templates.TemplateResponse("mypage/orders.html", {
-        "request": request,
-        "orders": orders
-    })
-
-################################################################################
-# 3) 리포트 확인 페이지 (기존 test-success 대체)
-################################################################################
-@router.get("/report/{order_id}")
-async def view_report(
-    request: Request,
-    order_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
-):
-    """완성된 리포트 확인 페이지"""
-    order = db.query(Order).filter(
-        Order.id == order_id,
-        Order.user_id == user.id,
-        Order.report_status == "completed"
-    ).first()
-    
-    if not order:
-        raise HTTPException(404, "리포트를 찾을 수 없거나 아직 생성 중입니다.")
-    
-    # 🎯 기존 test-success의 로직을 여기서 사용
-    try:
-        from app.saju_utils import SajuKeyManager
-        from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
-        from app.models import SajuUser, SajuAnalysisCache
-        from app.report_utils import radar_chart_base64,enhanced_radar_chart_base64, generate_2025_fortune_calendar
-        import markdown
-        calc_datetime, orig_date, gender = SajuKeyManager.get_birth_info_for_calculation(order.saju_key)
-        pillars = calculate_four_pillars(calc_datetime)
-        elem_dict_kr, result_text = analyze_four_pillars_to_string(
-            pillars['year'][0], pillars['year'][1],
-            pillars['month'][0], pillars['month'][1], 
-            pillars['day'][0], pillars['day'][1],
-            pillars['hour'][0], pillars['hour'][1],
-        )
         
-        # 사용자 이름
-        saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
-        user_name = saju_user.name if saju_user and saju_user.name else "고객"
-        
-        # AI 분석 결과 (캐시에서)
-        cached_analysis = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
-        ai_analysis = cached_analysis.analysis_full if cached_analysis else "AI 분석 결과를 불러올 수 없습니다."
-        ai_analysis_html = markdown.markdown(ai_analysis, extensions=['fenced_code', 'tables'])
-        # 차트 및 기타 데이터 생성
-        radar_base64_img = radar_chart_base64(elem_dict_kr)
-        radar_base64 = enhanced_radar_chart_base64(elem_dict_kr)
-        calendar_html = generate_2025_fortune_calendar(elem_dict_kr)
-
-        return templates.TemplateResponse("enhanced_report_base.html", {
-            "request": request,
-            "user_name": user_name,
-            "pillars": pillars,
-            "radar_base64": radar_base64,
-            "calendar_html": calendar_html,
-            "ai_analysis": ai_analysis_html,
-            "elem_dict_kr": elem_dict_kr,
-            "birthdate": "1984-06-01"  # 실제 생년월일
-            # enhanced_report_base.html에서 요구하는 모든 변수들
+        logger.info(f"리포트 재생성 태스크 시작: order_id={order_id}, task_id={task.id}")
+        return JSONResponse({
+            "success": True, 
+            "message": "리포트 재생성이 시작되었습니다."
         })
+        
     except Exception as e:
-        logger.error(f"리포트 표시 실패: {str(e)}")
-        raise HTTPException(500, f"리포트 표시 중 오류: {str(e)}")
-
+        logger.error(f"리포트 재생성 태스크 시작 실패: {e}")
+        order.report_status = "failed"
+        db.commit()
+        raise HTTPException(status_code=500, detail="리포트 재생성 시작에 실패했습니다.")
 
 ################################################################################
-# 4) 주문 상태 확인 API (AJAX용)
+# 8) 리포트 진행상황 체크 API
 ################################################################################
 @router.get("/status/{order_id}")
 async def check_order_status(
@@ -246,74 +373,126 @@ async def check_order_status(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """주문 상태 확인 API"""
+    """주문 및 리포트 생성 상태 확인 API"""
     order = db.query(Order).filter(
-        Order.id == order_id, 
+        Order.id == order_id,
         Order.user_id == user.id
     ).first()
     
     if not order:
-        raise HTTPException(404, "주문을 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
     
-    # Celery 태스크 상태 실시간 확인
-    if order.report_status == "generating" and order.celery_task_id:
+    # Celery 태스크 상태 확인
+    task_status = None
+    task_progress = None
+    
+    if order.celery_task_id:
         try:
+            from celery.result import AsyncResult
             task_result = AsyncResult(order.celery_task_id)
-            if task_result.ready():
-                if task_result.successful():
-                    order.report_status = "completed"
-                    order.report_completed_at = datetime.utcnow()
+            task_status = task_result.status
+            
+            if task_result.info:
+                if isinstance(task_result.info, dict):
+                    task_progress = task_result.info
                 else:
-                    order.report_status = "failed"
-                db.commit()
+                    task_progress = {"status": str(task_result.info)}
+                    
         except Exception as e:
-            logger.error(f"태스크 상태 확인 실패: {e}")
+            logger.error(f"Celery 태스크 상태 확인 실패: {e}")
     
     return JSONResponse({
         "order_id": order.id,
-        "status": order.status,
+        "order_status": order.status,
         "report_status": order.report_status,
-        "report_ready": order.report_status == "completed",
-        "report_url": f"/order/report/{order.id}" if order.report_status == "completed" else None
+        "task_status": task_status,
+        "task_progress": task_progress,
+        "report_completed_at": order.report_completed_at.isoformat() if order.report_completed_at else None,
+        "has_report": bool(order.report_html or order.report_pdf)
     })
 
 ################################################################################
-# 5) 이메일 발송/PDF 다운로드 (옵션)
+# 9) 리포트 다운로드
 ################################################################################
-@router.get("/email/{order_id}")
-async def send_report_email(
+@router.get("/download/{order_id}")
+async def download_report(
     order_id: int,
+    format: str = Query("html", regex="^(html|pdf)$"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """리포트 이메일 발송"""
+    """리포트 다운로드 (HTML 또는 PDF)"""
     order = db.query(Order).filter(
         Order.id == order_id,
         Order.user_id == user.id,
+        Order.status == "paid",
         Order.report_status == "completed"
     ).first()
     
     if not order:
-        raise HTTPException(404, "리포트를 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
     
-    # TODO: 이메일 발송 로직
-    return JSONResponse({"success": True, "message": "이메일이 발송되었습니다."})
+    if format == "html" and order.report_html:
+        from fastapi.responses import FileResponse
+        return FileResponse(
+            path=order.report_html,
+            filename=f"saju_report_{order_id}.html",
+            media_type="text/html"
+        )
+    elif format == "pdf" and order.report_pdf:
+        from fastapi.responses import FileResponse
+        return FileResponse(
+            path=order.report_pdf,
+            filename=f"saju_report_{order_id}.pdf",
+            media_type="application/pdf"
+        )
+    else:
+        raise HTTPException(status_code=404, detail=f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
 
-@router.get("/pdf/{order_id}")
-async def download_report_pdf(
-    order_id: int,
+################################################################################
+# 10) 관리자용 주문 관리 (선택사항)
+################################################################################
+@router.get("/admin/list", response_class=HTMLResponse)
+async def admin_order_list(
+    request: Request,
+    page: int = Query(1, ge=1),
+    status: str = Query("all"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """리포트 PDF 다운로드"""
-    order = db.query(Order).filter(
-        Order.id == order_id,
-        Order.user_id == user.id,
-        Order.report_status == "completed"
-    ).first()
+    """관리자용 주문 목록"""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
     
-    if not order:
-        raise HTTPException(404, "리포트를 찾을 수 없습니다.")
+    per_page = 20
+    offset = (page - 1) * per_page
     
-    # TODO: PDF 다운로드 로직
-    return JSONResponse({"success": True, "message": "PDF 준비 중입니다."})
+    query = db.query(Order)
+    if status != "all":
+        query = query.filter(Order.status == status)
+    
+    orders = query.order_by(Order.created_at.desc()).offset(offset).limit(per_page).all()
+    total = query.count()
+    pages = (total + per_page - 1) // per_page
+    
+    return templates.TemplateResponse("admin/orders.html", {
+        "request": request,
+        "orders": orders,
+        "page": page,
+        "pages": pages,
+        "total": total,
+        "current_status": status
+    })
+
+################################################################################
+# 11) 웹훅 처리 (선택사항 - 추후 구현)
+################################################################################
+@router.post("/webhook/kakaopay")
+async def kakaopay_webhook(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """카카오페이 웹훅 처리 (추후 구현 예정)"""
+    # 웹훅 데이터 처리 로직
+    # 결제 상태 변경, 환불 처리 등
+    return JSONResponse({"status": "ok"})

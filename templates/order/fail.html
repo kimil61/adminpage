@@ -1,0 +1,49 @@
+<!-- templates/order/fail.html -->
+{% extends "base.html" %}
+
+{% block title %}결제 실패 - My Website{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <!-- 실패 아이콘 -->
+        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">결제에 실패했습니다</h1>
+        
+        <div class="bg-red-50 rounded-lg p-4 mb-6">
+            <p class="text-red-700">{{ message }}</p>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+            <h3 class="font-semibold text-gray-800 mb-2">가능한 원인:</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li>• 카드 한도 초과 또는 잔액 부족</li>
+                <li>• 카드 정보 입력 오류</li>
+                <li>• 네트워크 연결 문제</li>
+                <li>• 결제 시간 초과</li>
+            </ul>
+        </div>
+        
+        <div class="space-y-3">
+            <a href="/saju" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 inline-block">
+                다시 시도하기
+            </a>
+            <a href="/" class="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-block">
+                홈으로 돌아가기
+            </a>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <p class="text-sm text-gray-500">
+                문제가 지속되면 고객센터로 문의해 주세요.<br>
+                이메일: support@example.com
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
