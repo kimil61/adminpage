@@ -74,9 +74,8 @@
                                     {% endif %}
                                 </div>
                                 <div class="space-x-2">
-                                    <a href="/order/download/{{ order.id }}?format=html" 
-                                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-200">
-                                        HTML 보기
+                                    <a href="/order/report/{{ order.id }}" target="_blank" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-200">
+                                        📄 HTML 보기
                                     </a>
                                     {% if order.report_pdf %}
                                     <a href="/order/download/{{ order.id }}?format=pdf" 

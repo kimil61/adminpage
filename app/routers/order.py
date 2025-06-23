@@ -450,6 +450,44 @@ async def download_report(
         raise HTTPException(status_code=404, detail=f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
 
 ################################################################################
+# 9-1) 리포트 HTML 직접 보기 (새로 추가)
+################################################################################
+@router.get("/report/{order_id}", response_class=HTMLResponse)
+async def view_report(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """리포트 HTML을 브라우저에서 직접 보기"""
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == user.id,
+        Order.status == "paid",
+        Order.report_status == "completed"
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+    
+    if not order.report_html:
+        raise HTTPException(status_code=404, detail="HTML 리포트가 아직 생성되지 않았습니다.")
+    
+    try:
+        # HTML 파일 읽어서 직접 반환
+        import os
+        if not os.path.exists(order.report_html):
+            raise HTTPException(status_code=404, detail="리포트 파일이 존재하지 않습니다.")
+            
+        with open(order.report_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        return HTMLResponse(content=html_content, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"리포트 HTML 읽기 실패: {e}")
+        raise HTTPException(status_code=500, detail="리포트를 불러오는 중 오류가 발생했습니다.")
+
+################################################################################
 # 10) 관리자용 주문 관리 (선택사항)
 ################################################################################
 @router.get("/admin/list", response_class=HTMLResponse)
