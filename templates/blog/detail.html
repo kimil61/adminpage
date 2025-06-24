@@ -1,68 +1,531 @@
 {% extends "base.html" %}
 
-{% block title %}{{ post.title }} - My Website{% endblock %}
+{% block title %}{{ post.title }} - AI 사주팔자{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Zenn.dev 스타일 블로그 상세 페이지 */
+    .article-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 20px;
+    }
+    
+    /* 아티클 헤더 */
+    .article-header {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .article-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1a202c;
+        line-height: 1.3;
+        margin-bottom: 1.5rem;
+        word-break: keep-all;
+    }
+    
+    .article-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        color: #718096;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .meta-item i {
+        width: 14px;
+        text-align: center;
+    }
+    
+    .article-tags {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .article-tag {
+        background: #edf2f7;
+        color: #4a5568;
+        padding: 0.375rem 0.875rem;
+        border-radius: 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .article-tag:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+        text-decoration: none;
+    }
+    
+    .featured-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 아티클 컨텐츠 - Zenn.dev 스타일 */
+    .article-content {
+        font-size: 1rem;
+        line-height: 1.75;
+        color: #2d3748;
+        word-break: break-word;
+    }
+    
+    .article-content h1,
+    .article-content h2,
+    .article-content h3,
+    .article-content h4,
+    .article-content h5,
+    .article-content h6 {
+        font-weight: 700;
+        color: #1a202c;
+        margin: 2rem 0 1rem 0;
+        line-height: 1.4;
+    }
+    
+    .article-content h1 {
+        font-size: 2rem;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+    }
+    
+    .article-content h2 {
+        font-size: 1.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+    }
+    
+    .article-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    .article-content h4 {
+        font-size: 1.25rem;
+    }
+    
+    .article-content p {
+        margin: 1.5rem 0;
+    }
+    
+    .article-content ul,
+    .article-content ol {
+        margin: 1.5rem 0;
+        padding-left: 1.5rem;
+    }
+    
+    .article-content li {
+        margin: 0.5rem 0;
+    }
+    
+    .article-content blockquote {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.5rem;
+        margin: 2rem 0;
+        border-radius: 0 8px 8px 0;
+        color: #4a5568;
+        font-style: italic;
+    }
+    
+    .article-content code {
+        background: #edf2f7;
+        color: #e53e3e;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .article-content pre {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 1.5rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 2rem 0;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    
+    .article-content pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    .article-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 2rem 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .article-content a {
+        color: #667eea;
+        text-decoration: underline;
+        text-decoration-color: rgba(102, 126, 234, 0.4);
+        text-underline-offset: 2px;
+        transition: all 0.2s ease;
+    }
+    
+    .article-content a:hover {
+        color: #5a67d8;
+        text-decoration-color: #5a67d8;
+    }
+    
+    .article-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .article-content th,
+    .article-content td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .article-content th {
+        background: #f7fafc;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    
+    .article-content tr:hover {
+        background: #f7fafc;
+    }
+    
+    /* 목차 (TOC) */
+    .table-of-contents {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .toc-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .toc-item {
+        margin: 0.5rem 0;
+    }
+    
+    .toc-link {
+        color: #4a5568;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: color 0.2s ease;
+    }
+    
+    .toc-link:hover {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    /* 액션 버튼들 */
+    .article-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 3rem 0;
+        padding: 2rem 0;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .action-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+    }
+    
+    .action-button:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+        color: #2d3748;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .action-button.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .action-button.primary:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* 관련 포스트 */
+    .related-posts {
+        margin-top: 4rem;
+    }
+    
+    .related-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .related-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    
+    .related-card:hover {
+        border-color: #cbd5e0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .related-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        background: #f7fafc;
+    }
+    
+    .related-content {
+        padding: 1rem;
+    }
+    
+    .related-post-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #2d3748;
+        text-decoration: none;
+        line-height: 1.4;
+        display: block;
+    }
+    
+    .related-post-title:hover {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .related-meta {
+        color: #718096;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* 반응형 */
+    @media (max-width: 768px) {
+        .article-container {
+            padding: 1rem 15px;
+        }
+        
+        .article-title {
+            font-size: 2rem;
+        }
+        
+        .article-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .article-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .action-button {
+            width: 100%;
+            max-width: 250px;
+            justify-content: center;
+        }
+        
+        .related-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .article-content h1 {
+            font-size: 1.75rem;
+        }
+        
+        .article-content h2 {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .article-container {
+            padding: 1rem 10px;
+        }
+        
+        .article-title {
+            font-size: 1.75rem;
+        }
+        
+        .article-tags {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="flex flex-col lg:flex-row gap-6">
-    <!-- 본문 -->
-    <div class="w-full lg:w-2/3">
-        <article>
-            <header class="mb-6">
-                <h1 class="text-3xl font-bold mb-2">{{ post.title }}</h1>
-                <div class="text-sm text-gray-500 space-x-4 mb-4">
-                    <span><i class="fas fa-calendar"></i> {{ post.created_at.strftime('%Y년 %m월 %d일') }}</span>
-                    <span><i class="fas fa-user"></i> {{ post.author.username }}</span>
-                    <span><i class="fas fa-eye"></i> {{ post.views }}회</span>
-                    {% if post.category %}
-                    <span><i class="fas fa-tag"></i> {{ post.category.name }}</span>
-                    {% endif %}
-                </div>
-                {% if post.featured_image %}
-                <img src="{{ post.featured_image }}" alt="{{ post.title }}" class="w-full rounded mb-6">
-                {% endif %}
-            </header>
-
-            <div class="prose max-w-none">
-                {{ post.content | safe }}
+<div class="article-container">
+    <!-- 아티클 헤더 -->
+    <header class="article-header">
+        <h1 class="article-title">{{ post.title }}</h1>
+        
+        <div class="article-meta">
+            <div class="meta-item">
+                <i class="fas fa-calendar"></i>
+                <span>{{ post.created_at.strftime('%Y년 %m월 %d일') }}</span>
             </div>
-        </article>
-
-        {% if related_posts %}
-        <div class="mt-10">
-            <h3 class="text-xl font-semibold mb-4">관련 포스트</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {% for related in related_posts %}
-                <div class="bg-white rounded shadow overflow-hidden">
-                    {% if related.featured_image %}
-                    <img src="{{ related.featured_image }}" alt="{{ related.title }}" class="w-full h-36 object-cover">
-                    {% endif %}
-                    <div class="p-4">
-                        <h6 class="font-semibold text-sm mb-2">{{ related.title }}</h6>
-                        <a href="/blog/{{ related.id }}" class="inline-block text-blue-600 text-sm hover:underline">읽기</a>
-                    </div>
-                </div>
-                {% endfor %}
+            
+            {% if post.author %}
+            <div class="meta-item">
+                <i class="fas fa-user"></i>
+                <span>{{ post.author.username }}</span>
             </div>
+            {% endif %}
+            
+            <div class="meta-item">
+                <i class="fas fa-eye"></i>
+                <span>{{ post.views or 0 }}회 조회</span>
+            </div>
+            
+            {% if post.updated_at and post.updated_at != post.created_at %}
+            <div class="meta-item">
+                <i class="fas fa-edit"></i>
+                <span>{{ post.updated_at.strftime('%Y년 %m월 %d일') }} 수정</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if post.category %}
+        <div class="article-tags">
+            <a href="/blog/category/{{ post.category.slug }}" class="article-tag">
+                {{ post.category.name }}
+            </a>
         </div>
         {% endif %}
+    </header>
+
+    <!-- 피처드 이미지 -->
+    {% if post.featured_image %}
+    <img src="{{ post.featured_image }}" alt="{{ post.title }}" class="featured-image">
+    {% endif %}
+
+    <!-- 아티클 컨텐츠 -->
+    <div class="article-content">
+        {{ post.content | safe }}
     </div>
 
-    <!-- 사이드바 -->
-    <div class="w-full lg:w-1/3">
-        <div class="bg-white rounded shadow">
-            <div class="border-b px-4 py-3">
-                <h5 class="font-semibold text-lg">카테고리</h5>
-            </div>
-            <div class="divide-y">
-                <a href="/blog" class="block px-4 py-2 hover:bg-gray-50">전체 보기</a>
-                {% if post.category %}
-                <a href="/category/{{ post.category.slug }}"
-                   class="block px-4 py-2 bg-blue-50 text-blue-700 font-medium">
-                    {{ post.category.name }}
-                </a>
-                {% endif %}
-            </div>
-        </div>
+    <!-- 액션 버튼들 -->
+    <div class="article-actions">
+        <a href="/blog" class="action-button">
+            <i class="fas fa-arrow-left"></i>
+            목록으로
+        </a>
+        
+        {% if request.session.get('is_admin') %}
+        <a href="/admin/posts/{{ post.id }}/edit" class="action-button">
+            <i class="fas fa-edit"></i>
+            수정하기
+        </a>
+        {% endif %}
+        
+        <a href="/saju" class="action-button primary">
+            <i class="fas fa-star"></i>
+            사주보기
+        </a>
     </div>
+
+    <!-- 관련 포스트 -->
+    {% if related_posts %}
+    <section class="related-posts">
+        <h3 class="related-title">관련 포스트</h3>
+        <div class="related-grid">
+            {% for related in related_posts %}
+            <div class="related-card">
+                {% if related.featured_image %}
+                <img src="{{ related.featured_image }}" alt="{{ related.title }}" class="related-image">
+                {% else %}
+                <div class="related-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea; font-size: 2rem;">
+                    📝
+                </div>
+                {% endif %}
+                
+                <div class="related-content">
+                    <a href="/blog/{{ related.slug or related.id }}" class="related-post-title">
+                        {{ related.title }}
+                    </a>
+                    <div class="related-meta">
+                        {{ related.created_at.strftime('%Y년 %m월 %d일') }}
+                        {% if related.views %}
+                        • {{ related.views }}회 조회
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </div>
 {% endblock %}

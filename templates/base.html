@@ -4,107 +4,319 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}🔮 AI 사주팔자 | 전통과 AI의 만남{% endblock %}</title>
-    <meta name="description" content="고서 원문과 AI가 만나 당신만의 사주를 분석합니다. 삼명통회 기반 정통 해석 + 현대적 AI 분석">
-    <meta name="keywords" content="사주, AI, 팔자, 삼명통회, 전통, 분석, 짝궁">
-    <!-- TailwindCSS CDN -->
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="/static/css/style.css" rel="stylesheet">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: #ffffff;
+            font-size: 16px;
+        }
+        
+        /* 새로운 헤더 스타일 - 랜딩페이지에서 가져옴 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4a5568;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover {
+            color: #667eea;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        /* 모바일 메뉴 */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #4a5568;
+            cursor: pointer;
+        }
+        
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .mobile-menu.active {
+            display: block;
+        }
+        
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        .mobile-nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .mobile-nav-link:hover {
+            background-color: #f7fafc;
+            color: #667eea;
+        }
+        
+        /* 메인 컨텐츠 여백 */
+        .main-content {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+        
+        /* 컨테이너 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .mobile-menu-button {
+                display: block;
+            }
+            
+            .nav {
+                padding: 0.75rem 1rem;
+            }
+            
+            .logo {
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* 푸터 스타일 */
+        .footer {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-section h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+        }
+        
+        .footer-section p,
+        .footer-section a {
+            color: #cbd5e0;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-section a:hover {
+            color: #667eea;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid #4a5568;
+            padding-top: 1.5rem;
+            text-align: center;
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+        
+        /* 플래시 메시지 */
+        .flash-messages {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 999;
+            max-width: 400px;
+        }
+        
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .flash-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .flash-error {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+        
+        .flash-info {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+        
+        .flash-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+    
     {% block extra_head %}{% endblock %}
 </head>
-<body class="antialiased flex flex-col min-h-screen">
-
-    <!-- Navbar -->
-    <nav class="bg-gray-800 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-14">
-                <div class="flex items-center space-x-8">
-                    <a href="/" class="text-lg font-semibold">infoWow.kr</a>
-                    <div class="hidden md:flex space-x-6">
-                        <a href="/" class="hover:text-gray-300">홈</a>
-                        <a href="/blog" class="hover:text-gray-300">블로그</a>
-                        <a href="/saju/page1" class="hover:text-gray-300">🔮 사주팔자</a> <!-- 이 라인 추가 -->
-                        <a href="/order/mypage" class="text-gray-700 hover:text-purple-600">구매내역</a>
-
-                    </div>
-                </div>
-
-                <!-- Mobile toggle -->
-                <div class="md:hidden">
-                    <button id="navToggle" class="focus:outline-none">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Right menu -->
-                <ul class="hidden md:flex items-center space-x-4">
-                    {% if request.session.get('user_id') %}
-                        <li class="relative group">
-                            <button class="flex items-center space-x-1 focus:outline-none">
-                                <span>{{ request.session.get('username') }}</span>
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.585l3.71-4.354a.75.75 0 011.138.976l-4 4.7a.75.75 0 01-1.138 0l-4-4.7a.75.75 0 01.02-1.06z"
-                                          clip-rule="evenodd"/>
-                                </svg>
-                            </button>
-                            <ul
-                                class="absolute right-0 w-40 bg-white text-gray-700 rounded shadow-lg hidden group-hover:block">
-                                {% if request.session.get('is_admin') %}
-                                    <li><a href="/admin/" class="block px-4 py-2 hover:bg-gray-100">관리자</a></li>
-                                {% endif %}
-                                <li><hr class="border-gray-200"></li>
-                                <li><a href="/logout" class="block px-4 py-2 hover:bg-gray-100">로그아웃</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li><a href="/login" class="hover:text-gray-300">로그인</a></li>
-                        <li><a href="/register" class="hover:text-gray-300">회원가입</a></li>
+<body>
+    <!-- 새로운 헤더 -->
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">🔮 AI 사주팔자</a>
+            
+            <!-- 데스크톱 메뉴 -->
+            <div class="nav-links">
+                <a href="/saju/page1" class="nav-link">🔮 사주보기</a>
+                <a href="/blog" class="nav-link">📚 블로그</a>
+                <a href="/saju/wiki" class="nav-link">📖 사주 위키</a>
+                {% if request.session.get('username') %}
+                    {% if request.session.get('is_admin') %}
+                        <a href="/admin" class="nav-link">⚙️ 관리자</a>
                     {% endif %}
-                </ul>
+                    <a href="/logout" class="nav-link">로그아웃</a>
+                {% else %}
+                    <a href="/login" class="nav-link">로그인</a>
+                    <a href="/saju/page1" class="cta-button">✨ 지금 시작하기</a>
+                {% endif %}
+            </div>
+            
+            <!-- 모바일 메뉴 버튼 -->
+            <button class="mobile-menu-button" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+        
+        <!-- 모바일 메뉴 -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-nav-links">
+                <a href="/saju" class="mobile-nav-link">🔮 사주보기</a>
+                <a href="/blog" class="mobile-nav-link">📚 블로그</a>
+                <a href="/saju/wiki" class="mobile-nav-link">📖 사주 위키</a>
+                {% if request.session.get('username') %}
+                    {% if request.session.get('is_admin') %}
+                        <a href="/admin" class="mobile-nav-link">⚙️ 관리자</a>
+                    {% endif %}
+                    <a href="/auth/logout" class="mobile-nav-link">로그아웃</a>
+                {% else %}
+                    <a href="/auth/login" class="mobile-nav-link">로그인</a>
+                    <a href="/saju" class="cta-button" style="margin-top: 0.5rem;">✨ 지금 시작하기</a>
+                {% endif %}
             </div>
         </div>
+    </header>
 
-        <!-- Mobile menu -->
-        <div id="mobileMenu" class="md:hidden hidden px-4 pb-4 space-y-2">
-            <a href="/" class="block hover:text-gray-300">홈</a>
-            <a href="/blog" class="block hover:text-gray-300">블로그</a>
-            <a href="/saju/page1" class="block hover:text-gray-300">🔮 사주팔자</a>
-            {% if request.session.get('user_id') %}
-                {% if request.session.get('is_admin') %}
-                    <a href="/admin/" class="block hover:text-gray-300">관리자</a>
-                {% endif %}
-                <a href="/logout" class="block hover:text-gray-300">로그아웃</a>
-            {% else %}
-                <a href="/login" class="block hover:text-gray-300">로그인</a>
-                <a href="/register" class="block hover:text-gray-300">회원가입</a>
-            {% endif %}
-        </div>
-    </nav>
+    <!-- 플래시 메시지 -->
+    <div class="flash-messages">
+        {% for category, message in get_flashed_messages(request) %}
+            <div class="flash-message flash-{{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
 
-    <!-- Main -->
-    <main class="flex-1 max-w-7xl mx-auto px-4 py-6">
-        {% with messages = get_flashed_messages(request) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-4 flex items-start justify-between rounded px-4 py-3 text-sm
-                        {% if category == 'error' %}
-                            bg-red-100 text-red-800
-                        {% elif category == 'success' %}
-                            bg-green-100 text-green-800
-                        {% else %}
-                            bg-blue-100 text-blue-800
-                        {% endif %}">
-                        <span>{{ message }}</span>
-                        <button type="button" class="font-bold leading-none" onclick="this.parentElement.remove()">&times;</button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
         {% block content %}{% endblock %}
     </main>
 
@@ -113,33 +325,27 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>🔮 AI 사주팔자</h3>
-                    <p style="color: #a0aec0; margin-bottom: 1rem;">
-                        전통 명리학과 AI 기술의 만남<br>
-                        정확하고 현대적인 사주 해석 서비스
-                    </p>
+                    <h4>🔮 AI 사주팔자</h4>
+                    <p>전통 사주팔자와 최신 AI 기술의 만남으로<br>더욱 정확하고 깊이 있는 운세를 제공합니다.</p>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>서비스</h3>
-                    <a href="/saju/page1">AI 사주 분석</a>
-                    <a href="#pricing">가격 안내</a>
-                    <a href="/order/mypage">마이페이지</a>
-                    <a href="/blog">사주 블로그</a>
+                    <h4>서비스</h4>
+                    <a href="/saju">사주 분석</a><br>
+                    <a href="/saju/wiki">사주 위키</a><br>
+                    <a href="/blog">블로그</a>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>고객지원</h3>
-                    <a href="#faq">자주 묻는 질문</a>
-                    <a href="/contact">문의하기</a>
-                    <a href="/privacy">개인정보처리방침</a>
-                    <a href="/terms">이용약관</a>
+                    <h4>고객지원</h4>
+                    <a href="mailto:help@infowow.kr">이메일 문의</a><br>
+                    <a href="tel:02-881-0775">전화 문의</a><br>
+                    <a href="#" onclick="alert('카카오톡 채널 준비 중입니다!')">📱 카카오톡 채널</a>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>연결하기</h3>
-                    <a href="#" onclick="alert('준비 중입니다!')">📧 이메일 문의</a>
-                    <a href="#" onclick="alert('준비 중입니다!')">📱 카카오톡 채널</a>
+                    <h4>소셜 미디어</h4>
+                    <a href="#" onclick="alert('준비 중입니다!')">📱 카카오톡 채널</a><br>
                     <a href="#" onclick="alert('준비 중입니다!')">📝 네이버 블로그</a>
                 </div>
             </div>
@@ -154,7 +360,9 @@
             </div>
         </div>
     </footer>
+
     {% block extra_scripts %}{% endblock %}
+    
     <!-- Naver Analytics -->
     <script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
     <script type="text/javascript">
@@ -164,22 +372,32 @@
             wcs_do();
         }
     </script>
+    
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EK53P8DPEK"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-
         gtag('config', 'G-EK53P8DPEK');
     </script>
+    
     <script>
-        // mobile nav toggle
+        // 모바일 네비게이션 토글
         document.getElementById('navToggle').addEventListener('click', () => {
-            document.getElementById('mobileMenu').classList.toggle('hidden');
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
         });
+        
+        // 플래시 메시지 자동 숨김
+        setTimeout(() => {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                message.style.opacity = '0';
+                message.style.transform = 'translateX(100%)';
+                setTimeout(() => message.remove(), 300);
+            });
+        }, 5000);
     </script>
-
-
 </body>
 </html>

@@ -1,89 +1,539 @@
 {% extends "base.html" %}
 
-{% block title %}블로그 - My Website{% endblock %}
+{% block title %}📚 블로그 - AI 사주팔자{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Zenn.dev 스타일 블로그 디자인 */
+    .blog-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 20px;
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 3rem;
+    }
+    
+    .blog-main {
+        min-width: 0; /* 그리드 오버플로우 방지 */
+    }
+    
+    .blog-sidebar {
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+    
+    /* 헤더 섹션 */
+    .blog-header {
+        margin-bottom: 3rem;
+    }
+    
+    .blog-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1a202c;
+        margin-bottom: 0.5rem;
+    }
+    
+    .blog-subtitle {
+        font-size: 1.125rem;
+        color: #4a5568;
+        margin-bottom: 2rem;
+    }
+    
+    /* 포스트 카드 - Zenn.dev 스타일 */
+    .post-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .post-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+    
+    .post-card:hover {
+        border-color: #cbd5e0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .post-image {
+        width: 120px;
+        height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #f7fafc;
+    }
+    
+    .post-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        color: #718096;
+    }
+    
+    .post-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .post-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .post-title:hover {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .post-excerpt {
+        color: #4a5568;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .post-footer {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        gap: 1rem;
+    }
+    
+    .post-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex: 1;
+    }
+    
+    .post-tag {
+        background: #edf2f7;
+        color: #4a5568;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    .post-tag:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+        text-decoration: none;
+    }
+    
+    .post-views {
+        color: #718096;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    /* 사이드바 스타일 */
+    .sidebar-section {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .sidebar-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .category-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .category-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .category-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-radius: 8px;
+        color: #4a5568;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    
+    .category-link:hover {
+        background: #f7fafc;
+        color: #667eea;
+        border-color: #e2e8f0;
+        text-decoration: none;
+    }
+    
+    .category-name {
+        font-weight: 500;
+    }
+    
+    .category-count {
+        background: #edf2f7;
+        color: #718096;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    /* 페이지네이션 */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 3rem;
+        padding: 2rem 0;
+    }
+    
+    .pagination a,
+    .pagination span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination a:hover {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .pagination .current {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+    
+    /* 빈 상태 */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #718096;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+    }
+    
+    .empty-description {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .empty-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s ease;
+    }
+    
+    .empty-cta:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* 반응형 디자인 */
+    @media (max-width: 1024px) {
+        .blog-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .blog-sidebar {
+            position: static;
+            order: -1;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 1rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .blog-container {
+            padding: 1rem 15px;
+        }
+        
+        .post-card {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .post-image {
+            width: 100%;
+            height: 160px;
+        }
+        
+        .blog-title {
+            font-size: 2rem;
+        }
+        
+        .post-meta {
+            flex-wrap: wrap;
+        }
+        
+        .post-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .blog-container {
+            padding: 1rem 10px;
+        }
+        
+        .post-card {
+            padding: 1rem;
+        }
+        
+        .sidebar-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="flex flex-col lg:flex-row gap-6">
-    <!-- 본문 영역 -->
-    <div class="w-full lg:w-2/3">
-        <h1 class="text-2xl font-semibold mb-6">블로그</h1>
+<div class="blog-container">
+    <!-- 메인 컨텐츠 -->
+    <main class="blog-main">
+        <header class="blog-header">
+            <h1 class="blog-title">📚 블로그</h1>
+            <p class="blog-subtitle">사주와 운세에 대한 깊이 있는 이야기를 전해드립니다</p>
+        </header>
 
         {% if posts %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="post-grid">
             {% for post in posts %}
-            <div class="bg-white rounded shadow overflow-hidden flex flex-col">
+            <article class="post-card">
                 {% if post.featured_image %}
-                <img src="{{ post.featured_image }}" alt="{{ post.title }}" class="w-full h-48 object-cover">
+                <img src="{{ post.featured_image }}" alt="{{ post.title }}" class="post-image">
+                {% else %}
+                <div class="post-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea; font-size: 2rem;">
+                    📝
+                </div>
                 {% endif %}
-                <div class="p-4 flex flex-col flex-1">
-                    <h5 class="text-lg font-semibold mb-2">{{ post.title }}</h5>
-                    <p class="text-sm text-gray-700 flex-grow">{{ post.excerpt or post.content[:150] }}...</p>
-                    <div class="mt-4 flex items-center justify-between text-sm">
-                        <a href="/blog/{{ post.id }}" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">더 읽기</a>
-                        <span class="text-gray-500">조회 {{ post.views }}회</span>
+                
+                <div class="post-content">
+                    <div class="post-meta">
+                        <span class="post-meta-item">
+                            <i class="fas fa-calendar" style="width: 12px;"></i>
+                            {{ post.created_at.strftime('%Y년 %m월 %d일') }}
+                        </span>
+                        {% if post.author %}
+                        <span class="post-meta-item">
+                            <i class="fas fa-user" style="width: 12px;"></i>
+                            {{ post.author.username }}
+                        </span>
+                        {% endif %}
+                        <span class="post-meta-item">
+                            <i class="fas fa-eye" style="width: 12px;"></i>
+                            {{ post.views or 0 }}회
+                        </span>
+                    </div>
+                    
+                    <a href="/blog/{{ post.id }}" class="post-title">
+                        {{ post.title }}
+                    </a>
+                    
+                    <p class="post-excerpt">
+                        {{ post.excerpt or (post.content|striptags)[:120] + '...' if post.content else '내용 없음' }}
+                    </p>
+                    
+                    <div class="post-footer">
+                        <div class="post-tags">
+                            {% if post.category %}
+                            <a href="/blog/category/{{ post.category.slug }}" class="post-tag">
+                                {{ post.category.name }}
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                <div class="bg-gray-100 text-gray-500 text-xs px-4 py-2 flex justify-between">
-                    <span>{{ post.created_at.strftime('%Y-%m-%d') }}</span>
-                    <span>{{ post.author.username }}</span>
-                </div>
-            </div>
+            </article>
             {% endfor %}
         </div>
 
+        <!-- 페이지네이션 -->
         {% if pages > 1 %}
-        <div class="mt-8">
-            <nav class="flex justify-center">
-                <ul class="inline-flex items-center space-x-1 text-sm">
-                    {% if page > 1 %}
-                    <li>
-                        <a href="?page={{ page - 1 }}"
-                           class="px-3 py-1 rounded border bg-white hover:bg-gray-100">이전</a>
-                    </li>
-                    {% endif %}
+        <nav class="pagination">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}" title="이전 페이지">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
 
-                    {% for p in range(1, pages + 1) %}
-                    <li>
-                        <a href="?page={{ p }}"
-                           class="px-3 py-1 rounded border {{ 'bg-blue-600 text-white' if p == page else 'bg-white hover:bg-gray-100' }}">
-                            {{ p }}
-                        </a>
-                    </li>
-                    {% endfor %}
+            {% for p in range(1, pages + 1) %}
+                {% if p == page %}
+                <span class="current">{{ p }}</span>
+                {% else %}
+                <a href="?page={{ p }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
 
-                    {% if page < pages %}
-                    <li>
-                        <a href="?page={{ page + 1 }}"
-                           class="px-3 py-1 rounded border bg-white hover:bg-gray-100">다음</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+            {% if page < pages %}
+            <a href="?page={{ page + 1 }}" title="다음 페이지">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </nav>
         {% endif %}
+
         {% else %}
-        <div class="text-center py-12 text-gray-500">
-            <h3 class="text-xl font-semibold">아직 포스트가 없습니다</h3>
-            <p class="mt-2">첫 번째 포스트를 기다리고 있어요!</p>
+        <!-- 빈 상태 -->
+        <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <h3 class="empty-title">아직 포스트가 없습니다</h3>
+            <p class="empty-description">
+                첫 번째 포스트를 기다리고 있어요!<br>
+                관리자라면 새로운 포스트를 작성해보세요.
+            </p>
+            {% if request.session.get('is_admin') %}
+            <a href="/admin/posts/create" class="empty-cta">
+                <i class="fas fa-plus"></i>
+                첫 포스트 작성하기
+            </a>
+            {% endif %}
         </div>
         {% endif %}
-    </div>
+    </main>
 
     <!-- 사이드바 -->
-    <div class="w-full lg:w-1/3">
-        <div class="bg-white rounded shadow">
-            <div class="border-b px-4 py-3">
-                <h5 class="text-lg font-semibold">카테고리</h5>
-            </div>
-            <div>
+    <aside class="blog-sidebar">
+        <!-- 카테고리 섹션 -->
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">
+                <i class="fas fa-folder"></i>
+                카테고리
+            </h3>
+            {% if categories %}
+            <ul class="category-list">
+                <li class="category-item">
+                    <a href="/blog" class="category-link">
+                        <span class="category-name">전체</span>
+                        <span class="category-count">{{ total_posts or 0 }}</span>
+                    </a>
+                </li>
                 {% for category in categories %}
-                <a href="/category/{{ category.slug }}"
-                   class="block px-4 py-2 border-b hover:bg-gray-50">
-                    {{ category.name }}
+                <li class="category-item">
+                    <a href="/blog/category/{{ category.slug }}" class="category-link">
+                        <span class="category-name">{{ category.name }}</span>
+                        <span class="category-count">{{ category.posts|length if category.posts else 0 }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: #718096; font-size: 0.875rem; text-align: center; padding: 1rem;">
+                아직 카테고리가 없습니다
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- 인기 포스트 섹션 -->
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">
+                <i class="fas fa-fire"></i>
+                인기 포스트
+            </h3>
+            <div style="color: #718096; font-size: 0.875rem; text-align: center; padding: 1rem;">
+                준비 중입니다
+            </div>
+        </div>
+
+        <!-- 최근 포스트 섹션 -->
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">
+                <i class="fas fa-clock"></i>
+                최근 포스트
+            </h3>
+            {% if recent_posts %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for post in recent_posts[:5] %}
+                <a href="/blog/{{ post.id }}" style="color: #4a5568; text-decoration: none; font-size: 0.875rem; line-height: 1.4; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;" 
+                   onmouseover="this.style.background='#f7fafc'" 
+                   onmouseout="this.style.background='transparent'">
+                    {{ post.title[:40] + '...' if post.title|length > 40 else post.title }}
                 </a>
                 {% endfor %}
             </div>
+            {% else %}
+            <p style="color: #718096; font-size: 0.875rem; text-align: center; padding: 1rem;">
+                최근 포스트가 없습니다
+            </p>
+            {% endif %}
         </div>
-    </div>
+    </aside>
 </div>
 {% endblock %}
