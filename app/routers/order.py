@@ -495,7 +495,7 @@ async def download_report(
         raise HTTPException(status_code=404, detail=f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
 
 ################################################################################
-# 9-1) 리포트 HTML 직접 보기 (새로 추가)
+# 9-1) 생성된 리포트 HTML 직접 보기 (새로 추가)
 ################################################################################
 @router.get("/report/{order_id}", response_class=HTMLResponse)
 async def view_report(
@@ -530,6 +530,82 @@ async def view_report(
         
     except Exception as e:
         logger.error(f"리포트 HTML 읽기 실패: {e}")
+        raise HTTPException(status_code=500, detail="리포트를 불러오는 중 오류가 발생했습니다.")
+
+################################################################################
+# 9-1) 빠른 리포트 보기 (기존 generate_enhanced_report_html 재사용)
+################################################################################
+@router.get("/report/live/{order_id}", response_class=HTMLResponse)
+async def view_quick_report(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """빠른 리포트 보기 (기존 generate_enhanced_report_html 재사용)"""
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == user.id,
+        Order.status == "paid"
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+    
+    # 캐시에서 AI 분석 결과 확인
+    cache = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
+    if not cache or not cache.analysis_full:
+        return HTMLResponse("""
+            <div style="text-align: center; padding: 3rem;">
+                <h2>🔄 리포트를 준비 중입니다</h2>
+                <p>AI 분석이 완료되면 자동으로 표시됩니다.</p>
+                <script>setTimeout(() => location.reload(), 5000);</script>
+            </div>
+        """)
+    
+    try:
+        # 기존 generate_enhanced_report_html 함수 재사용
+        from app.tasks import generate_enhanced_report_html
+        from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
+        from datetime import datetime
+        
+        # 사주 정보 파싱
+        parts = order.saju_key.split('_')
+        if len(parts) == 5:
+            calendar, birth_raw, hour_part, tz_part, gender = parts
+            birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
+            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        elif len(parts) == 3:
+            birthdate_str, hour_part, gender = parts
+            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        else:
+            raise ValueError(f"잘못된 saju_key 형식: {order.saju_key}")
+
+        if birth_hour is None:
+            birth_hour = 12
+
+        birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
+        pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
+        elem_dict_kr, result_text = analyze_four_pillars_to_string(
+            pillars['year'][0], pillars['year'][1],
+            pillars['month'][0], pillars['month'][1], 
+            pillars['day'][0], pillars['day'][1],
+            pillars['hour'][0], pillars['hour'][1],
+        )
+
+        # 사용자 이름
+        saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
+        user_name = saju_user.name if saju_user and getattr(saju_user, "name", None) else "고객"
+
+        # HTML 생성 (파일 저장 없이)
+        html_content = generate_enhanced_report_html(
+            user_name, pillars, cache.analysis_full, elem_dict_kr, birthdate_str
+        )
+        
+        return HTMLResponse(content=html_content, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"빠른 리포트 생성 실패: {e}")
         raise HTTPException(status_code=500, detail="리포트를 불러오는 중 오류가 발생했습니다.")
 
 ################################################################################
