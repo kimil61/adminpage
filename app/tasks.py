@@ -12,7 +12,8 @@ from app.routers.saju import (
     calculate_four_pillars,
     analyze_four_pillars_to_string,
     ai_sajupalja_with_ollama,
-    ai_sajupalja_with_chatgpt
+    ai_sajupalja_with_chatgpt,
+    ai_sajupalja_with_chatgpt_sync
 )
 from markdown import markdown
 import pdfkit
@@ -188,10 +189,9 @@ def generate_full_report(self, order_id: int, saju_key: str):
             result_text,
         ])
         
-        # ai_sajupalja_with_chatgpt 는 비동기 함수이므로 여기서 실행 결과를 기다려 문자열을 받아야 합니다.
-        analysis_result = asyncio.run(
-            ai_sajupalja_with_chatgpt(prompt=prompt, content=combined_text)
-        )
+        # 기존 asyncio.run 코드를 동기 함수로 교체
+        analysis_result = ai_sajupalja_with_chatgpt_sync(prompt=prompt, content=combined_text)
+
         if not analysis_result:
             raise Exception('Failed to generate AI analysis')
 
@@ -258,6 +258,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
             
         #     attachments = [pdf_path] if pdf_success else []
         #     send_email_improved(order.pdf_send_email, email_subject, email_body, attachments)
+        
         # AI 분석 완료 후 상태 업데이트
         order.report_status = "completed"
         order.report_completed_at = datetime.now()
