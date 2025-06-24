@@ -34,26 +34,28 @@ async def blog_list(
         "total": total
     })
 
-@router.get("/blog/{post_id}", response_class=HTMLResponse)
+@router.get("/blog/{slug}", response_class=HTMLResponse)
 async def blog_detail(
     request: Request,
-    post_id: int,
+    slug: str,  # post_id에서 slug로 변경
     db: Session = Depends(get_db)
 ):
+    # slug로 포스트 찾기
     post = db.query(Post).filter(
-        Post.id == post_id,
+        Post.slug == slug,  # ID 대신 slug로 검색
         Post.is_published == True
     ).first()
     
     if not post:
         raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
     
-    # 🔒 None 방어 처리
+    # 조회수 증가
     if post.views is None:
         post.views = 0
     post.views += 1
     db.commit()
     
+    # 같은 카테고리의 관련 포스트
     related_posts = db.query(Post).filter(
         Post.category_id == post.category_id,
         Post.id != post.id,
@@ -65,6 +67,38 @@ async def blog_detail(
         "post": post,
         "related_posts": related_posts
     })
+
+# @router.get("/blog/{post_id}", response_class=HTMLResponse)
+# async def blog_detail(
+#     request: Request,
+#     post_id: int,
+#     db: Session = Depends(get_db)
+# ):
+#     post = db.query(Post).filter(
+#         Post.id == post_id,
+#         Post.is_published == True
+#     ).first()
+    
+#     if not post:
+#         raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+    
+#     # 🔒 None 방어 처리
+#     if post.views is None:
+#         post.views = 0
+#     post.views += 1
+#     db.commit()
+    
+#     related_posts = db.query(Post).filter(
+#         Post.category_id == post.category_id,
+#         Post.id != post.id,
+#         Post.is_published == True
+#     ).limit(3).all()
+    
+#     return templates.TemplateResponse("blog/detail.html", {
+#         "request": request,
+#         "post": post,
+#         "related_posts": related_posts
+#     })
 
 @router.get("/category/{category_slug}", response_class=HTMLResponse)
 async def blog_category(
