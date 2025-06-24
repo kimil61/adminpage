@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Website{% endblock %}</title>
-
+    <title>{% block title %}🔮 AI 사주팔자 | 전통과 AI의 만남{% endblock %}</title>
+    <meta name="description" content="고서 원문과 AI가 만나 당신만의 사주를 분석합니다. 삼명통회 기반 정통 해석 + 현대적 AI 분석">
+    <meta name="keywords" content="사주, AI, 팔자, 삼명통회, 전통, 분석, 짝궁">
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="/static/css/style.css" rel="stylesheet">
@@ -107,15 +108,52 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-gray-300 py-6">
-        <div class="max-w-7xl mx-auto px-4 text-sm text-center space-y-1">
-            <p>&copy; 2025 SkyLoom | 대표자: 김일 | 사업자등록번호: 812-72-00526</p>
-            <p>인천광역시 미추홀구 낙섬동로 134, 105동 403호(용현동)</p>
-            <p>대표전화: 02-881-0775 | 이메일: help@infowow.kr</p>
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>🔮 AI 사주팔자</h3>
+                    <p style="color: #a0aec0; margin-bottom: 1rem;">
+                        전통 명리학과 AI 기술의 만남<br>
+                        정확하고 현대적인 사주 해석 서비스
+                    </p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>서비스</h3>
+                    <a href="/saju/page1">AI 사주 분석</a>
+                    <a href="#pricing">가격 안내</a>
+                    <a href="/order/mypage">마이페이지</a>
+                    <a href="/blog">사주 블로그</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>고객지원</h3>
+                    <a href="#faq">자주 묻는 질문</a>
+                    <a href="/contact">문의하기</a>
+                    <a href="/privacy">개인정보처리방침</a>
+                    <a href="/terms">이용약관</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>연결하기</h3>
+                    <a href="#" onclick="alert('준비 중입니다!')">📧 이메일 문의</a>
+                    <a href="#" onclick="alert('준비 중입니다!')">📱 카카오톡 채널</a>
+                    <a href="#" onclick="alert('준비 중입니다!')">📝 네이버 블로그</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 SkyLoom | 대표자: 김일 | 사업자등록번호: 812-72-00526</p>
+                <p>인천광역시 미추홀구 낙섬동로 134, 105동 403호(용현동)</p>
+                <p>대표전화: 02-881-0775 | 이메일: help@infowow.kr</p>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                    이 서비스는 전통 명리학을 기반으로 하되, 참고용으로만 활용해주세요.
+                </p>
+            </div>
         </div>
     </footer>
-
     {% block extra_scripts %}{% endblock %}
     <!-- Naver Analytics -->
     <script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
