@@ -701,6 +701,25 @@ def generate_saju_analysis(birthdate, birth_hour):
         return format_fortune_text(reply)
     except Exception as e:
         return f"⚠️ 오류 발생: {e}"
+    
+# /saju 방문시 --> /saju/page1로 리다이렉트
+@router.get("/", response_class=RedirectResponse)
+async def saju_root():
+    return RedirectResponse(url="/saju/page1", status_code=302)
+
+@router.get("/wiki", response_class=HTMLResponse)
+async def saju_wiki_placeholder(request: Request):
+    return HTMLResponse("""
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url=/saju/page1" />
+        </head>
+        <body>
+            <h2 style='text-align:center;margin-top:100px;'>🔧 준비 중입니다. 2초 후 이전 페이지로 돌아갑니다.</h2>
+        </body>
+        </html>
+    """)
+
 
 # ai 사주 첫페이지
 @router.get("/page1", response_class=HTMLResponse)
@@ -1142,3 +1161,4 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
 
 # AI 사주 2차 업그레이드 버전 API 끝
 #######################################################################
+
