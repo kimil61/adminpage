@@ -497,8 +497,42 @@ async function startPremiumPurchase() {
 
 // 카카오페이 결제창 오픈
 function openKakaoPayment(orderData) {
-    const { redirect_url, is_mobile, order_id } = orderData;
+    const { redirect_url, is_mobile, order_id, dev_mode, message } = orderData;
     
+    // 🔧 개발 모드: 결제창 없이 바로 성공 처리
+    if (dev_mode) {
+        console.log('🔧 개발 모드: 결제 건너뛰기');
+        console.log('응답 메시지:', message);
+        
+        // 개발 모드 알림
+        const devAlert = document.createElement('div');
+        devAlert.className = 'fixed top-4 right-4 bg-yellow-500 text-white p-4 rounded-lg shadow-lg z-50';
+        devAlert.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="font-semibold">🔧 개발 모드</p>
+                    <p class="text-sm">결제 건너뛰기 완료</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(devAlert);
+        
+        // 성공 메시지 표시
+        showPaymentSuccess();
+        
+        // 3초 후 마이페이지로 이동
+        setTimeout(() => {
+            devAlert.remove();
+            window.location.href = '/order/mypage';
+        }, 3000);
+        
+        return;
+    }
+    
+    // 🏭 프로덕션 모드: 기존 카카오페이 로직
     if (is_mobile || isMobileDevice()) {
         // 모바일: 현재 창에서 리다이렉트
         window.location.href = redirect_url;
@@ -645,6 +679,7 @@ function showPaymentLoading(show) {
     }
 }
 
+// showPaymentSuccess 함수도 개발 모드 메시지 추가
 function showPaymentSuccess() {
     // 성공 메시지 표시
     const successDiv = document.createElement('div');
@@ -664,7 +699,9 @@ function showPaymentSuccess() {
     
     // 5초 후 제거
     setTimeout(() => {
-        successDiv.remove();
+        if (successDiv.parentNode) {
+            successDiv.remove();
+        }
     }, 5000);
 }
 

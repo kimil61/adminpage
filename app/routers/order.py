@@ -17,10 +17,15 @@ from app.payments.kakaopay import (
     KakaoPayError, get_payment_method_name, is_mobile_user_agent
 )
 import logging
-
+import os
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# 개발 모드 설정 읽기
+DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
+SKIP_PAYMENT = os.getenv("SKIP_PAYMENT", "false").lower() == "true"
+
 
 router = APIRouter(prefix="/order", tags=["Order"])
 
@@ -90,7 +95,40 @@ async def create_order(
         db.commit()
         db.refresh(order)
         
-        # 카카오페이 결제 준비 API 호출
+        ##################################################
+        # 개발 모드 또는 결제 생략 설정인 경우
+        if DEV_MODE and SKIP_PAYMENT:
+            logger.info(f"🔧 개발 모드: 결제 건너뛰기 - order_id={order.id}")
+            
+            # 바로 결제 완료 상태로 변경
+            order.status = "paid"
+            order.report_status = "generating"
+            order.kakao_tid = f"DEV_TID_{order.id}"
+            db.commit()
+            
+            # 백그라운드 리포트 생성 시작
+            try:
+                from app.tasks import generate_full_report
+                task = generate_full_report.delay(order.id, order.saju_key)
+                order.celery_task_id = task.id
+                db.commit()
+                logger.info(f"🔧 개발 모드: 리포트 생성 태스크 시작 - task_id={task.id}")
+            except Exception as e:
+                logger.error(f"리포트 생성 태스크 시작 실패: {e}")
+            
+            # 개발 모드 응답 (결제창 없이 바로 성공 페이지로)
+            return JSONResponse({
+                "success": True,
+                "dev_mode": True,
+                "order_id": order.id,
+                "redirect_url": f"/order/success?order_id={order.id}",
+                "is_mobile": False,
+                "message": "🔧 개발 모드: 결제 건너뛰기 완료"
+            })
+
+        ##################################################
+
+        # 🏭 프로덕션 모드: 실제 카카오페이 호출
         try:
             kakao_response = await kakao_ready(
                 order_id=order.id,
@@ -117,6 +155,7 @@ async def create_order(
             
             return JSONResponse({
                 "success": True,
+                "dev_mode": False,
                 "order_id": order.id,
                 "tid": order.kakao_tid,
                 "redirect_url": redirect_url,
@@ -137,6 +176,7 @@ async def create_order(
         logger.error(f"주문 생성 실패: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"주문 생성 실패: {str(e)}")
+
 
 ################################################################################
 # 2) 결제 승인 콜백 - 카카오페이에서 리다이렉트

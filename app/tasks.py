@@ -93,7 +93,7 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             keyword_html=keyword_html,
             checklist=checklist,
             fortune_summary=fortune_summary,
-            analysis_result=analysis_result,
+            analysis_result=analysis_result_html,
             elem_dict_kr=elem_dict_kr,
             birthdate=birthdate_str
         )

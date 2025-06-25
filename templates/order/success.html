@@ -79,7 +79,7 @@ function closeWindow() {
     try {
         // 부모 창이 있으면 새로고침
         if (window.opener && !window.opener.closed) {
-            window.opener.location.reload();
+            window.opener.location.href = '/order/mypage';
         }
         
         // 팝업창 닫기
