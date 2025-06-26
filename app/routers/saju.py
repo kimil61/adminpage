@@ -1021,10 +1021,10 @@ DELAY_BETWEEN_REQUESTS = os.getenv('DELAY_BETWEEN_REQUESTS', 2)  # 요청 간 �
 def load_prompt():
     """improved_saju_prompt_v2.md 파일에서 프롬프트 로드"""
     try:
-        with open('improved_saju_prompt_v2.md', 'r', encoding='utf-8') as f:
+        with open('improved_saju_prompt_v3.md', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        print("❌ improved_saju_prompt_v2.md 파일을 찾을 수 없습니다.")
+        print("❌ improved_saju_prompt_v3.md 파일을 찾을 수 없습니다.")
         return None
 def test_ollama_connection():
     """ollama 서버 연결 테스트"""

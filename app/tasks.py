@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from datetime import datetime, timedelta
 from celery import current_task
 from app.celery_app import celery_app
@@ -67,58 +68,78 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
         fortune_summary = generate_fortune_summary(elem_dict_kr)
         
         # 7. AI 심층 분석 결과를 HTML로 변환 (개선된 버전)
-        def format_ai_analysis(text):
-            """AI 분석 결과를 HTML로 변환"""
+        def format_ai_analysis(text: str) -> str:
+            """
+            GPT‑4o가 줄바꿈을 제대로 넣지 못해 하나의 문장으로 붙여­나오는 문제를
+            완전히 해결한다.
+
+            1) ### 헤딩 앞뒤 줄바꿈 강제 ‑ 선행 공백 제거
+            2) '### n. 제목:' → '### n. 제목' + 본문 분리
+            3) 문단 내부 한국어 마침표 뒤에 <br> 삽입 (가독성↑)
+            4) **A. …** 패턴을 #### 서브헤딩으로 변환
+            5) 마크다운→HTML 변환 후, 기존 스타일 인라인 유지
+            """
             if not text:
                 return ""
 
-            import re
-            import html as html_module
+            import re, html as html_module
             from markdown import markdown
 
-            # 텍스트 정규화
-            text = text.replace('\r\n', '\n').replace('\r', '\n')
-            text = text.replace(' <strong', '\n<strong')
+            # 줄바꿈 종류 통일
+            text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
 
-            # A. ~ F. 항목 앞에 줄바꿈 두 개 삽입
-            text = re.sub(r'(?<!<br>)\s*([A-F])\.', r'<br><br>\1.', text)
+            # ① 헤딩 앞 공백 제거 + 두 줄바꿈 보장
+            #    ‘ … ### 2.’ → '\n\n### 2.'
+            text = re.sub(r'\s*###\s*', r'\n\n### ', text)
 
-            # 문장 끝 마침표 뒤에 줄바꿈 삽입 (단, 한글로 끝나는 문장에만 적용)
-            text = re.sub(r'(?<=[가-힣])\.(\s)', r'.<br>\1', text)
-
-            # 헤딩이 문장 중간에 붙지 않도록 보정
-            text = re.sub(r'(?<!\n)\s+(#{1,6}\s)', r'\n\1', text)
+            # ② '### 1. 제목: 본문…' → '### 1. 제목\n\n본문…'
             text = re.sub(
-                r'^(#{1,6}\s?\d+\.[^\n]+?)\s+(?=[^\n])',
-                r'\1\n',
+                r'^(###\s*\d+\.\s*[^:\n]+):\s*',
+                r'\1\n\n',
                 text,
                 flags=re.MULTILINE
             )
 
+            # ③ **A. 소제목** → #### A. 소제목
+            text = re.sub(r'\*\*([A-F])\.\s*([^*]+?)\*\*', r'#### \1. \2', text)
 
-            # 마크다운 변환
+            # ④ 가독성용 줄바꿈: 마침표 뒤 한글/영대문자 시작이면 <br>용 두 스페이스 + \n
+            text = re.sub(r'(?<=[가-힣\w])\.\s+(?=[가-힣A-Z])', '.  \n', text)
+
+            # ⑤ 과잉 빈줄 정리(3줄→2줄)
+            text = re.sub(r'\n{3,}', '\n\n', text)
+
+            # ⑥ 마크다운 → HTML
             html = markdown(
                 text,
                 extensions=[
-                    'markdown.extensions.extra',
-                    'markdown.extensions.nl2br',
-                    'markdown.extensions.sane_lists'
-                ]
+                    "markdown.extensions.extra",
+                    "markdown.extensions.nl2br",
+                    "markdown.extensions.sane_lists",
+                ],
             )
 
-            # HTML 엔티티 디코딩
+            # ⑦ HTML 엔티티 디코드
             html = html_module.unescape(html)
 
-            # 스타일 적용
-            html = html.replace('<h3>', '<h3 style="color: #7C3AED; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">')
-            html = html.replace('<h2>', '<h2 style="color: #5B21B6; margin-top: 2.5rem; margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 700;">')
-            html = html.replace('<strong>', '<strong style="color: #1F2937; font-weight: 700;">')
-            html = html.replace('<p>', '<p style="margin-bottom: 1rem; line-height: 1.6;">')
+            # ⑧ 스타일 주입
+            html = html.replace(
+                "<h3>",
+                '<h3 style="color: #7C3AED; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">',
+            )
+            html = html.replace(
+                "<h4>",
+                '<h4 style="color: #5B21B6; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600;">',
+            )
+            html = html.replace(
+                "<p>",
+                '<p style="margin-bottom: 1rem; line-height: 1.6;">',
+            )
 
             return html
 
         analysis_result_html = format_ai_analysis(analysis_result)
-        
+
         # Jinja2 환경 설정
         env = Environment(
             loader=FileSystemLoader('templates'),
