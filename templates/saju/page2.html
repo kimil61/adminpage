@@ -683,7 +683,8 @@ function showPaymentLoading(show) {
 function showPaymentSuccess() {
     // 성공 메시지 표시
     const successDiv = document.createElement('div');
-    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
+    // 위치를 더 아래로 조정하고 중앙 정렬로 변경
+    successDiv.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm w-full mx-4';
     successDiv.innerHTML = `
         <div class="flex items-center space-x-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -708,7 +709,8 @@ function showPaymentSuccess() {
 function showPaymentError(message) {
     // 에러 메시지 표시
     const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
+    // 위치를 더 아래로 조정하고 중앙 정렬로 변경
+    errorDiv.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm w-full mx-4';
     errorDiv.innerHTML = `
         <div class="flex items-center space-x-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -726,6 +728,27 @@ function showPaymentError(message) {
     setTimeout(() => {
         errorDiv.remove();
     }, 7000);
+}
+
+// 개발 모드 알림도 동일하게 수정
+function showDevModeAlert() {
+    const devAlert = document.createElement('div');
+    // 위치를 더 아래로 조정하고 중앙 정렬로 변경
+    devAlert.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm w-full mx-4';
+    devAlert.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="font-semibold">🔧 개발 모드</p>
+                <p class="text-sm">결제 건너뛰기 완료</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(devAlert);
+    
+    return devAlert;
 }
 
 // 페이지 로드 시 이벤트 리스너 등록
