@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation
+from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation, Product
 from app.template import templates
 from datetime import datetime, timedelta
 import uuid
@@ -871,7 +871,9 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     
     # 환경변수에서 후원 링크 가져오기
     coffee_link = os.getenv("BUY_ME_A_COFFEE_LINK", "https://www.buymeacoffee.com/yourname")
-    
+    # 🎯 상품 정보 조회 (premium_saju 코드로) - 이 부분만 추가
+    product = db.query(Product).filter(Product.code == "premium_saju", Product.is_active == True).first()
+
     return templates.TemplateResponse("saju/page2.html", {
         "request": request,
         "name": name,
@@ -889,7 +891,9 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
         "get_twelve_gods_by_day_branch": get_twelve_gods_by_day_branch,
         "birth_hour": calc_datetime.hour,
         "birthdate": calc_datetime.date(),
-        "has_cached_analysis": bool(cached_analysis and cached_analysis.analysis_preview)
+        "has_cached_analysis": bool(cached_analysis and cached_analysis.analysis_preview),
+        "product": product
+
     })
 
 # AI 사주 분석 초기버전 API

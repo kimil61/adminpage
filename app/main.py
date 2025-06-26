@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 import os
 
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="My Website", version="1.0.0")
