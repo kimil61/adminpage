@@ -1021,11 +1021,12 @@ DELAY_BETWEEN_REQUESTS = os.getenv('DELAY_BETWEEN_REQUESTS', 2)  # 요청 간 �
 def load_prompt():
     """improved_saju_prompt_v2.md 파일에서 프롬프트 로드"""
     try:
-        with open('improved_saju_prompt_v3.md', 'r', encoding='utf-8') as f:
+        with open('improved_saju_prompt_v4.md', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        print("❌ improved_saju_prompt_v3.md 파일을 찾을 수 없습니다.")
+        print("❌ improved_saju_prompt_v4.md 파일을 찾을 수 없습니다.")
         return None
+    
 def test_ollama_connection():
     """ollama 서버 연결 테스트"""
     try:
@@ -1089,6 +1090,7 @@ async def ai_sajupalja_with_chatgpt(prompt: str, content: str) -> str:
     try:
         # 명리학 고서 기반 시스템 프롬프트 (간소화 버전)
         response = client.chat.completions.create(
+            # model="gpt-4o",  # GPT-3.5-turbo에서 GPT-4o로 업그레이드
             model="gpt-4o",  # GPT-3.5-turbo에서 GPT-4o로 업그레이드
             messages=[
                 {"role": "system", "content": prompt},

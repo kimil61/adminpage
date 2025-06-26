@@ -150,7 +150,8 @@ Thumbs.db
 
 
 # 프롬프트
-improved_saju_prompt_v2.md
+improved_saju_prompt_v*.md
+
 saju_test_module.py
 saju_couple_test_module.py
 update_new_result.py
