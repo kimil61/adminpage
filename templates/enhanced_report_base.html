@@ -149,6 +149,12 @@
             align-items: center;
             gap: 0.5rem;
         }
+
+        /* 블록 내 볼드 구간(A., B. …)이 한줄에 붙어 나오는 현상 보정 */
+        .info-card h3 strong {
+            display: block;       /* 강제로 줄바꿈 */
+            margin-top: 0.5rem;   /* 위쪽 여백 */
+        }
         
         /* 사주팔자 테이블 */
         .pillars-table {
@@ -594,14 +600,14 @@
             <div class="divider"></div>
 
             <!-- AI 분석 결과 -->
-            {% if analysis_result %}
+            {% if analysis_result_html %}
             <div class="section-header">
                 <span class="section-icon">🧠</span>
                 <h2 class="section-title">AI 심층 분석</h2>
             </div>
             
             <div class="info-card">
-                {{ analysis_result|safe }}
+                {{ analysis_result_html|safe }}
             </div>
             {% endif %}
 

@@ -1088,40 +1088,11 @@ async def ai_sajupalja_with_chatgpt(prompt: str, content: str) -> str:
     """GPT-4o를 사용하여 삼명통회 전문 번역 프롬프트 기반 사주팔자 해석"""
     try:
         # 명리학 고서 기반 시스템 프롬프트 (간소화 버전)
-        system_prompt = """당신은 명리학의 5대 주요 고서(자평진전, 연해자평, 삼명통회, 궁통보감, 적천수)에 기반하여 사주팔자를 해석하는 전문가입니다.
-
-## 핵심 원칙
-- 음양오행의 상생상극 관계와 균형
-- 월령 기반 용신론과 격국 분석
-- 십신 관계를 통한 인간관계와 사회적 역할 해석
-- 계절 조후론에 따른 건강과 에너지 관리
-
-## 해석 방식
-1. 정확한 명리학 원칙 적용
-2. 현대적이고 실용적인 조언
-3. 8개 섹션별 체계적 분석
-4. 개인 맞춤형 독창적 인사이트 제공
-
-자연스러운 한국어로 상세하고 따뜻하게 해석해주세요."""
-
-        # 사용자 프롬프트 구성 (새 프롬프트 형식에 맞춤)
-        full_prompt = f"""{prompt}
-
-다음 사주 정보를 바탕으로 위 8개 섹션에 따라 체계적으로 해석해주세요:
-
-{content}
-
-**주의사항:**
-- 각 섹션을 명확히 구분하여 작성
-- 실용적이고 구체적인 조언 제공
-- 마지막 "개인 맞춤형 실천 전략"에서는 특히 창의적이고 독창적인 인사이트 제공
-- 자연스러운 현대 한국어 사용"""
-        
         response = client.chat.completions.create(
             model="gpt-4o",  # GPT-3.5-turbo에서 GPT-4o로 업그레이드
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": full_prompt}
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": content}
             ],
             # 새 프롬프트(8섹션 상세 분석)에 최적화된 설정
             temperature=0.4,      # 창의적 인사이트를 위해 약간 상향 (0.3→0.4)

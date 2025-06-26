@@ -271,6 +271,7 @@
                 <a href="/blog" class="nav-link">📚 블로그</a>
                 <a href="/saju/wiki" class="nav-link">📖 사주 위키</a>
                 {% if request.session.get('username') %}
+                    <a href="/order/mypage" class="nav-link"> 마이 페이지</a>
                     {% if request.session.get('is_admin') %}
                         <a href="/admin" class="nav-link">⚙️ 관리자</a>
                     {% endif %}

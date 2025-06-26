@@ -37,10 +37,11 @@ from app.report_utils import (
 )
 
 
+# 사용 부분 수정
+
 # 로거 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict_kr, birthdate_str=None):
     """향상된 HTML 리포트 생성 (5가지 업그레이드 적용)"""
@@ -65,8 +66,58 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
         # 6. 운세 요약 카드
         fortune_summary = generate_fortune_summary(elem_dict_kr)
         
-        # 7. AI 심층 분석 결과 markdown 변환
-        analysis_result_html = markdown(analysis_result.replace('\n', '\n\n'))
+        # 7. AI 심층 분석 결과를 HTML로 변환 (개선된 버전)
+        def format_ai_analysis(text):
+            """AI 분석 결과를 HTML로 변환"""
+            if not text:
+                return ""
+
+            import re
+            import html as html_module
+            from markdown import markdown
+
+            # 텍스트 정규화
+            text = text.replace('\r\n', '\n').replace('\r', '\n')
+            text = text.replace(' <strong', '\n<strong')
+
+            # A. ~ F. 항목 앞에 줄바꿈 두 개 삽입
+            text = re.sub(r'(?<!<br>)\s*([A-F])\.', r'<br><br>\1.', text)
+
+            # 문장 끝 마침표 뒤에 줄바꿈 삽입 (단, 한글로 끝나는 문장에만 적용)
+            text = re.sub(r'(?<=[가-힣])\.(\s)', r'.<br>\1', text)
+
+            # 헤딩이 문장 중간에 붙지 않도록 보정
+            text = re.sub(r'(?<!\n)\s+(#{1,6}\s)', r'\n\1', text)
+            text = re.sub(
+                r'^(#{1,6}\s?\d+\.[^\n]+?)\s+(?=[^\n])',
+                r'\1\n',
+                text,
+                flags=re.MULTILINE
+            )
+
+
+            # 마크다운 변환
+            html = markdown(
+                text,
+                extensions=[
+                    'markdown.extensions.extra',
+                    'markdown.extensions.nl2br',
+                    'markdown.extensions.sane_lists'
+                ]
+            )
+
+            # HTML 엔티티 디코딩
+            html = html_module.unescape(html)
+
+            # 스타일 적용
+            html = html.replace('<h3>', '<h3 style="color: #7C3AED; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">')
+            html = html.replace('<h2>', '<h2 style="color: #5B21B6; margin-top: 2.5rem; margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 700;">')
+            html = html.replace('<strong>', '<strong style="color: #1F2937; font-weight: 700;">')
+            html = html.replace('<p>', '<p style="margin-bottom: 1rem; line-height: 1.6;">')
+
+            return html
+
+        analysis_result_html = format_ai_analysis(analysis_result)
         
         # Jinja2 환경 설정
         env = Environment(
@@ -81,7 +132,7 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             return value
         
         env.filters['strftime'] = strftime_filter
-        
+
         # 템플릿 렌더링
         template = env.get_template('enhanced_report_base.html')
         html_content = template.render(
@@ -93,7 +144,8 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             keyword_html=keyword_html,
             checklist=checklist,
             fortune_summary=fortune_summary,
-            analysis_result=analysis_result_html,
+            analysis_result_html=analysis_result_html,  # 변환된 HTML
+            analysis_result=analysis_result,  # 원본 텍스트
             elem_dict_kr=elem_dict_kr,
             birthdate=birthdate_str
         )
@@ -170,7 +222,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
             birth_hour = 12
 
         birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
-        
+
         pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
         elem_dict_kr, result_text = analyze_four_pillars_to_string(
             pillars['year'][0], pillars['year'][1],
@@ -181,14 +233,14 @@ def generate_full_report(self, order_id: int, saju_key: str):
 
         # AI 분석 실행
         self.update_state(state='progress', meta={'current': 4, 'total': 6, 'status': 'AI 심층 분석 중...'})
-        
+
         combined_text = "\n".join([
             "오행 분포:",
             ", ".join([f"{k}:{v}" for k, v in elem_dict_kr.items()]),
             "",
             result_text,
         ])
-        
+
         # 기존 asyncio.run 코드를 동기 함수로 교체
         analysis_result = ai_sajupalja_with_chatgpt_sync(prompt=prompt, content=combined_text)
 
