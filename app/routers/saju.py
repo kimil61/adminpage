@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation, Product
 from app.template import templates
@@ -20,6 +19,8 @@ from app.database import SessionLocal
 from app.models import SajuWikiContent
 from app.saju_utils import SajuKeyManager
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 # 환경 변수 로드
 from dotenv import load_dotenv
