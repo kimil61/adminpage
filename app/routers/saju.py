@@ -21,13 +21,13 @@ from app.saju_utils import SajuKeyManager
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-
+import logging
 # 환경 변수 로드
 from dotenv import load_dotenv
 load_dotenv()
 from openai import OpenAI
 
-
+logger = logging.getLogger(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/saju")
@@ -517,7 +517,7 @@ def analyze_four_pillars_to_string(
     lines.append("기신: " + (', '.join(gishin_list) if gishin_list else '없음'))
 
     full_text = "\n".join(lines)
-    return counts_kr, full_text
+    return counts_kr,full_text
 
 ## 끝
 #####################################################################
@@ -1176,29 +1176,32 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
     """AI 사주 분석 API"""
     request.session.pop("cached_saju_analysis", None)
 
-    # === DB 캐시 확인 ===
-    birthdate_str = request.session.get("birthdate")
-    birth_hour = int(request.session.get("birthhour", 12))
+ # === DB 캐시 확인 ===
     saju_key = request.session.get("saju_key")
+    if not saju_key:
+        raise HTTPException(status_code=400, detail="사주 정보가 없습니다.")
 
-    # DB 캐시 확인
+
+ # DB 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
     if cached_row and cached_row.analysis_full:
         return {"result": safe_markdown(cached_row.analysis_full)}
 
     try:
-        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d")
         prompt = load_prompt()
         if not prompt:
-            return
-        # 2. ollama 연결 테스트
+            return {"error": "프롬프트 로드 실패"}
+            
+        # OpenAI API 키 확인
         if not client.api_key:
             return {"error": "OpenAI API 키가 설정되지 않았습니다."}
-        # 사주팔자가져오기
-        pillars = calculate_four_pillars(datetime(birthdate.year, birthdate.month, birthdate.day, birth_hour))
-
+        
+        # 🎯 사주팔자 계산 - SajuService 사용 (기존 세션 기반 계산 제거)
+        from app.services.saju_service import SajuService
+        pillars, elem_dict_kr = SajuService.get_or_calculate_saju(saju_key, db)
+        
         # Use string-based analysis for result_text
-        elem_line, result_text = analyze_four_pillars_to_string(
+        elem_dict_kr, result_text = analyze_four_pillars_to_string(
             pillars['year'][0], pillars['year'][1],
             pillars['month'][0], pillars['month'][1],
             pillars['day'][0], pillars['day'][1],
@@ -1209,7 +1212,7 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
         if not analysis_result:
             return {"error": "AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요."}
 
-        # DB에 캐시 저장 (analysis_full 컬럼)
+       # DB에 캐시 저장 (analysis_full 컬럼)
         existing = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
         if existing:
             existing.analysis_full = analysis_result
@@ -1220,8 +1223,10 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
             ))
         db.commit()
         return {"result": safe_markdown(analysis_result)}
-    except:
-        raise HTTPException(status_code=400, detail="Invalid birthdate")
+        
+    except Exception as e:
+        logger.error(f"AI 분석 실패: {e}")
+        raise HTTPException(status_code=400, detail="AI 분석 중 오류가 발생했습니다.")
 
 # AI 사주 2차 업그레이드 버전 API 끝
 #######################################################################

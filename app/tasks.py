@@ -28,7 +28,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
 # ✅ utils.py에서 리포트 생성 함수들 import
-from app.utils import generate_enhanced_report_html
+from app.utils import generate_enhanced_report_html,generate_live_report_from_db
 
 # 로거 설정
 logging.basicConfig(level=logging.INFO)
@@ -96,27 +96,29 @@ def generate_full_report(self, order_id: int, saju_key: str):
 
         # 사주 계산
         self.update_state(state='progress', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
-        
+        from app.services.saju_service import SajuService
+        pillars, elem_dict_kr = SajuService.get_or_calculate_saju(saju_key, db)
+
         # saju_key 형식 파싱 (3조각: yyyy-mm-dd_hour_gender  |  5조각: CAL_yyyymmdd_HH/UH_TZ_G)
-        parts = saju_key.split('_')
+        # parts = saju_key.split('_')
 
-        if len(parts) == 5:
-            calendar, birth_raw, hour_part, tz_part, gender = parts
-            birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
-            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
-        elif len(parts) == 3:
-            birthdate_str, hour_part, gender = parts
-            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
-        else:
-            raise ValueError(f"잘못된 saju_key 형식: {saju_key}")
+        # if len(parts) == 5:
+        #     calendar, birth_raw, hour_part, tz_part, gender = parts
+        #     birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
+        #     birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        # elif len(parts) == 3:
+        #     birthdate_str, hour_part, gender = parts
+        #     birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
+        # else:
+        #     raise ValueError(f"잘못된 saju_key 형식: {saju_key}")
 
-        # 출생 시간이 정해지지 않았으면 정오(12시)로 대체
-        if birth_hour is None:
-            birth_hour = 12
+        # # 출생 시간이 정해지지 않았으면 정오(12시)로 대체
+        # if birth_hour is None:
+        #     birth_hour = 12
 
-        birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
+        # birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
 
-        pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
+        # pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
         elem_dict_kr, result_text = analyze_four_pillars_to_string(
             pillars['year'][0], pillars['year'][1],
             pillars['month'][0], pillars['month'][1], 
@@ -157,6 +159,17 @@ def generate_full_report(self, order_id: int, saju_key: str):
         # 🎯 HTML & PDF 생성 - 새로운 방식 사용
         self.update_state(state='progress', meta={'current': 5, 'total': 6, 'status': '리포트 파일 생성 중...'})
         
+        # ✅ 이미 계산된 데이터를 활용하여 HTML 생성
+        # birthdate_str 추출 (리포트 생성용)
+        parts = saju_key.split('_')
+        if len(parts) == 5:
+            calendar, birth_raw, hour_part, tz_part, gender = parts
+            birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
+        elif len(parts) == 3:
+            birthdate_str, hour_part, gender = parts
+        else:
+            birthdate_str = "1984-01-01"  # 기본값
+
         # ✅ Option 1: 이미 계산된 데이터를 활용하여 HTML 생성
         html_content = generate_enhanced_report_html(
             user_name=user_name,
@@ -167,7 +180,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         )
         
         # ✅ Option 2: DB에서 다시 조회하여 생성 (선택사항)
-        # html_content = generate_live_report_from_db(order_id, db)
+        html_content = generate_live_report_from_db(order_id, db)
         
         # 파일 저장 경로
         output_dir = os.path.join('static', 'uploads', 'reports')
@@ -181,7 +194,7 @@ def generate_full_report(self, order_id: int, saju_key: str):
         logger.info(f"📄 HTML 저장 완료: {html_path}")
         
         # PDF 생성 (선택사항)
-        # pdf_success = html_to_pdf_improved(html_content, pdf_path)
+        pdf_success = html_to_pdf_improved(html_content, pdf_path)
         
         # 파일 경로 업데이트
         order.report_html = html_path

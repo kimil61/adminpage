@@ -274,12 +274,21 @@ def generate_live_report_from_db(order_id: int, db: Session) -> str:
             raise Exception(f'Analysis cache not found for saju_key: {order.saju_key}')
 
         # 3. saju_key 파싱해서 필요한 데이터 추출
-        birthdate_str, birth_hour, user_name = parse_saju_key_and_get_data(order.saju_key, db)
+        # birthdate_str, birth_hour, user_name = parse_saju_key_and_get_data(order.saju_key, db)
+
+        # 3. 사용자 이름 조회
+        user_name = get_user_name_from_saju_key(order.saju_key, db)
+
 
         # 4. 사주 계산 (pillars, elem_dict_kr)
-        pillars, elem_dict_kr = calculate_saju_data(birthdate_str, birth_hour)
+        # pillars, elem_dict_kr = calculate_saju_data(birthdate_str, birth_hour)
+        from app.services.saju_service import SajuService
+        pillars, elem_dict_kr = SajuService.get_or_calculate_saju(order.saju_key, db)
 
-        # 5. generate_enhanced_report_html 함수 호출
+        # 5. birthdate_str 추출 (리포트 생성용)
+        birthdate_str = extract_birthdate_from_saju_key(order.saju_key)
+
+        # 6. generate_enhanced_report_html 함수 호출
         html_content = generate_enhanced_report_html(
             user_name=user_name,
             pillars=pillars,
@@ -293,6 +302,35 @@ def generate_live_report_from_db(order_id: int, db: Session) -> str:
     except Exception as e:
         logger.error(f"실시간 리포트 생성 실패: {e}")
         raise
+
+
+def get_user_name_from_saju_key(saju_key: str, db: Session) -> str:
+    """saju_key로 사용자 이름 조회"""
+    try:
+        saju_user = db.query(SajuUser).filter_by(saju_key=saju_key).first()
+        return saju_user.name if saju_user and getattr(saju_user, "name", None) else "고객"
+    except Exception as e:
+        logger.error(f"사용자 이름 조회 실패: {e}")
+        return "고객"
+
+
+def extract_birthdate_from_saju_key(saju_key: str) -> str:
+    """saju_key에서 birthdate_str 추출 (리포트 생성용)"""
+    try:
+        parts = saju_key.split('_')
+        if len(parts) == 5:
+            calendar, birth_raw, hour_part, tz_part, gender = parts
+            return f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
+        elif len(parts) == 3:
+            birthdate_str, hour_part, gender = parts
+            return birthdate_str
+        else:
+            return "1984-01-01"  # 기본값
+    except Exception as e:
+        logger.error(f"생년월일 추출 실패: {e}")
+        return "1984-01-01"
+
+
 
 
 def parse_saju_key_and_get_data(saju_key: str, db: Session) -> tuple[str, int, str]:
@@ -329,7 +367,7 @@ def parse_saju_key_and_get_data(saju_key: str, db: Session) -> tuple[str, int, s
         raise
 
 
-def calculate_saju_data(birthdate_str: str, birth_hour: int) -> tuple[dict, dict]:
+def calculate_saju_data_bak(birthdate_str: str, birth_hour: int) -> tuple[dict, dict]:
     """
     생년월일과 시간으로 사주 데이터 계산
     Returns: (pillars, elem_dict_kr)
