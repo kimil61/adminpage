@@ -1,4 +1,4 @@
-<!-- templates/enhanced_report_base.html - 개선된 버전 -->
+<!-- templates/enhanced_report_base.html - 월별 운세 달력 추가 버전 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -150,18 +150,11 @@
             gap: 0.5rem;
         }
 
-        /* 블록 내 볼드 구간(A., B. …)이 한줄에 붙어 나오는 현상 보정 */
-        .info-card h3 strong {
-            display: block;       /* 강제로 줄바꿈 */
-            margin-top: 0.5rem;   /* 위쪽 여백 */
-        }
-        
         /* 사주팔자 테이블 */
         .pillars-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1rem 0;
-            font-size: 1.1rem;
+            margin: 1.5rem 0;
             background: white;
             border-radius: 12px;
             overflow: hidden;
@@ -180,52 +173,44 @@
         .pillars-table td {
             padding: 1.5rem;
             text-align: center;
-            font-weight: 600;
-            font-size: 1.3rem;
-            color: #2d3748;
             border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .day-pillar {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
             font-weight: 700;
-            font-size: 1.4rem;
+            color: #2d3748;
         }
         
-        /* 오행 밸런스 차트 섹션 */
+        .pillars-table .day-pillar {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            color: #234e52;
+            position: relative;
+        }
+        
+        .pillars-table .day-pillar::after {
+            content: '⭐';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        /* 오행 밸런스 차트 */
         .balance-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            margin: 1.5rem 0;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
             text-align: center;
         }
         
         .balance-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin: 0 0 2rem 0;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-            white-space: nowrap;
         }
         
         .chart-container {
-            max-width: 500px;
-            margin: 2rem auto;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 2px solid #e2e8f0;
+            margin: 2rem 0;
         }
         
         .chart-container img {
@@ -234,6 +219,68 @@
             border-radius: 8px;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
         }
+        
+        /* 월별 운세 달력 특별 스타일 */
+        .calendar-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .mini-cal {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 15px 0 !important;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .mini-cal th {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+            color: white !important;
+            padding: 12px 8px !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+            border: none !important;
+        }
+        
+        .mini-cal td {
+            padding: 12px 8px !important;
+            text-align: center !important;
+            border: 1px solid #e2e8f0 !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+        
+        .mini-cal tr:hover {
+            background: #f7fafc !important;
+        }
+        
+        .calendar-legend {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f0fff4;
+            border-radius: 12px;
+            border-left: 4px solid #48bb78;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin: 0.5rem 1rem 0.5rem 0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .legend-good { background: #DCFCE7; color: #166534; }
+        .legend-caution { background: #FEFCE8; color: #854D0E; }
+        .legend-normal { background: #F3F4F6; color: #374151; }
+        .legend-risk { background: #FEE2E2; color: #991B1B; }
         
         /* 하이라이트 박스 */
         .highlight-box {
@@ -394,6 +441,12 @@
                 margin: 0.5rem 0;
                 width: 100%;
             }
+            
+            .mini-cal th,
+            .mini-cal td {
+                padding: 8px 4px !important;
+                font-size: 12px !important;
+            }
         }
         
         /* 프린트 최적화 */
@@ -430,7 +483,7 @@
             }
             
             .section-header {
-                page-break-inside: avoid !important; /* allow page to break *before* the header if needed */
+                page-break-inside: avoid !important;
                 margin: 1rem 0 0.5rem 0 !important;
                 padding: 0.5rem !important;
             }
@@ -456,18 +509,15 @@
                 height: 1px !important;
             }
             
-            /* 테이블 최적화 */
-            .pillars-table,
-            .checklist-table {
+            .mini-cal {
                 page-break-inside: avoid !important;
-                font-size: 11px !important;
+                font-size: 10px !important;
             }
             
-            .pillars-table th,
-            .pillars-table td,
-            .checklist-table th,
-            .checklist-table td {
-                padding: 0.5rem !important;
+            .mini-cal th,
+            .mini-cal td {
+                padding: 4px !important;
+                font-size: 9px !important;
             }
         }
         
@@ -511,12 +561,26 @@
             <h1 class="cover-title">🔮 프리미엄 사주 리포트</h1>
             <p class="cover-subtitle">{{ user_name }}님의 AI 심층 분석 + 전통 명리학 해석</p>
             <div class="purchase-badge">
-                💎 Premium Report ₩1,900
+                💎 Premium Report ₩5,000
             </div>
         </div>
 
         <!-- 메인 콘텐츠 -->
         <div class="content-section">
+            
+            <!-- 임원급 요약 정보 -->
+            {% if executive_summary %}
+            <div class="section-header">
+                <span class="section-icon">📊</span>
+                <h2 class="section-title">Executive Summary</h2>
+            </div>
+            
+            <div class="info-card">
+                {{ executive_summary|safe }}
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
             
             <!-- 사주팔자 기본 정보 -->
             {% if pillars %}
@@ -543,7 +607,8 @@
                 </table>
                 <div class="highlight-box">
                     <h4>🎯 핵심 포인트</h4>
-                    <p>일주 <strong>{{ pillars.day }}</strong>가 {{ user_name }}님의 본질적 성향을 나타냅니다. 이를 중심으로 전체적인 운세 흐름을 파악할 수 있습니다.</p>
+                    <p>일주 <strong>{{ pillars.day }}</strong>가 {{ user_name }}님의 본질적 성향을 나타냅니다.
+                    이를 중심으로 전체적인 운세 흐름을 파악할 수 있습니다.</p>
                 </div>
             </div>
             {% endif %}
@@ -599,6 +664,50 @@
 
             <div class="divider"></div>
 
+            <!-- 🆕 2025년 월별 운세 달력 (새로 추가!) -->
+            {% if calendar_html %}
+            <div class="section-header">
+                <span class="section-icon">📅</span>
+                <h2 class="section-title">2025년 월별 운세 달력</h2>
+            </div>
+            
+            <div class="calendar-section">
+                <h3 style="margin: 0 0 1.5rem 0; color: #4a5568; text-align: center;">🗓️ {{ user_name }}님의 2025년 맞춤 운세</h3>
+                
+                {{ calendar_html|safe }}
+                
+                <div class="calendar-legend">
+                    <h4 style="margin: 0 0 1rem 0; color: #22543d;">📖 운세 해석 가이드</h4>
+                    <div style="text-align: center;">
+                        <span class="legend-item legend-good">● 좋음 - 적극 추진</span>
+                        <span class="legend-item legend-caution">▲ 주의 - 신중하게</span>
+                        <span class="legend-item legend-normal">○ 보통 - 평상시대로</span>
+                        <span class="legend-item legend-risk">■ 조심 - 보수적으로</span>
+                    </div>
+                    <p style="margin-top: 1rem; color: #22543d; font-size: 0.9rem; line-height: 1.6;">
+                        <strong>💡 활용법:</strong> 중요한 결정이나 새로운 시작을 계획할 때 이 달력을 참고하세요. 
+                        연인관계(Love), 재물운(Money), 직업운(Career) 세 영역을 종합적으로 고려하여 최적의 타이밍을 잡으실 수 있습니다.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
+            <!-- 운세 요약 카드 -->
+            {% if fortune_summary %}
+            <div class="section-header">
+                <span class="section-icon">🌟</span>
+                <h2 class="section-title">운세 요약</h2>
+            </div>
+            
+            <div class="info-card">
+                {{ fortune_summary|safe }}
+            </div>
+            {% endif %}
+
+            <div class="divider"></div>
+
             <!-- AI 분석 결과 -->
             {% if analysis_result_html %}
             <div class="section-header">
@@ -609,19 +718,6 @@
             <div class="info-card">
                 {{ analysis_result_html|safe }}
             </div>
-            {% endif %}
-
-            <div class="divider"></div>
-
-            
-
-            <!-- 월별 운세 -->
-            {% if monthly_fortune %}
-            <div class="section-header">
-                <span class="section-icon">📅</span>
-                <h2 class="section-title">2025년 월별 운세</h2>
-            </div>
-            {{ monthly_fortune|safe }}
             {% endif %}
 
             <div class="divider"></div>
@@ -691,74 +787,11 @@
                     </small>
                     <small style="color: #4a5568; line-height: 1.6;">
                         이 리포트를 인쇄해서 보관하시거나, 중요한 결정을 내릴 때 참고자료로 활용해보세요. 
-                        가족이나 친구들과 함께 보시면 더욱 재미있을 거예요! 
-                        정기적으로 다시 읽어보며 성장하는 모습을 확인해보세요. 🌟
+                        가족이나 친구들과 함께 보시면 더욱 재미있을 거예요!
                     </small>
                 </div>
             </div>
         </div>
     </div>
-    
-    <script>
-        // 페이지 로드 시 부드러운 애니메이션
-        document.addEventListener('DOMContentLoaded', function() {
-            // 스크롤 시 부드러운 애니메이션
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, observerOptions);
-            
-            // 애니메이션 대상 요소들 관찰
-            document.querySelectorAll('.info-card, .balance-section').forEach(el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(30px)';
-                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                observer.observe(el);
-            });
-            
-            // 버튼 클릭 효과
-            document.querySelectorAll('.btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    if (this.onclick) return;
-                    this.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 150);
-                });
-            });
-            
-            // 인쇄 전 알림
-            window.addEventListener('beforeprint', function() {
-                console.log('인쇄 준비 중...');
-            });
-            
-            // 인쇄 후 메시지
-            window.addEventListener('afterprint', function() {
-                alert('인쇄가 완료되었습니다! 언제든지 다시 확인해보세요. 😊');
-            });
-        });
-        
-        // 차트 로딩 에러 처리
-        document.querySelectorAll('img').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const errorMsg = document.createElement('p');
-                errorMsg.textContent = '차트를 불러오는 중 문제가 발생했습니다.';
-                errorMsg.style.color = '#e53e3e';
-                errorMsg.style.textAlign = 'center';
-                errorMsg.style.padding = '2rem';
-                this.parentNode.appendChild(errorMsg);
-            });
-        });
-    </script>
 </body>
 </html>

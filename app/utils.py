@@ -104,7 +104,7 @@ def resize_image(image_path: str, max_width: int = 800):
         pass
 
 def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict_kr, birthdate_str=None):
-    """향상된 HTML 리포트 생성 (5가지 업그레이드 적용)"""
+    """향상된 HTML 리포트 생성 (개선된 행운키워드 포함)"""
     try:
         # 1. 임원급 요약 정보
         executive_summary = create_executive_summary(user_name, birthdate_str or "1984-06-01", pillars, elem_dict_kr)
@@ -115,10 +115,21 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
         # 3. 오행 기반 월별 운세 달력
         calendar_html = generate_2025_fortune_calendar(elem_dict_kr)
         
-        # 4. 개인화된 행운 키워드
+        # 4. 🆕 개선된 개인화 행운 키워드 (일관성 보장 + 설명 포함)
         birth_month = int(birthdate_str.split('-')[1]) if birthdate_str else 6
-        lucky_color, lucky_numbers, lucky_stone = generate_lucky_keywords(elem_dict_kr, birth_month)
-        keyword_html = keyword_card(lucky_color, lucky_numbers, lucky_stone)
+        
+        # 개선된 함수 사용 - 더 많은 개인화 정보 전달
+        from app.report_utils import generate_lucky_keywords_with_explanation, keyword_card_improved
+        
+        lucky_color, lucky_numbers, lucky_stone, explanation = generate_lucky_keywords_with_explanation(
+            elem_dict_kr=elem_dict_kr,
+            birth_month=birth_month,
+            birthdate_str=birthdate_str,
+            pillars=pillars
+        )
+        
+        # 개선된 키워드 카드 생성 (설명 포함)
+        keyword_html = keyword_card_improved(lucky_color, lucky_numbers, lucky_stone, explanation)
         
         # 5. 맞춤형 실천 체크리스트
         checklist = generate_action_checklist(elem_dict_kr)
@@ -221,7 +232,7 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             executive_summary=executive_summary,
             radar_base64=radar_base64,
             calendar_html=calendar_html, 
-            keyword_html=keyword_html,
+            keyword_html=keyword_html,  # 개선된 키워드 HTML (설명 포함)
             checklist=checklist,
             fortune_summary=fortune_summary,
             analysis_result_html=analysis_result_html,  # 변환된 HTML
@@ -245,7 +256,6 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             본 리포트는 AI 분석 결과이며 참고용입니다.
         </div>
         """
-
 
 def generate_live_report_from_db(order_id: int, db: Session) -> str:
     """

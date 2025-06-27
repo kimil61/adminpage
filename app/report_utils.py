@@ -8,6 +8,8 @@ import pandas as pd
 import os
 import random
 from datetime import datetime
+import hashlib
+from typing import Tuple, List
 
 # 한글 폰트 설정
 def setup_korean_font():
@@ -372,40 +374,250 @@ def generate_2025_fortune_calendar(elem_dict_kr: dict) -> str:
         print(f"운세 달력 생성 실패: {e}")
         return '<p>월별 운세를 생성할 수 없습니다.</p>'
 
-def generate_lucky_keywords(elem_dict_kr: dict, birth_month: int = 6) -> tuple[str, list[int], str]:
-    """오행 기반 행운 키워드 생성"""
+
+def generate_lucky_keywords_improved(elem_dict_kr: dict, birth_month: int = 6, birthdate_str: str = None, pillars: dict = None) -> Tuple[str, List[int], str]:
+    """
+    개선된 행운 키워드 생성 - 완전 개인화된 알고리즘
+    
+    Args:
+        elem_dict_kr: 오행 분포 {'목': 2, '화': 1, ...}
+        birth_month: 출생월 (1-12)
+        birthdate_str: 출생일 문자열 "YYYY-MM-DD" 
+        pillars: 사주 정보 {'year': '갑자', 'month': '정미', ...}
+    
+    Returns:
+        (행운색상, 행운숫자리스트, 행운보석)
+    """
     try:
-        # 가장 강한 오행 찾기
-        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        # 1. 개인화 해시 생성 (일관된 결과 보장)
+        hash_input = f"{elem_dict_kr}{birth_month}"
+        if birthdate_str:
+            hash_input += birthdate_str
+        if pillars:
+            hash_input += str(pillars)
         
-        # 오행별 행운 키워드 매핑
+        personal_hash = hashlib.md5(hash_input.encode()).hexdigest()
+        
+        # 2. 오행 분석 강화
+        total_elements = sum(elem_dict_kr.values())
+        if total_elements == 0:
+            # 기본값 반환
+            return '자주색', [3, 7, 9], '자수정'
+        
+        # 가장 강한 오행과 약한 오행
+        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        min_element = min(elem_dict_kr, key=elem_dict_kr.get)
+        
+        # 오행 균형도 계산 (0~1, 1에 가까울수록 균형)
+        element_values = list(elem_dict_kr.values())
+        balance_score = 1 - (max(element_values) - min(element_values)) / max(total_elements, 1)
+        
+        # 3. 확장된 오행별 키워드 매핑
         element_keywords = {
-            '목': {'colors': ['초록', '연두', '갈색'], 'stones': ['에메랄드', '말라카이트', '아벤투린']},
-            '화': {'colors': ['빨강', '주황', '분홍'], 'stones': ['루비', '가넷', '카넬리안']},
-            '토': {'colors': ['노랑', '베이지', '갈색'], 'stones': ['황수정', '호박', '타이거아이']},
-            '금': {'colors': ['흰색', '은색', '회색'], 'stones': ['다이아몬드', '수정', '문스톤']},
-            '수': {'colors': ['파랑', '검정', '자주'], 'stones': ['사파이어', '청금석', '자수정']}
+            '목': {
+                'colors': ['초록', '연두', '연갈색', '올리브', '카키', '민트'],
+                'stones': ['에메랄드', '말라카이트', '아벤투린', '페리도트', '아마존석', '녹색벽옥'],
+                'personality': 'growth'  # 성장형
+            },
+            '화': {
+                'colors': ['빨강', '주황', '분홍', '코랄', '진홍', '자홍'],
+                'stones': ['루비', '가넷', '카넬리안', '홍마노', '선스톤', '로즈쿼츠'],
+                'personality': 'passionate'  # 열정형
+            },
+            '토': {
+                'colors': ['노랑', '베이지', '갈색', '황토', '샴페인', '골드'],
+                'stones': ['황수정', '호박', '타이거아이', '황옥', '토파즈', '황철석'],
+                'personality': 'stable'  # 안정형
+            },
+            '금': {
+                'colors': ['흰색', '은색', '회색', '플래티넘', '진주', '크림'],
+                'stones': ['다이아몬드', '수정', '문스톤', '진주', '백옥', '화이트사파이어'],
+                'personality': 'systematic'  # 체계형
+            },
+            '수': {
+                'colors': ['파랑', '검정', '자주', '네이비', '인디고', '티파니블루'],
+                'stones': ['사파이어', '청금석', '자수정', '라피스라줄리', '블루토파즈', '아쿠아마린'],
+                'personality': 'wise'  # 지혜형
+            }
         }
         
-        # 행운 숫자 생성 (오행 + 생월 기반)
+        # 4. 해시 기반 deterministic 선택
+        def hash_select(options: list, offset: int = 0) -> any:
+            """해시값을 이용한 일관된 선택"""
+            hash_val = int(personal_hash[offset:offset+8], 16)
+            return options[hash_val % len(options)]
+        
+        # 5. 메인 오행의 키워드 선택
+        main_keywords = element_keywords[max_element]
+        
+        # 6. 보완 오행 고려 (균형이 좋지 않을 때)
+        if balance_score < 0.5:  # 불균형이 심할 때
+            # 부족한 오행의 키워드도 일부 반영
+            complement_keywords = element_keywords[min_element]
+            
+            # 색상: 메인 오행 80% + 보완 오행 20% 확률로 선택  
+            hash_mod = int(personal_hash[8:10], 16) % 100
+            if hash_mod < 20:  # 20% 확률로 보완 색상
+                lucky_color = hash_select(complement_keywords['colors'], 2)
+            else:  # 80% 확률로 메인 색상
+                lucky_color = hash_select(main_keywords['colors'], 0)
+                
+            # 보석: 메인 위주지만 보완도 고려
+            if hash_mod < 30:  # 30% 확률로 보완 보석
+                lucky_stone = hash_select(complement_keywords['stones'], 4)
+            else:
+                lucky_stone = hash_select(main_keywords['stones'], 1)
+        else:
+            # 균형이 좋을 때는 메인 오행 위주
+            lucky_color = hash_select(main_keywords['colors'], 0)
+            lucky_stone = hash_select(main_keywords['stones'], 1)
+        
+        # 7. 개인화된 행운 숫자 생성
         base_numbers = {
             '목': [1, 3, 8], '화': [2, 7, 9], '토': [5, 6, 8], 
             '금': [4, 7, 9], '수': [1, 6, 9]
         }
         
-        lucky_color = random.choice(element_keywords[max_element]['colors'])
-        lucky_stone = random.choice(element_keywords[max_element]['stones'])
-        
-        # 개인화된 행운 숫자
         lucky_numbers = base_numbers[max_element].copy()
+        
+        # 생월 추가 (if not already in)
         if birth_month not in lucky_numbers:
             lucky_numbers.append(birth_month)
         
-        return lucky_color, lucky_numbers[:3], lucky_stone
+        # 개인화 숫자 추가 (해시 기반)
+        personal_number = (int(personal_hash[10:12], 16) % 9) + 1
+        if personal_number not in lucky_numbers:
+            lucky_numbers.append(personal_number)
+        
+        # 오행 균형 기반 보너스 숫자
+        if balance_score > 0.7:  # 균형이 매우 좋을 때
+            lucky_numbers.append(0)  # 완성의 숫자
+        
+        # 최대 4개까지만
+        lucky_numbers = lucky_numbers[:4]
+        
+        # 8. 정렬 (일관성)
+        lucky_numbers.sort()
+        
+        return lucky_color, lucky_numbers, lucky_stone
         
     except Exception as e:
-        print(f"행운 키워드 생성 실패: {e}")
+        print(f"개선된 행운 키워드 생성 실패: {e}")
+        # 안전한 기본값
         return '자주색', [3, 7, 9], '자수정'
+
+
+def generate_lucky_keywords_with_explanation(elem_dict_kr: dict, birth_month: int = 6, birthdate_str: str = None, pillars: dict = None) -> Tuple[str, List[int], str, str]:
+    """
+    행운 키워드 + 설명 생성
+    
+    Returns:
+        (행운색상, 행운숫자리스트, 행운보석, 선택이유설명)
+    """
+    try:
+        lucky_color, lucky_numbers, lucky_stone = generate_lucky_keywords_improved(
+            elem_dict_kr, birth_month, birthdate_str, pillars
+        )
+        
+        # 가장 강한/약한 오행
+        max_element = max(elem_dict_kr, key=elem_dict_kr.get)
+        min_element = min(elem_dict_kr, key=elem_dict_kr.get)
+        
+        total_elements = sum(elem_dict_kr.values())
+        balance_score = 1 - (max(elem_dict_kr.values()) - min(elem_dict_kr.values())) / max(total_elements, 1)
+        
+        # 설명 생성
+        explanation = f"""
+        <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #4c51bf;">🔍 키워드 선택 이유</h4>
+            <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: #4a5568;">
+                <strong>주력 오행:</strong> {max_element}({elem_dict_kr[max_element]}개) - 
+                {'균형이 잘 잡혀 있어' if balance_score > 0.7 else '강한 편이라'} 
+                {max_element} 기운을 활용한 <span style="color: {lucky_color.lower()}; font-weight: bold;">{lucky_color}</span>과 
+                <strong>{lucky_stone}</strong>을 추천합니다.
+                {f'부족한 {min_element} 기운을 보완하는 요소도 포함했습니다.' if balance_score < 0.5 else ''}
+            </p>
+        </div>
+        """
+        
+        return lucky_color, lucky_numbers, lucky_stone, explanation
+        
+    except Exception as e:
+        print(f"설명 포함 키워드 생성 실패: {e}")
+        return '자주색', [3, 7, 9], '자수정', ""
+
+
+# utils.py에서 사용할 래퍼 함수 (기존 호환성 유지)
+def generate_lucky_keywords(elem_dict_kr: dict, birth_month: int = 6, birthdate_str: str = None, pillars: dict = None) -> Tuple[str, List[int], str]:
+    """기존 함수명 유지 - 개선된 버전으로 리다이렉트"""
+    return generate_lucky_keywords_improved(elem_dict_kr, birth_month, birthdate_str, pillars)
+
+
+# 키워드 카드 HTML 생성도 개선
+def keyword_card_improved(color: str, numbers: List[int], stone: str, explanation: str = "") -> str:
+    """개선된 행운 키워드 카드 생성 (설명 포함)"""
+    try:
+        nums = ", ".join(map(str, numbers))
+        
+        # 색상별 배경색 매핑
+        color_bg_map = {
+            '빨강': '#FEE2E2', '빨간색': '#FEE2E2', '진홍': '#FEE2E2', '자홍': '#FEE2E2',
+            '파랑': '#DBEAFE', '파란색': '#DBEAFE', '블루': '#DBEAFE', '네이비': '#1E3A8A', '티파니블루': '#0891B2',
+            '초록': '#D1FAE5', '녹색': '#D1FAE5', '그린': '#D1FAE5', '연두': '#DCFCE7', '올리브': '#EF4444', '민트': '#A7F3D0',
+            '노랑': '#FEF3C7', '노란색': '#FEF3C7', '옐로우': '#FEF3C7', '골드': '#FDE68A', '샴페인': '#FEF3C7',
+            '보라': '#E9D5FF', '보라색': '#E9D5FF', '퍼플': '#E9D5FF', '자주': '#F3E8FF', '인디고': '#E0E7FF',
+            '주황': '#FED7AA', '주황색': '#FED7AA', '오렌지': '#FED7AA', '코랄': '#FECACA',
+            '분홍': '#FCE7F3', '핑크': '#FCE7F3',
+            '검정': '#F3F4F6', '검은색': '#F3F4F6',
+            '흰색': '#FFFFFF', '화이트': '#FFFFFF', '크림': '#FFFBEB', '진주': '#F8FAFC',
+            '회색': '#F3F4F6', '그레이': '#F3F4F6', '은색': '#F1F5F9', '플래티넘': '#F8FAFC',
+            '갈색': '#FEF3C7', '연갈색': '#F7FAFC', '황토': '#FEF3C7', '카키': '#EF4444', '베이지': '#FEF7ED'
+        }
+        
+        bg_color = color_bg_map.get(color, '#F8FAFC')
+        
+        html = f'''
+        <div class="info-card" style="background: {bg_color}; border: 2px solid #E5E7EB;">
+            <h3 style="color: #374151; margin-bottom: 15px; font-size: 18px;">🍀 2025년 맞춤 행운 키워드</h3>
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #E5E7EB;">
+                    <span style="font-size: 20px; margin-right: 12px;">🎨</span>
+                    <div>
+                        <strong style="color: #374151;">행운의 색상:</strong> 
+                        <span style="font-weight: bold; font-size: 16px; padding: 4px 8px; background: white; border-radius: 4px; color: #374151;">{color}</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #E5E7EB;">
+                    <span style="font-size: 20px; margin-right: 12px;">🔢</span>
+                    <div>
+                        <strong style="color: #374151;">행운의 숫자:</strong> 
+                        <span style="font-weight: bold; color: #7C3AED; font-size: 16px; padding: 4px 8px; background: white; border-radius: 4px;">{nums}</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; padding: 8px 0;">
+                    <span style="font-size: 20px; margin-right: 12px;">💎</span>
+                    <div>
+                        <strong style="color: #374151;">행운의 보석:</strong> 
+                        <span style="font-weight: bold; color: #059669; font-size: 16px; padding: 4px 8px; background: white; border-radius: 4px;">{stone}</span>
+                    </div>
+                </div>
+            </div>
+            
+            {explanation}
+            
+            <div style="margin-top: 15px; padding: 10px; background-color: rgba(255,255,255,0.7); border-radius: 6px; font-size: 12px; color: #6B7280;">
+                💡 <strong>활용법:</strong> 중요한 결정을 내릴 때나 새로운 시작을 할 때 이 키워드들을 활용해보세요! 
+                옷이나 액세서리 선택, 중요한 날짜 정하기 등에 참고하시면 됩니다.
+            </div>
+        </div>
+        '''
+        return html
+        
+    except Exception as e:
+        print(f"개선된 키워드 카드 생성 실패: {e}")
+        return '<div class="info-card"><h3>행운 키워드를 생성할 수 없습니다.</h3></div>'
 
 def generate_action_checklist(elem_dict_kr: dict) -> list[dict]:
     """오행 기반 실천 체크리스트 생성"""
