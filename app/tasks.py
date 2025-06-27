@@ -26,6 +26,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+import pdfkit
 
 # ✅ utils.py에서 리포트 생성 함수들 import
 from app.utils import generate_enhanced_report_html,generate_live_report_from_db
@@ -43,6 +44,41 @@ def test_task(self, message: str):
 
 
 def html_to_pdf_production(html_content: str, output_path: str) -> bool:
+    """프로덕션용 PDF 생성 (최고 호환성)"""
+    try:
+        options = {
+            'page-size': 'A4',
+            'margin-top': '15mm',
+            'margin-right': '15mm', 
+            'margin-bottom': '15mm',
+            'margin-left': '15mm',
+            'encoding': "UTF-8",
+            'disable-smart-shrinking': None,
+            'print-media-type': None,
+            'image-dpi': 300,
+            'image-quality': 94,
+            'javascript-delay': 500,
+            'no-outline': None,
+            'enable-local-file-access': None,
+            'title': '사주팔자 분석 리포트',
+            'disable-javascript': None,  # JS 제거로 호환성 향상
+        }
+        
+        pdfkit.from_string(html_content, output_path, options=options)
+        
+        # 📊 생성된 파일 검증
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info(f"✅ PDF 생성 성공: {output_path} ({os.path.getsize(output_path)} bytes)")
+            return True
+        else:
+            raise Exception("PDF 파일이 생성되지 않았거나 크기가 0입니다.")
+            
+    except Exception as e:
+        logger.error(f"❌ PDF 생성 실패: {e}")
+        return False
+    
+
+def html_to_pdf_production2(html_content: str, output_path: str) -> bool:
     """프로덕션용 PDF 생성 (WeasyPrint 버전)"""
     try:
         # WeasyPrint를 사용하여 PDF 생성
