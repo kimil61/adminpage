@@ -1142,9 +1142,14 @@ def post_process_saju_result(text: str) -> str:
     # 괄호 안 한자 설명 제거
     text = re.sub(r'\([一-龯]+\)', '', text)
     
-    # 연속된 공백 정리
-    text = re.sub(r'\s+', ' ', text)
-    
+    # ⚠️ 줄바꿈은 유지하고, 중복 줄바꿈은 하나로 축소
+    text = re.sub(r'\n{2,}', '\n\n', text)
+
+    # ⚠️ 이 부분 제거 또는 조건 수정
+    # text = re.sub(r'\s+', ' ', text)  ← 이건 제거하거나 아래처럼 바꿔야 함
+    # 예: 여러 공백을 하나로 줄이되, 줄바꿈은 유지
+    text = re.sub(r'[ \t]+', ' ', text)  # 공백/탭만 정리
+
     return text.strip()
 
 

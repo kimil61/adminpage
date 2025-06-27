@@ -573,7 +573,7 @@ async def view_report(
         raise HTTPException(status_code=500, detail="리포트를 불러오는 중 오류가 발생했습니다.")
 
 ################################################################################
-# 9-2) 빠른 리포트 보기 (기존 generate_enhanced_report_html 재사용)
+# 9-2) 빠른 리포트 보기 (새로운 utils.py 함수 사용)
 ################################################################################
 @router.get("/report/live/{order_id}", response_class=HTMLResponse)
 async def view_live_report(
@@ -582,218 +582,135 @@ async def view_live_report(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """실시간 리포트 생성 및 표시 (수정된 버전)"""
-    from app.models import SajuAnalysisCache, SajuUser
+    """실시간 리포트 생성 및 표시 (utils.py 함수 사용)"""
     import logging
     
     logger = logging.getLogger(__name__)
     
-    order = db.query(Order).filter(
-        Order.id == order_id,
-        Order.user_id == user.id,
-        Order.status == "paid"
-    ).first()
-    
-    if not order:
-        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
-    
-    # 캐시에서 AI 분석 결과 확인
-    cache = db.query(SajuAnalysisCache).filter_by(saju_key=order.saju_key).first()
-    if not cache or not cache.analysis_full:
-        return HTMLResponse("""
-            <div style="text-align: center; padding: 3rem; font-family: 'Noto Sans KR', sans-serif;">
-                <h2>🔄 리포트를 준비 중입니다</h2>
-                <p>AI 분석이 완료되면 자동으로 표시됩니다.</p>
-                <div style="margin: 2rem 0;">
-                    <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 2s linear infinite; margin: 0 auto;"></div>
-                </div>
-                <script>
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    setTimeout(() => location.reload(), 5000);
-                </script>
-            </div>
-        """)
-    
     try:
-        # 필요한 모듈들 import
-        from app.routers.saju import calculate_four_pillars, analyze_four_pillars_to_string
-        from datetime import datetime
-        from app.report_utils import (
-            enhanced_radar_chart_base64,
-            generate_2025_fortune_calendar,
-            generate_lucky_keywords,
-            keyword_card,
-            generate_action_checklist,
-            generate_fortune_summary,
-            create_executive_summary
-        )
-        from markdown import markdown
+        # ✅ utils.py의 새로운 함수 사용 - 권한 확인 포함
+        from app.utils import generate_live_report_for_user
         
-        # 사주 정보 파싱
-        parts = order.saju_key.split('_')
-        if len(parts) == 5:
-            calendar, birth_raw, hour_part, tz_part, gender = parts
-            birthdate_str = f"{birth_raw[:4]}-{birth_raw[4:6]}-{birth_raw[6:]}"
-            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
-        elif len(parts) == 3:
-            birthdate_str, hour_part, gender = parts
-            birth_hour = None if hour_part in ("UH", "", "None") else int(hour_part)
-        else:
-            raise ValueError(f"잘못된 saju_key 형식: {order.saju_key}")
-
-        if birth_hour is None:
-            birth_hour = 12
-
-        birth_year, birth_month, birth_day = map(int, birthdate_str.split('-'))
-        pillars = calculate_four_pillars(datetime(birth_year, birth_month, birth_day, birth_hour))
-        elem_dict_kr, result_text = analyze_four_pillars_to_string(
-            pillars['year'][0], pillars['year'][1],
-            pillars['month'][0], pillars['month'][1], 
-            pillars['day'][0], pillars['day'][1],
-            pillars['hour'][0], pillars['hour'][1],
-        )
-
-        # 사용자 이름
-        saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
-        user_name = saju_user.name if saju_user and getattr(saju_user, "name", None) else "고객"
-
-        # 리포트 구성요소들 생성
-        try:
-            executive_summary = create_executive_summary(user_name, birthdate_str, pillars, elem_dict_kr)
-            radar_base64 = enhanced_radar_chart_base64(elem_dict_kr)
-            calendar_html = generate_2025_fortune_calendar(elem_dict_kr)
-            
-            birth_month = int(birthdate_str.split('-')[1]) if birthdate_str else 6
-            lucky_color, lucky_numbers, lucky_stone = generate_lucky_keywords(elem_dict_kr, birth_month)
-            keyword_html = keyword_card(lucky_color, lucky_numbers, lucky_stone)
-            
-            checklist = generate_action_checklist(elem_dict_kr)
-            fortune_summary = generate_fortune_summary(elem_dict_kr)
-        except Exception as comp_error:
-            logger.error(f"리포트 구성요소 생성 실패: {comp_error}")
-            # 기본값들로 대체
-            executive_summary = {"summary": "리포트 준비 중", "key_points": []}
-            radar_base64 = ""
-            calendar_html = "<p>달력 준비 중</p>"
-            keyword_html = "<p>키워드 준비 중</p>"
-            checklist = []
-            fortune_summary = {"summary": "운세 준비 중"}
-
-        # pillars 형식을 템플릿에 맞게 변환
-        pillars_display = {
-            'year': pillars['year'][0] + pillars['year'][1],    # 갑자
-            'month': pillars['month'][0] + pillars['month'][1], # 정미  
-            'day': pillars['day'][0] + pillars['day'][1],       # 병인
-            'hour': pillars['hour'][0] + pillars['hour'][1]     # 무술
-        }
-
-        # AI 분석 결과를 마크다운으로 변환
-        analysis_result_html = markdown(cache.analysis_full.replace('\n', '\n\n'))
-
-        # Jinja2 환경 설정 (markdown 필터 추가)
-        from jinja2 import Environment, FileSystemLoader, select_autoescape
-        
-        env = Environment(
-            loader=FileSystemLoader('templates'),
-            autoescape=select_autoescape(['html'])
+        html_content = generate_live_report_for_user(
+            order_id=order_id,
+            user_id=user.id,
+            db=db
         )
         
-        # 필터 추가
-        def markdown_filter(text):
-            if not text:
-                return ""
-            return markdown(str(text).replace('\n', '\n\n'))
-        
-        def strftime_filter(value, format='%Y-%m-%d %H:%M'):
-            if isinstance(value, str) and value == "now":
-                return datetime.now().strftime(format)
-            return value
-        
-        env.filters['markdown'] = markdown_filter
-        env.filters['strftime'] = strftime_filter
-        
-        # 템플릿 렌더링
-        template = env.get_template('enhanced_report_base.html')
-        html_content = template.render(
-            request=request,
-            user_name=user_name,
-            pillars=pillars_display,  # 수정된 형식
-            executive_summary=executive_summary,
-            radar_base64=radar_base64,
-            calendar_html=calendar_html, 
-            keyword_html=keyword_html,
-            checklist=checklist,
-            fortune_summary=fortune_summary,
-            analysis_result=cache.analysis_full,  # 원본 텍스트
-            elem_dict_kr=elem_dict_kr,
-            birthdate=birthdate_str
-        )
-        
+        logger.info(f"✅ 실시간 리포트 생성 성공: order_id={order_id}, user_id={user.id}")
         return HTMLResponse(content=html_content, status_code=200)
         
     except Exception as e:
-        logger.error(f"실시간 리포트 생성 실패: {e}")
-        import traceback
-        traceback.print_exc()  # 디버깅용
+        logger.error(f"❌ 실시간 리포트 생성 실패: order_id={order_id}, user_id={user.id}, error={e}")
         
-        # 에러가 발생하면 간단한 AI 분석 결과만 보여주기
-        analysis_html = markdown(cache.analysis_full.replace('\n', '\n\n'))
-        
-        return HTMLResponse(f"""
+        # 에러 페이지 반환
+        error_html = f"""
         <!DOCTYPE html>
         <html lang="ko">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{user_name}님의 사주팔자 리포트</title>
+            <title>리포트 생성 오류</title>
             <style>
-                body {{ 
-                    font-family: 'Noto Sans KR', sans-serif; 
-                    line-height: 1.6; 
-                    max-width: 800px; 
-                    margin: 0 auto; 
-                    padding: 2rem; 
-                    background: #f8fafc;
+                body {{
+                    font-family: 'Noto Sans KR', sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
                 }}
-                .container {{ 
-                    background: white; 
-                    padding: 2rem; 
-                    border-radius: 12px; 
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                .error-container {{
+                    background: white;
+                    padding: 3rem;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+                    text-align: center;
+                    max-width: 500px;
                 }}
-                h1 {{ color: #2d3748; margin-bottom: 1rem; }}
-                h2 {{ color: #4a5568; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }}
-                .ai-analysis {{ 
-                    background: #f7fafc; 
-                    padding: 1.5rem; 
-                    border-radius: 8px; 
-                    border-left: 4px solid #4299e1;
+                .error-icon {{
+                    font-size: 4rem;
+                    margin-bottom: 1rem;
                 }}
-                .footer-note {{ 
-                    text-align: center; 
-                    color: #718096; 
-                    font-size: 0.9rem; 
-                    margin-top: 2rem; 
-                    padding-top: 1rem; 
-                    border-top: 1px solid #e2e8f0;
+                .error-title {{
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    color: #e53e3e;
+                    margin-bottom: 1rem;
+                }}
+                .error-message {{
+                    color: #4a5568;
+                    margin-bottom: 2rem;
+                    line-height: 1.6;
+                }}
+                .btn {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    display: inline-block;
+                    transition: transform 0.2s;
+                }}
+                .btn:hover {{
+                    transform: translateY(-2px);
                 }}
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>🔮 {user_name}님의 사주팔자 리포트</h1>
-                <h2>🧠 AI 심층 분석</h2>
-                <div class="ai-analysis">
-                    {analysis_html}
+            <div class="error-container">
+                <div class="error-icon">😔</div>
+                <div class="error-title">리포트 생성 오류</div>
+                <div class="error-message">
+                    죄송합니다. 리포트를 생성하는 중 오류가 발생했습니다.<br>
+                    잠시 후 다시 시도해주세요.
+                    <br><br>
+                    <small style="color: #a0aec0;">
+                        오류가 계속 발생하면 고객센터로 문의해주세요.
+                    </small>
                 </div>
-                <div class="footer-note">
-                    본 리포트는 AI 분석 결과이며 참고용입니다. 🌟<br>
-                    <small>리포트 생성 중 일부 기능에서 오류가 발생하여 간소화된 버전을 표시합니다.</small>
-                </div>
+                <a href="/order/mypage" class="btn">내 주문 목록으로 돌아가기</a>
             </div>
         </body>
         </html>
-        """, status_code=200)
+        """
+        
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+################################################################################
+# 추가: 개발용 리포트 보기 (선택사항)
+################################################################################
+@router.get("/dev/report/{order_id}", response_class=HTMLResponse)
+async def dev_view_report(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """개발용 리포트 보기 (관리자 전용)"""
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # 관리자 권한 확인 (선택사항)
+    if not getattr(user, 'is_admin', False):
+        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+    
+    try:
+        # ✅ DB에서 직접 조회하는 방식 사용
+        from app.utils import generate_live_report_from_db
+        
+        html_content = generate_live_report_from_db(order_id, db)
+        
+        logger.info(f"✅ 개발용 리포트 생성 성공: order_id={order_id}")
+        return HTMLResponse(content=html_content, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"❌ 개발용 리포트 생성 실패: order_id={order_id}, error={e}")
+        raise HTTPException(status_code=500, detail=f"개발용 리포트 생성 실패: {str(e)}")
+
 
 ################################################################################
 # 10) 관리자용 주문 관리 (선택사항)

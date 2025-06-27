@@ -1,3 +1,5 @@
+# tasks.py 수정 버전
+
 import os
 import logging
 import re
@@ -24,173 +26,50 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from app.report_utils import (
-    radar_chart_base64, 
-    month_heat_table, 
-    keyword_card,
-    generate_2025_fortune_calendar,
-    generate_lucky_keywords,
-    generate_action_checklist,
-    create_executive_summary,
-    generate_fortune_summary,
-    enhanced_radar_chart_base64
-)
 
-
-# 사용 부분 수정
+# ✅ utils.py에서 리포트 생성 함수들 import
+from app.utils import generate_enhanced_report_html
 
 # 로거 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict_kr, birthdate_str=None):
-    """향상된 HTML 리포트 생성 (5가지 업그레이드 적용)"""
+
+@celery_app.task(bind=True, name='app.tasks.test_task')
+def test_task(self, message: str):
+    """테스트용 간단한 태스크"""
+    logger.info(f"테스트 태스크 실행: {message}")
+    return f"완료: {message}"
+
+
+def html_to_pdf_improved(html_content: str, output_path: str) -> bool:
+    """HTML을 PDF로 변환 (개선된 버전)"""
     try:
-        # 1. 임원급 요약 정보
-        executive_summary = create_executive_summary(user_name, birthdate_str or "1984-06-01", pillars, elem_dict_kr)
+        options = {
+            'page-size': 'A4',
+            'margin-top': '20mm',
+            'margin-right': '20mm', 
+            'margin-bottom': '20mm',
+            'margin-left': '20mm',
+            'encoding': "UTF-8",
+            'no-outline': None,
+            'enable-local-file-access': None,
+            'load-error-handling': 'ignore',
+            'load-media-error-handling': 'ignore'
+        }
         
-        # 2. 향상된 레이더 차트 (설명 포함)
-        radar_base64 = enhanced_radar_chart_base64(elem_dict_kr)
-        
-        # 3. 오행 기반 월별 운세 달력
-        calendar_html = generate_2025_fortune_calendar(elem_dict_kr)
-        
-        # 4. 개인화된 행운 키워드
-        birth_month = int(birthdate_str.split('-')[1]) if birthdate_str else 6
-        lucky_color, lucky_numbers, lucky_stone = generate_lucky_keywords(elem_dict_kr, birth_month)
-        keyword_html = keyword_card(lucky_color, lucky_numbers, lucky_stone)
-        
-        # 5. 맞춤형 실천 체크리스트
-        checklist = generate_action_checklist(elem_dict_kr)
-        
-        # 6. 운세 요약 카드
-        fortune_summary = generate_fortune_summary(elem_dict_kr)
-        
-        # 7. AI 심층 분석 결과를 HTML로 변환 (개선된 버전)
-        def format_ai_analysis(text: str) -> str:
-            """
-            GPT‑4o가 줄바꿈을 제대로 넣지 못해 하나의 문장으로 붙여­나오는 문제를
-            완전히 해결한다.
-
-            1) ### 헤딩 앞뒤 줄바꿈 강제 ‑ 선행 공백 제거
-            2) '### n. 제목:' → '### n. 제목' + 본문 분리
-            3) 문단 내부 한국어 마침표 뒤에 <br> 삽입 (가독성↑)
-            4) **A. …** 패턴을 #### 서브헤딩으로 변환
-            5) 마크다운→HTML 변환 후, 기존 스타일 인라인 유지
-            """
-            if not text:
-                return ""
-
-            import re, html as html_module
-            from markdown import markdown
-
-            # 줄바꿈 종류 통일
-            text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
-
-            # ① 헤딩 앞 공백 제거 + 두 줄바꿈 보장
-            #    ‘ … ### 2.’ → '\n\n### 2.'
-            text = re.sub(r'\s*###\s*', r'\n\n### ', text)
-
-            # ② '### 1. 제목: 본문…' → '### 1. 제목\n\n본문…'
-            text = re.sub(
-                r'^(###\s*\d+\.\s*[^:\n]+):\s*',
-                r'\1\n\n',
-                text,
-                flags=re.MULTILINE
-            )
-
-            # ③ **A. 소제목** → #### A. 소제목
-            text = re.sub(r'\*\*([A-F])\.\s*([^*]+?)\*\*', r'#### \1. \2', text)
-
-            # ④ 가독성용 줄바꿈: 마침표 뒤 한글/영대문자 시작이면 <br>용 두 스페이스 + \n
-            text = re.sub(r'(?<=[가-힣\w])\.\s+(?=[가-힣A-Z])', '.  \n', text)
-
-            # ⑤ 과잉 빈줄 정리(3줄→2줄)
-            text = re.sub(r'\n{3,}', '\n\n', text)
-
-            # ⑥ 마크다운 → HTML
-            html = markdown(
-                text,
-                extensions=[
-                    "markdown.extensions.extra",
-                    "markdown.extensions.nl2br",
-                    "markdown.extensions.sane_lists",
-                ],
-            )
-
-            # ⑦ HTML 엔티티 디코드
-            html = html_module.unescape(html)
-
-            # ⑧ 스타일 주입
-            html = html.replace(
-                "<h3>",
-                '<h3 style="color: #7C3AED; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">',
-            )
-            html = html.replace(
-                "<h4>",
-                '<h4 style="color: #5B21B6; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600;">',
-            )
-            html = html.replace(
-                "<p>",
-                '<p style="margin-bottom: 1rem; line-height: 1.6;">',
-            )
-
-            return html
-
-        analysis_result_html = format_ai_analysis(analysis_result)
-
-        # Jinja2 환경 설정
-        env = Environment(
-            loader=FileSystemLoader('templates'),
-            autoescape=select_autoescape(['html'])
-        )
-        
-        # 날짜 필터 추가
-        def strftime_filter(value, format='%Y-%m-%d %H:%M'):
-            if isinstance(value, str) and value == "now":
-                return datetime.now().strftime(format)
-            return value
-        
-        env.filters['strftime'] = strftime_filter
-
-        # 템플릿 렌더링
-        template = env.get_template('enhanced_report_base.html')
-        html_content = template.render(
-            user_name=user_name,
-            pillars=pillars,
-            executive_summary=executive_summary,
-            radar_base64=radar_base64,
-            calendar_html=calendar_html, 
-            keyword_html=keyword_html,
-            checklist=checklist,
-            fortune_summary=fortune_summary,
-            analysis_result_html=analysis_result_html,  # 변환된 HTML
-            analysis_result=analysis_result,  # 원본 텍스트
-            elem_dict_kr=elem_dict_kr,
-            birthdate=birthdate_str
-        )
-        
-        return html_content
+        pdfkit.from_string(html_content, output_path, options=options)
+        logger.info(f"✅ PDF 생성 성공: {output_path}")
+        return True
         
     except Exception as e:
-        logger.error(f"향상된 HTML 리포트 생성 실패: {e}")
-        # 폴백 HTML
-        return f"""
-        <h1>🔮 {user_name}님의 사주팔자 리포트</h1>
-        <h2>AI 심층 분석</h2>
-        <div class="ai-analysis">
-            {markdown(analysis_result.replace('\\n', '\\n\\n'))}
-        </div>
-        <div class="footer-note">
-            본 리포트는 AI 분석 결과이며 참고용입니다.
-        </div>
-        """
+        logger.error(f"❌ PDF 생성 실패: {e}")
+        return False
 
-# generate_full_report 함수도 약간 수정 (birthdate_str 전달)
+
 @celery_app.task(bind=True, name='app.tasks.generate_full_report')
 def generate_full_report(self, order_id: int, saju_key: str):
-    """완전한 AI 리포트 생성 태스크 (향상된 버전)"""
+    """완전한 AI 리포트 생성 태스크 (개선된 버전)"""
     db: Session = SessionLocal()
     
     try:
@@ -205,10 +84,6 @@ def generate_full_report(self, order_id: int, saju_key: str):
         # 진행 상황 업데이트
         self.update_state(state='progress', meta={'current': 1, 'total': 6, 'status': '주문 정보 확인 중...'})
         
-        order = db.query(Order).filter(Order.id == order_id).first()
-        if not order:
-            raise Exception(f'Order {order_id} not found')
-
         # 프롬프트 로드
         self.update_state(state='progress', meta={'current': 2, 'total': 6, 'status': 'AI 모델 준비 중...'})
         
@@ -219,13 +94,10 @@ def generate_full_report(self, order_id: int, saju_key: str):
         if not os.getenv('OPENAI_API_KEY'):
             raise Exception('OpenAI API key not configured')
 
-        # if not test_ollama_connection():
-        #     raise Exception('Ollama connection failed')
-
         # 사주 계산
         self.update_state(state='progress', meta={'current': 3, 'total': 6, 'status': '사주 분석 중...'})
         
-        # saju_key 형식 파싱 (3조각: yyyy-mm-dd_hour_gender  |  5조각: CAL_yyyymmdd_HH/UH_TZ_G)
+        # saju_key 형식 파싱 (3조각: yyyy-mm-dd_hour_gender  |  5조각: CAL_yyyymmdd_HH/UH_TZ_G)
         parts = saju_key.split('_')
 
         if len(parts) == 5:
@@ -282,13 +154,20 @@ def generate_full_report(self, order_id: int, saju_key: str):
         saju_user = db.query(SajuUser).filter_by(saju_key=order.saju_key).first()
         user_name = saju_user.name if saju_user and getattr(saju_user, "name", None) else "고객"
 
-        # HTML & PDF 생성
+        # 🎯 HTML & PDF 생성 - 새로운 방식 사용
         self.update_state(state='progress', meta={'current': 5, 'total': 6, 'status': '리포트 파일 생성 중...'})
         
-        # 향상된 HTML 생성 (birthdate_str 전달)
+        # ✅ Option 1: 이미 계산된 데이터를 활용하여 HTML 생성
         html_content = generate_enhanced_report_html(
-            user_name, pillars, analysis_result, elem_dict_kr, birthdate_str
+            user_name=user_name,
+            pillars=pillars,
+            analysis_result=analysis_result,
+            elem_dict_kr=elem_dict_kr,
+            birthdate_str=birthdate_str
         )
+        
+        # ✅ Option 2: DB에서 다시 조회하여 생성 (선택사항)
+        # html_content = generate_live_report_from_db(order_id, db)
         
         # 파일 저장 경로
         output_dir = os.path.join('static', 'uploads', 'reports')
@@ -301,37 +180,13 @@ def generate_full_report(self, order_id: int, saju_key: str):
             f.write(html_content)
         logger.info(f"📄 HTML 저장 완료: {html_path}")
         
-        # PDF 생성
+        # PDF 생성 (선택사항)
         # pdf_success = html_to_pdf_improved(html_content, pdf_path)
         
         # 파일 경로 업데이트
         order.report_html = html_path
-
         db.commit()
 
-        # 이메일 발송
-        # self.update_state(state='progress', meta={'current': 6, 'total': 6, 'status': '이메일 발송 중...'})
-        
-        # if order.pdf_send_email:
-        #     email_subject = f'🔮 {user_name}님의 사주팔자 심층 분석 리포트가 준비되었습니다'
-        #     email_body = f"""
-        #     <h2>안녕하세요, {user_name}님!</h2>
-        #     <p>주문하신 사주팔자 심층 분석 리포트가 완성되었습니다.</p>
-        #     <p><strong>포함 내용:</strong></p>
-        #     <ul>
-        #         <li>🎯 개인 맞춤 요약 정보</li>
-        #         <li>📊 오행 밸런스 차트 + 해석</li>
-        #         <li>📅 2025년 월별 운세 달력</li>
-        #         <li>🍀 행운 키워드 & 실천 가이드</li>
-        #         <li>🤖 AI 심층 분석 결과</li>
-        #     </ul>
-        #     <p>첨부된 PDF 파일을 확인해주세요.</p>
-        #     <p>좋은 하루 되세요! 🌟</p>
-        #     """
-            
-        #     attachments = [pdf_path] if pdf_success else []
-        #     send_email_improved(order.pdf_send_email, email_subject, email_body, attachments)
-        
         # AI 분석 완료 후 상태 업데이트
         order.report_status = "completed"
         order.report_completed_at = datetime.now()
@@ -358,67 +213,47 @@ def generate_full_report(self, order_id: int, saju_key: str):
     finally:
         db.close()
 
+
 def send_email_improved(to_email: str, subject: str, body: str, attachments=None) -> bool:
     """이메일 발송 (개선된 버전)"""
-    smtp_host = os.getenv('SMTP_HOST')
-    smtp_port = int(os.getenv('SMTP_PORT', '587'))
-    smtp_user = os.getenv('SMTP_USER')
-    smtp_password = os.getenv('SMTP_PASSWORD')
-
-    if not all([smtp_host, smtp_user, smtp_password]):
-        logger.warning('⚠️ SMTP 설정이 없어 이메일 발송을 건너뜁니다')
-        return False
-
     try:
-        msg = MIMEMultipart()
-        msg['Subject'] = subject
-        msg['From'] = smtp_user
-        msg['To'] = to_email
-        msg.attach(MIMEText(body, 'html', 'utf-8'))
-
-        attachments = attachments or []
-        for file_path in attachments:
-            if os.path.exists(file_path):
-                with open(file_path, 'rb') as f:
-                    part = MIMEApplication(f.read(), Name=os.path.basename(file_path))
-                part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-                msg.attach(part)
-
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_user, [to_email], msg.as_string())
+        # SMTP 설정 확인
+        smtp_server = os.getenv('SMTP_SERVER')
+        smtp_port = int(os.getenv('SMTP_PORT', 587))
+        smtp_username = os.getenv('SMTP_USERNAME')
+        smtp_password = os.getenv('SMTP_PASSWORD')
         
-        logger.info(f"📧 이메일 발송 성공: {to_email}")
+        if not all([smtp_server, smtp_username, smtp_password]):
+            logger.warning("SMTP 설정이 완전하지 않아 이메일 발송을 건너뜁니다.")
+            return False
+        
+        # 이메일 생성
+        msg = MIMEMultipart()
+        msg['From'] = smtp_username
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        
+        # HTML 본문 추가
+        msg.attach(MIMEText(body, 'html', 'utf-8'))
+        
+        # 첨부파일 추가
+        if attachments:
+            for file_path in attachments:
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as f:
+                        part = MIMEApplication(f.read(), Name=os.path.basename(file_path))
+                        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                        msg.attach(part)
+        
+        # SMTP 서버 연결 및 발송
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        
+        logger.info(f"✅ 이메일 발송 성공: {to_email}")
         return True
         
     except Exception as e:
-        logger.error(f"💥 이메일 발송 실패: {e}")
+        logger.error(f"❌ 이메일 발송 실패: {e}")
         return False
-
-# 기존 다른 태스크들...
-@celery_app.task(name='app.tasks.cleanup_old_cache')
-def cleanup_old_cache():
-    """오래된 캐시 정리 태스크"""
-    db = SessionLocal()
-    try:
-        cutoff_date = datetime.now() - timedelta(days=30)
-        old_cache = db.query(SajuAnalysisCache).filter(
-            SajuAnalysisCache.created_at < cutoff_date
-        ).delete()
-        db.commit()
-        logger.info(f"🗑️ 오래된 캐시 {old_cache}개 정리 완료")
-    except Exception as e:
-        logger.error(f"💥 캐시 정리 실패: {e}")
-        db.rollback()
-    finally:
-        db.close()
-
-@celery_app.task(bind=True, name='app.tasks.test_task')
-def test_task(self, name: str):
-    """테스트용 태스크"""
-    import time
-    for i in range(5):
-        time.sleep(1)
-        self.update_state(state='progress', meta={'current': i+1, 'total': 5, 'status': f'Processing {name}...'})
-    return {'status': 'Task completed!', 'name': name}
