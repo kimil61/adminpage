@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Date, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Date, Text, ForeignKey, UniqueConstraint,JSON
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -119,6 +119,10 @@ class SajuUser(Base):
     last_visit = Column(DateTime, default=datetime.now)
     visit_count = Column(Integer, default=1)
     saju_key = Column(String(120), nullable=True)
+        # 🎯 새로 추가할 컬럼들
+    calculated_pillars = Column(JSON, nullable=True)  # 계산된 사주팔자
+    elem_dict_kr = Column(JSON, nullable=True)        # 오행 분포
+    calculated_at = Column(DateTime, nullable=True)   # 계산 시간
     created_at = Column(DateTime, default=datetime.now)
     user_id = Column(Integer, ForeignKey("blog_users.id"))
     user = relationship("User")
