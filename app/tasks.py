@@ -19,7 +19,7 @@ from app.routers.saju import (
     ai_sajupalja_with_chatgpt_sync
 )
 from markdown import markdown
-import pdfkit
+from weasyprint import HTML
 import asyncio
 from fpdf import FPDF
 import smtplib
@@ -42,31 +42,22 @@ def test_task(self, message: str):
     return f"완료: {message}"
 
 
-def html_to_pdf_improved(html_content: str, output_path: str) -> bool:
-    """HTML을 PDF로 변환 (개선된 버전)"""
+def html_to_pdf_production(html_content: str, output_path: str) -> bool:
+    """프로덕션용 PDF 생성 (WeasyPrint 버전)"""
     try:
-        options = {
-            'page-size': 'A4',
-            'margin-top': '20mm',
-            'margin-right': '20mm', 
-            'margin-bottom': '20mm',
-            'margin-left': '20mm',
-            'encoding': "UTF-8",
-            'no-outline': None,
-            'enable-local-file-access': None,
-            'load-error-handling': 'ignore',
-            'load-media-error-handling': 'ignore'
-        }
-        
-        pdfkit.from_string(html_content, output_path, options=options)
-        logger.info(f"✅ PDF 생성 성공: {output_path}")
-        return True
-        
+        # WeasyPrint를 사용하여 PDF 생성
+        HTML(string=html_content, base_url=".").write_pdf(output_path)
+
+        # 생성된 파일 검증
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info(f"✅ PDF 생성 성공: {output_path} ({os.path.getsize(output_path)} bytes)")
+            return True
+        else:
+            raise Exception("PDF 파일이 생성되지 않았거나 크기가 0입니다.")
     except Exception as e:
         logger.error(f"❌ PDF 생성 실패: {e}")
         return False
-
-
+    
 @celery_app.task(bind=True, name='app.tasks.generate_full_report')
 def generate_full_report(self, order_id: int, saju_key: str):
     """완전한 AI 리포트 생성 태스크 (개선된 버전)"""
@@ -194,8 +185,8 @@ def generate_full_report(self, order_id: int, saju_key: str):
         logger.info(f"📄 HTML 저장 완료: {html_path}")
         
         # PDF 생성 (선택사항)
-        pdf_success = html_to_pdf_improved(html_content, pdf_path)
-        
+        pdf_success = html_to_pdf_production(html_content, pdf_path)
+        print(pdf_success)
         # 파일 경로 업데이트
         order.report_html = html_path
         db.commit()

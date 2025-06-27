@@ -7,7 +7,7 @@ import os
 import sys
 sys.path.append('.')
 
-from app.tasks import html_to_pdf_improved, generate_enhanced_report_html
+from app.tasks import html_to_pdf_production, generate_enhanced_report_html
 from app.report_utils import radar_chart_base64
 
 def test_simple_pdf():
@@ -19,7 +19,7 @@ def test_simple_pdf():
     """
     
     output_path = "test_simple.pdf"
-    success = html_to_pdf_improved(simple_html, output_path)
+    success = html_to_pdf_production(simple_html, output_path)
     
     if success:
         print(f"✅ 간단한 PDF 생성 성공: {output_path}")
@@ -60,7 +60,7 @@ def test_full_report_pdf():
         )
         
         output_path = "test_full_report.pdf"
-        success = html_to_pdf_improved(html_content, output_path)
+        success = html_to_pdf_production(html_content, output_path)
         
         if success:
             print(f"✅ 전체 리포트 PDF 생성 성공: {output_path}")
