@@ -1,6 +1,7 @@
 # app/routers/blog.py 수정본 - 라우터 순서 중요!
 
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends
+from app.exceptions import NotFoundError
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from urllib.parse import unquote
@@ -58,7 +59,7 @@ async def blog_category(
         # 디버깅: 존재하는 카테고리들 출력
         existing_categories = db.query(Category).all()
         print(f"📋 존재하는 카테고리들: {[c.slug for c in existing_categories]}")
-        raise HTTPException(status_code=404, detail="카테고리를 찾을 수 없습니다.")
+        raise NotFoundError("카테고리를 찾을 수 없습니다.")
     
     per_page = 6
     offset = (page - 1) * per_page
@@ -110,7 +111,7 @@ async def blog_detail(
         ).first()
     
     if not post:
-        raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+        raise NotFoundError("포스트를 찾을 수 없습니다.")
     
     # 조회수 증가
     if post.views is None:

@@ -1,6 +1,7 @@
 # app/routers/saju.py - 완전한 작동 버전
 
-from fastapi import APIRouter, Request, Form, Depends, HTTPException
+from fastapi import APIRouter, Request, Form, Depends
+from app.exceptions import BadRequestError
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.database import get_db
 from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation, Product
@@ -760,7 +761,7 @@ async def saju_page1_submit(
 
     # 입력값 검증
     if not gender or not birth_year or not birth_month or not birth_day:
-        raise HTTPException(status_code=400, detail="필수 입력값이 누락되었습니다.")
+        raise BadRequestError("필수 입력값이 누락되었습니다.")
 
     # 출생 시간 처리 (refactored to match latest logic)
     if hour_unknown:
@@ -904,7 +905,7 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     
     saju_key = request.session.get("saju_key")
     if not saju_key:
-        raise HTTPException(status_code=400, detail="사주 정보가 없습니다.")
+        raise BadRequestError("사주 정보가 없습니다.")
     
     # 🔄 글로벌 캐시 확인
     cached_row = db.query(SajuAnalysisCache).filter_by(saju_key=saju_key).first()
@@ -1179,7 +1180,7 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
  # === DB 캐시 확인 ===
     saju_key = request.session.get("saju_key")
     if not saju_key:
-        raise HTTPException(status_code=400, detail="사주 정보가 없습니다.")
+        raise BadRequestError("사주 정보가 없습니다.")
 
 
  # DB 캐시 확인
@@ -1226,7 +1227,7 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
         
     except Exception as e:
         logger.error(f"AI 분석 실패: {e}")
-        raise HTTPException(status_code=400, detail="AI 분석 중 오류가 발생했습니다.")
+        raise BadRequestError("AI 분석 중 오류가 발생했습니다.")
 
 # AI 사주 2차 업그레이드 버전 API 끝
 #######################################################################

@@ -3,7 +3,13 @@
 """주문 / 결제 / 구매내역 Router - 카카오페이 연동 버전"""
 
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Request, Body, Query, Header
+from fastapi import APIRouter, Depends, Request, Body, Query, Header, HTTPException
+from app.exceptions import (
+    BadRequestError,
+    NotFoundError,
+    PermissionDeniedError,
+    InternalServerError,
+)
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -43,7 +49,7 @@ async def create_order(
     try:
         saju_key = payload.get("saju_key")
         if not saju_key:
-            raise HTTPException(status_code=400, detail="사주 정보가 필요합니다.")
+            raise BadRequestError("사주 정보가 필요합니다.")
         
         # 중복 구매 체크
         existing = db.query(Order).filter(
@@ -52,7 +58,7 @@ async def create_order(
             Order.status == "paid"
         ).first()
         if existing:
-            raise HTTPException(status_code=400, detail="이미 구매한 리포트입니다.")
+            raise BadRequestError("이미 구매한 리포트입니다.")
         
         # 진행 중인 주문이 있는지 체크 (30분 이내)
         recent_pending = db.query(Order).filter(
@@ -168,14 +174,14 @@ async def create_order(
             # 실패한 주문 삭제
             db.delete(order)
             db.commit()
-            raise HTTPException(status_code=400, detail=f"결제 준비 실패: {e.message}")
+            raise BadRequestError(f"결제 준비 실패: {e.message}")
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"주문 생성 실패: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"주문 생성 실패: {str(e)}")
+        raise InternalServerError(f"주문 생성 실패: {str(e)}")
 
 
 ################################################################################
@@ -330,11 +336,11 @@ async def payment_success(
     ).first()
     
     if not order:
-        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+        raise NotFoundError("주문을 찾을 수 없습니다.")
     
     # 본인 주문이 아니면 접근 제한 (로그인한 경우만)
     if user and order.user_id != user.id:
-        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+        raise PermissionDeniedError("접근 권한이 없습니다.")
     
     return templates.TemplateResponse("order/success.html", {
         "request": request,
@@ -424,7 +430,7 @@ async def retry_report_generation(
     ).first()
 
     if not order:
-        raise HTTPException(status_code=404, detail="생성 실패한 리포트를 찾을 수 없습니다.")
+        raise NotFoundError("생성 실패한 리포트를 찾을 수 없습니다.")
 
     # 리포트 상태 초기화
     order.report_status = "generating"
@@ -447,7 +453,7 @@ async def retry_report_generation(
         logger.error(f"리포트 재생성 태스크 시작 실패: {e}")
         order.report_status = "failed"
         db.commit()
-        raise HTTPException(status_code=500, detail="리포트 재생성 시작에 실패했습니다.")
+        raise InternalServerError("리포트 재생성 시작에 실패했습니다.")
 
 ################################################################################
 # 8) 리포트 진행상황 체크 API
@@ -465,7 +471,7 @@ async def check_order_status(
     ).first()
     
     if not order:
-        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+        raise NotFoundError("주문을 찾을 수 없습니다.")
     
     # Celery 태스크 상태 확인
     task_status = None
@@ -515,7 +521,7 @@ async def download_report(
     ).first()
     
     if not order:
-        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+        raise NotFoundError("리포트를 찾을 수 없습니다.")
     
     if format == "html" and order.report_html:
         from fastapi.responses import FileResponse
@@ -532,7 +538,7 @@ async def download_report(
             media_type="application/pdf"
         )
     else:
-        raise HTTPException(status_code=404, detail=f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
+        raise NotFoundError(f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
 
 
 
@@ -554,16 +560,16 @@ async def view_report(
     ).first()
     
     if not order:
-        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+        raise NotFoundError("리포트를 찾을 수 없습니다.")
     
     if not order.report_html:
-        raise HTTPException(status_code=404, detail="HTML 리포트가 아직 생성되지 않았습니다.")
+        raise NotFoundError("HTML 리포트가 아직 생성되지 않았습니다.")
     
     try:
         # HTML 파일 읽어서 직접 반환
         import os
-        if not os.path.exists(order.report_html):
-            raise HTTPException(status_code=404, detail="리포트 파일이 존재하지 않습니다.")
+            if not os.path.exists(order.report_html):
+                raise NotFoundError("리포트 파일이 존재하지 않습니다.")
             
         with open(order.report_html, 'r', encoding='utf-8') as f:
             html_content = f.read()
@@ -572,7 +578,7 @@ async def view_report(
         
     except Exception as e:
         logger.error(f"리포트 HTML 읽기 실패: {e}")
-        raise HTTPException(status_code=500, detail="리포트를 불러오는 중 오류가 발생했습니다.")
+        raise InternalServerError("리포트를 불러오는 중 오류가 발생했습니다.")
 
 ################################################################################
 # 9-2) 빠른 리포트 보기 (새로운 utils.py 함수 사용)
@@ -593,10 +599,9 @@ async def view_live_report(
     logger = logging.getLogger(__name__)
 
     from app.models import Post
-    from fastapi import HTTPException
     report = db.query(Post).get(report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+        raise NotFoundError("리포트를 찾을 수 없습니다.")
     from app.models import User as ReportUser
     report_user = db.query(ReportUser).get(report.user_id)
 
@@ -637,7 +642,7 @@ async def dev_view_report(
     
     # 관리자 권한 확인 (선택사항)
     if not getattr(user, 'is_admin', False):
-        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+        raise PermissionDeniedError("관리자 권한이 필요합니다.")
     
     try:
         # ✅ DB에서 직접 조회하는 방식 사용
@@ -650,7 +655,7 @@ async def dev_view_report(
         
     except Exception as e:
         logger.error(f"❌ 개발용 리포트 생성 실패: order_id={order_id}, error={e}")
-        raise HTTPException(status_code=500, detail=f"개발용 리포트 생성 실패: {str(e)}")
+        raise InternalServerError(f"개발용 리포트 생성 실패: {str(e)}")
 
 
 ################################################################################
@@ -666,7 +671,7 @@ async def admin_order_list(
 ):
     """관리자용 주문 목록"""
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+        raise PermissionDeniedError("관리자 권한이 필요합니다.")
     
     per_page = 20
     offset = (page - 1) * per_page
