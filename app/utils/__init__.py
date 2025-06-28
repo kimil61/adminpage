@@ -1,5 +1,6 @@
 from passlib.context import CryptContext
-from fastapi import HTTPException, Depends, Request, UploadFile
+from fastapi import Depends, Request, UploadFile
+from app.exceptions import UnauthorizedError, PermissionDeniedError
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
@@ -51,18 +52,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user_id = request.session.get('user_id')
     if not user_id:
-        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+        raise UnauthorizedError("로그인이 필요합니다.")
     
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=401, detail="유효하지 않은 사용자입니다.")
+        raise UnauthorizedError("유효하지 않은 사용자입니다.")
     
     return user
 
 def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
     user = get_current_user(request, db)
     if not user.is_admin:
-        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+        raise PermissionDeniedError("관리자 권한이 필요합니다.")
     return user
 
 def flash_message(request: Request, message: str, category: str = "info"):

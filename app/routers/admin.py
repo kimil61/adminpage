@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, Form, File, UploadFile, Depends, HTTPException
+from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
+from app.exceptions import NotFoundError, PermissionDeniedError
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -162,7 +163,7 @@ async def admin_edit_post(
 ):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+        raise NotFoundError("포스트를 찾을 수 없습니다.")
 
     form = PostForm(obj=post)
     categories = db.query(Category).all()
@@ -195,7 +196,7 @@ async def admin_edit_post_submit(
 ):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="포스트를 찾을 수 없습니다.")
+        raise NotFoundError("포스트를 찾을 수 없습니다.")
 
     slug = create_slug(title)
     if slug != post.slug:
@@ -363,7 +364,7 @@ async def admin_edit_in_post(
 ):
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
-        raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
+        raise NotFoundError("항목을 찾을 수 없습니다.")
     form = InPostForm(obj=item)
     return templates.TemplateResponse(
         "admin/in_posts_form.html",
@@ -385,7 +386,7 @@ async def admin_edit_in_post_submit(
 ):
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
-        raise HTTPException(status_code=404, detail="항목을 찾을 수 없습니다.")
+        raise NotFoundError("항목을 찾을 수 없습니다.")
     item.title = title
     item.content = content
     item.gen_content1 = gen_content1
@@ -522,7 +523,7 @@ async def admin_edit_saju_user(
 ):
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if not saju_user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+        raise NotFoundError("사용자를 찾을 수 없습니다.")
     form = SajuUserAdminForm(obj=saju_user)
     form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
     form.user_id.data = saju_user.user_id
@@ -546,7 +547,7 @@ async def admin_edit_saju_user_submit(
 ):
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if not saju_user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+        raise NotFoundError("사용자를 찾을 수 없습니다.")
     saju_user.name = name
     saju_user.birthdate = birthdate
     saju_user.birthhour = birthhour
@@ -583,7 +584,7 @@ async def admin_edit_filtered(
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
     if not content:
-        raise HTTPException(status_code=404, detail="콘텐츠를 찾을 수 없습니다.")
+        raise NotFoundError("콘텐츠를 찾을 수 없습니다.")
     form = FilteredContentForm(obj=content)
     return templates.TemplateResponse(
         "admin/filtered_content_form.html",
@@ -611,7 +612,7 @@ async def admin_edit_filtered_submit(
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
     if not content:
-        raise HTTPException(status_code=404, detail="콘텐츠를 찾을 수 없습니다.")
+        raise NotFoundError("콘텐츠를 찾을 수 없습니다.")
     content.filter_result = filter_result
     content.reasoning = reasoning
     content.confidence_score = confidence_score
