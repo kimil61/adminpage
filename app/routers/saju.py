@@ -761,6 +761,9 @@ async def saju_page1_submit(
 
     # 입력값 검증
     if not gender or not birth_year or not birth_month or not birth_day:
+        logger.warning(
+            f"Missing required fields: gender={gender}, year={birth_year}, month={birth_month}, day={birth_day}"
+        )
         raise BadRequestError("필수 입력값이 누락되었습니다.")
 
     # 출생 시간 처리 (refactored to match latest logic)
@@ -905,6 +908,7 @@ async def api_saju_ai_analysis(request: Request, db: Session = Depends(get_db)):
     
     saju_key = request.session.get("saju_key")
     if not saju_key:
+        logger.warning("Saju key missing in session")
         raise BadRequestError("사주 정보가 없습니다.")
     
     # 🔄 글로벌 캐시 확인
@@ -1180,6 +1184,7 @@ async def api_saju_ai_analysis_2(request: Request, db: Session = Depends(get_db)
  # === DB 캐시 확인 ===
     saju_key = request.session.get("saju_key")
     if not saju_key:
+        logger.warning("Saju key missing in session")
         raise BadRequestError("사주 정보가 없습니다.")
 
 

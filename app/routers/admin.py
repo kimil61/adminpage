@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
 from app.exceptions import NotFoundError, PermissionDeniedError
+import logging
+
+logger = logging.getLogger(__name__)
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -163,6 +166,7 @@ async def admin_edit_post(
 ):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
+        logger.warning(f"Post not found: post_id={post_id}")
         raise NotFoundError("포스트를 찾을 수 없습니다.")
 
     form = PostForm(obj=post)
@@ -196,6 +200,7 @@ async def admin_edit_post_submit(
 ):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
+        logger.warning(f"Post not found: post_id={post_id}")
         raise NotFoundError("포스트를 찾을 수 없습니다.")
 
     slug = create_slug(title)
@@ -364,6 +369,7 @@ async def admin_edit_in_post(
 ):
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
+        logger.warning(f"InPost not found: item_id={item_id}")
         raise NotFoundError("항목을 찾을 수 없습니다.")
     form = InPostForm(obj=item)
     return templates.TemplateResponse(
@@ -386,6 +392,7 @@ async def admin_edit_in_post_submit(
 ):
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
+        logger.warning(f"InPost not found: item_id={item_id}")
         raise NotFoundError("항목을 찾을 수 없습니다.")
     item.title = title
     item.content = content
@@ -523,6 +530,7 @@ async def admin_edit_saju_user(
 ):
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if not saju_user:
+        logger.warning(f"SajuUser not found: saju_user_id={saju_user_id}")
         raise NotFoundError("사용자를 찾을 수 없습니다.")
     form = SajuUserAdminForm(obj=saju_user)
     form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
@@ -547,6 +555,7 @@ async def admin_edit_saju_user_submit(
 ):
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if not saju_user:
+        logger.warning(f"SajuUser not found: saju_user_id={saju_user_id}")
         raise NotFoundError("사용자를 찾을 수 없습니다.")
     saju_user.name = name
     saju_user.birthdate = birthdate
@@ -584,6 +593,7 @@ async def admin_edit_filtered(
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
     if not content:
+        logger.warning(f"FilteredContent not found: content_id={content_id}")
         raise NotFoundError("콘텐츠를 찾을 수 없습니다.")
     form = FilteredContentForm(obj=content)
     return templates.TemplateResponse(
@@ -612,6 +622,7 @@ async def admin_edit_filtered_submit(
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
     if not content:
+        logger.warning(f"FilteredContent not found: content_id={content_id}")
         raise NotFoundError("콘텐츠를 찾을 수 없습니다.")
     content.filter_result = filter_result
     content.reasoning = reasoning

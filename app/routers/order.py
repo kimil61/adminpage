@@ -49,6 +49,7 @@ async def create_order(
     try:
         saju_key = payload.get("saju_key")
         if not saju_key:
+            logger.warning(f"Missing saju_key: user_id={user.id}")
             raise BadRequestError("사주 정보가 필요합니다.")
         
         # 중복 구매 체크
@@ -58,6 +59,9 @@ async def create_order(
             Order.status == "paid"
         ).first()
         if existing:
+            logger.warning(
+                f"Duplicate purchase attempt: user_id={user.id}, saju_key={saju_key}"
+            )
             raise BadRequestError("이미 구매한 리포트입니다.")
         
         # 진행 중인 주문이 있는지 체크 (30분 이내)
@@ -336,10 +340,14 @@ async def payment_success(
     ).first()
     
     if not order:
+        logger.warning(f"Order not found: order_id={order_id}")
         raise NotFoundError("주문을 찾을 수 없습니다.")
     
     # 본인 주문이 아니면 접근 제한 (로그인한 경우만)
     if user and order.user_id != user.id:
+        logger.warning(
+            f"Permission denied: order_id={order_id}, user_id={user.id}"
+        )
         raise PermissionDeniedError("접근 권한이 없습니다.")
     
     return templates.TemplateResponse("order/success.html", {
@@ -430,6 +438,9 @@ async def retry_report_generation(
     ).first()
 
     if not order:
+        logger.warning(
+            f"Retry requested but order not found: order_id={order_id}, user_id={user.id}"
+        )
         raise NotFoundError("생성 실패한 리포트를 찾을 수 없습니다.")
 
     # 리포트 상태 초기화
@@ -471,6 +482,9 @@ async def check_order_status(
     ).first()
     
     if not order:
+        logger.warning(
+            f"Order status requested but not found: order_id={order_id}, user_id={user.id}"
+        )
         raise NotFoundError("주문을 찾을 수 없습니다.")
     
     # Celery 태스크 상태 확인
@@ -521,6 +535,9 @@ async def download_report(
     ).first()
     
     if not order:
+        logger.warning(
+            f"Report download requested but not found: order_id={order_id}, user_id={user.id}"
+        )
         raise NotFoundError("리포트를 찾을 수 없습니다.")
     
     if format == "html" and order.report_html:
@@ -538,6 +555,9 @@ async def download_report(
             media_type="application/pdf"
         )
     else:
+        logger.warning(
+            f"Requested report format not ready: order_id={order_id}, format={format}"
+        )
         raise NotFoundError(f"{format.upper()} 리포트가 아직 생성되지 않았습니다.")
 
 
@@ -560,15 +580,24 @@ async def view_report(
     ).first()
     
     if not order:
+        logger.warning(
+            f"Report view requested but not found: order_id={order_id}, user_id={user.id}"
+        )
         raise NotFoundError("리포트를 찾을 수 없습니다.")
     
     if not order.report_html:
+        logger.warning(
+            f"HTML report missing: order_id={order_id}, user_id={user.id}"
+        )
         raise NotFoundError("HTML 리포트가 아직 생성되지 않았습니다.")
     
     try:
         # HTML 파일 읽어서 직접 반환
         import os
         if not os.path.exists(order.report_html):
+            logger.warning(
+                f"Report file missing: order_id={order_id}, path={order.report_html}"
+            )
             raise NotFoundError("리포트 파일이 존재하지 않습니다.")
             
         with open(order.report_html, 'r', encoding='utf-8') as f:
@@ -601,6 +630,7 @@ async def view_live_report(
     from app.models import Post
     report = db.query(Post).get(report_id)
     if report is None:
+        logger.warning(f"Live report not found: report_id={report_id}")
         raise NotFoundError("리포트를 찾을 수 없습니다.")
     from app.models import User as ReportUser
     report_user = db.query(ReportUser).get(report.user_id)
@@ -642,6 +672,9 @@ async def dev_view_report(
     
     # 관리자 권한 확인 (선택사항)
     if not getattr(user, 'is_admin', False):
+        logger.warning(
+            f"Dev report access denied: order_id={order_id}, user_id={user.id}"
+        )
         raise PermissionDeniedError("관리자 권한이 필요합니다.")
     
     try:
@@ -671,6 +704,9 @@ async def admin_order_list(
 ):
     """관리자용 주문 목록"""
     if not user.is_admin:
+        logger.warning(
+            f"Admin order list access denied: user_id={user.id}"
+        )
         raise PermissionDeniedError("관리자 권한이 필요합니다.")
     
     per_page = 20
