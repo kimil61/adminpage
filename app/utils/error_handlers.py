@@ -6,7 +6,15 @@ from app.template import templates
 
 
 def prefers_json(request: Request) -> bool:
+    """Return True if the client expects a JSON response."""
     accept = request.headers.get("accept", "").lower()
+
+    # 1) If the request path looks like an API endpoint (e.g. /order/**),
+    #    return JSON regardless of the Accept header.
+    if request.url.path.startswith("/order"):
+        return True
+
+    # 2) Otherwise determine preference based on the Accept header.
     if "application/json" not in accept:
         return False
     if "text/html" not in accept:

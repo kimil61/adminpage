@@ -568,8 +568,8 @@ async def view_report(
     try:
         # HTML 파일 읽어서 직접 반환
         import os
-            if not os.path.exists(order.report_html):
-                raise NotFoundError("리포트 파일이 존재하지 않습니다.")
+        if not os.path.exists(order.report_html):
+            raise NotFoundError("리포트 파일이 존재하지 않습니다.")
             
         with open(order.report_html, 'r', encoding='utf-8') as f:
             html_content = f.read()
