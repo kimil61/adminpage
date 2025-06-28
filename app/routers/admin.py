@@ -23,6 +23,7 @@ from app.forms import (
     SajuUserAdminForm,
 )
 from app.utils import require_admin, save_uploaded_file, create_slug, flash_message
+from app.utils.csrf import generate_csrf_token, validate_csrf_token
 import os
 from datetime import datetime
 from app.template import templates
@@ -41,15 +42,20 @@ async def admin_dashboard(
     total_categories = db.query(Category).count()
     
     recent_posts = db.query(Post).order_by(Post.created_at.desc()).limit(5).all()
-    
-    return templates.TemplateResponse("admin/dashboard.html", {
-        "request": request,
-        "total_posts": total_posts,
-        "published_posts": published_posts,
-        "total_users": total_users,
-        "total_categories": total_categories,
-        "recent_posts": recent_posts
-    })
+
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "admin/dashboard.html",
+        {
+            "request": request,
+            "total_posts": total_posts,
+            "published_posts": published_posts,
+            "total_users": total_users,
+            "total_categories": total_categories,
+            "recent_posts": recent_posts,
+            "csrf_token": csrf_token,
+        },
+    )
 
 @router.get("/posts", response_class=HTMLResponse)
 async def admin_posts(
@@ -75,19 +81,24 @@ async def admin_posts(
     has_next = page < pages
     prev_page = page - 1 if has_prev else None
     next_page = page + 1 if has_next else None
-    
-    return templates.TemplateResponse("admin/posts.html", {
-        "request": request,
-        "posts": posts,
-        "page": page,
-        "pages": pages,
-        "total": total,
-        "per_page": per_page,
-        "has_prev": has_prev,
-        "has_next": has_next,
-        "prev_page": prev_page,
-        "next_page": next_page
-    })
+
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "admin/posts.html",
+        {
+            "request": request,
+            "posts": posts,
+            "page": page,
+            "pages": pages,
+            "total": total,
+            "per_page": per_page,
+            "has_prev": has_prev,
+            "has_next": has_next,
+            "prev_page": prev_page,
+            "next_page": next_page,
+            "csrf_token": csrf_token,
+        },
+    )
 
 @router.get("/posts/create", response_class=HTMLResponse)
 async def admin_create_post(
@@ -98,12 +109,12 @@ async def admin_create_post(
     form = PostForm()
     categories = db.query(Category).all()
     form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
-    
-    return templates.TemplateResponse("admin/post_form.html", {
-        "request": request,
-        "form": form,
-        "action": "create"
-    })
+
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "admin/post_form.html",
+        {"request": request, "form": form, "action": "create", "csrf_token": csrf_token},
+    )
 
 @router.post("/posts/create")
 async def admin_create_post_submit(
@@ -114,9 +125,11 @@ async def admin_create_post_submit(
     category_id: int = Form(0),
     is_published: bool = Form(False),
     featured_image: UploadFile = File(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+    validate_csrf_token(request, csrf_token)
     slug = create_slug(title)
     
     existing_post = db.query(Post).filter(Post.slug == slug).first()
@@ -133,9 +146,10 @@ async def admin_create_post_submit(
             form = PostForm(formdata)
             categories = db.query(Category).all()
             form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
+            csrf_token = generate_csrf_token(request)
             return templates.TemplateResponse(
                 "admin/post_form.html",
-                {"request": request, "form": form, "action": "create"},
+                {"request": request, "form": form, "action": "create", "csrf_token": csrf_token},
                 status_code=400,
             )
     
@@ -173,12 +187,17 @@ async def admin_edit_post(
     categories = db.query(Category).all()
     form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
 
-    return templates.TemplateResponse("admin/post_form.html", {
-        "request": request,
-        "form": form,
-        "post": post,
-        "action": "edit"
-    })
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "admin/post_form.html",
+        {
+            "request": request,
+            "form": form,
+            "post": post,
+            "action": "edit",
+            "csrf_token": csrf_token,
+        },
+    )
 
 
 # POST route for editing a post
@@ -195,9 +214,11 @@ async def admin_edit_post_submit(
     category_id: int = Form(0),
     is_published: bool = Form(False),
     featured_image: UploadFile = File(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+    validate_csrf_token(request, csrf_token)
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         logger.warning(f"Post not found: post_id={post_id}")
@@ -220,9 +241,10 @@ async def admin_edit_post_submit(
             form = PostForm(formdata)
             categories = db.query(Category).all()
             form.category_id.choices = [(0, '카테고리 선택')] + [(c.id, c.name) for c in categories]
+            csrf_token = generate_csrf_token(request)
             return templates.TemplateResponse(
                 "admin/post_form.html",
-                {"request": request, "form": form, "post": post, "action": "edit"},
+                {"request": request, "form": form, "post": post, "action": "edit", "csrf_token": csrf_token},
                 status_code=400,
             )
 
@@ -244,9 +266,11 @@ async def admin_edit_post_submit(
 async def admin_delete_post(
     request: Request,
     post_id: int,
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     post = db.query(Post).filter(Post.id == post_id).first()
     if post:
         db.delete(post)
@@ -262,12 +286,17 @@ async def admin_categories(
 ):
     categories = db.query(Category).all()
     form = CategoryForm()
-    
-    return templates.TemplateResponse("admin/categories.html", {
-        "request": request,
-        "categories": categories,
-        "form": form
-    })
+
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "admin/categories.html",
+        {
+            "request": request,
+            "categories": categories,
+            "form": form,
+            "csrf_token": csrf_token,
+        },
+    )
 
 @router.post("/categories")
 async def admin_create_category(
@@ -275,9 +304,11 @@ async def admin_create_category(
     name: str = Form(...),
     slug: str = Form(...),
     description: str = Form(""),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
+    validate_csrf_token(request, csrf_token)
     existing_category = db.query(Category).filter(
         (Category.name == name) | (Category.slug == slug)
     ).first()
@@ -297,9 +328,11 @@ async def admin_create_category(
 async def admin_delete_category(
     request: Request,
     category_id: int,
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     category = db.query(Category).filter(Category.id == category_id).first()
     if category:
         db.delete(category)
@@ -316,9 +349,10 @@ async def admin_in_posts(
     current_user: User = Depends(require_admin),
 ):
     items = db.query(InPost).order_by(InPost.created_at.desc()).all()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/in_posts.html",
-        {"request": request, "items": items},
+        {"request": request, "items": items, "csrf_token": csrf_token},
     )
 
 
@@ -329,9 +363,10 @@ async def admin_create_in_post(
     current_user: User = Depends(require_admin),
 ):
     form = InPostForm()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/in_posts_form.html",
-        {"request": request, "form": form, "action": "create"},
+        {"request": request, "form": form, "action": "create", "csrf_token": csrf_token},
     )
 
 
@@ -343,9 +378,11 @@ async def admin_create_in_post_submit(
     gen_content1: str = Form(None),
     gen_content2: str = Form(None),
     gen_content3: str = Form(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     # Create InPost with additional generated content fields
     item = InPost(
         title=title,
@@ -372,9 +409,10 @@ async def admin_edit_in_post(
         logger.warning(f"InPost not found: item_id={item_id}")
         raise NotFoundError("항목을 찾을 수 없습니다.")
     form = InPostForm(obj=item)
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/in_posts_form.html",
-        {"request": request, "form": form, "item": item, "action": "edit"},
+        {"request": request, "form": form, "item": item, "action": "edit", "csrf_token": csrf_token},
     )
 
 
@@ -387,9 +425,11 @@ async def admin_edit_in_post_submit(
     gen_content1: str = Form(None),
     gen_content2: str = Form(None),
     gen_content3: str = Form(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if not item:
         logger.warning(f"InPost not found: item_id={item_id}")
@@ -408,9 +448,11 @@ async def admin_edit_in_post_submit(
 async def admin_delete_in_post(
     request: Request,
     item_id: int,
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     item = db.query(InPost).filter(InPost.id == item_id).first()
     if item:
         db.delete(item)
@@ -430,9 +472,10 @@ async def admin_filtered_contents(
         .order_by(FilteredContent.created_at.desc())
         .all()
     )
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/filtered_contents.html",
-        {"request": request, "contents": contents},
+        {"request": request, "contents": contents, "csrf_token": csrf_token},
     )
 
 
@@ -443,9 +486,10 @@ async def admin_create_filtered(
     current_user: User = Depends(require_admin),
 ):
     form = FilteredContentForm()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/filtered_content_form.html",
-        {"request": request, "form": form, "action": "create"},
+        {"request": request, "form": form, "action": "create", "csrf_token": csrf_token},
     )
 
 
@@ -456,9 +500,11 @@ async def admin_create_filtered_submit(
     reasoning: str = Form(""),
     confidence_score: int = Form(None),
     suitable_for_blog: bool = Form(False),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     content = FilteredContent(
         filter_result=filter_result,
         reasoning=reasoning,
@@ -478,8 +524,9 @@ async def admin_saju_users(
     current_user: User = Depends(require_admin),
 ):
     users = db.query(SajuUser).order_by(SajuUser.created_at.desc()).all()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
-        "admin/saju_users.html", {"request": request, "users": users}
+        "admin/saju_users.html", {"request": request, "users": users, "csrf_token": csrf_token}
     )
 
 
@@ -491,9 +538,10 @@ async def admin_create_saju_user(
 ):
     form = SajuUserAdminForm()
     form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/saju_user_form.html",
-        {"request": request, "form": form, "action": "create"},
+        {"request": request, "form": form, "action": "create", "csrf_token": csrf_token},
     )
 
 
@@ -505,9 +553,11 @@ async def admin_create_saju_user_submit(
     birthhour: int = Form(None),
     gender: str = Form(...),
     user_id_field: int = Form(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     user = SajuUser(
         name=name,
         birthdate=birthdate,
@@ -535,9 +585,10 @@ async def admin_edit_saju_user(
     form = SajuUserAdminForm(obj=saju_user)
     form.user_id.choices = [(u.id, u.username) for u in db.query(User).all()]
     form.user_id.data = saju_user.user_id
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/saju_user_form.html",
-        {"request": request, "form": form, "user": saju_user, "action": "edit"},
+        {"request": request, "form": form, "user": saju_user, "action": "edit", "csrf_token": csrf_token},
     )
 
 
@@ -550,9 +601,11 @@ async def admin_edit_saju_user_submit(
     birthhour: int = Form(None),
     gender: str = Form(...),
     user_id_field: int = Form(None),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if not saju_user:
         logger.warning(f"SajuUser not found: saju_user_id={saju_user_id}")
@@ -571,9 +624,11 @@ async def admin_edit_saju_user_submit(
 async def admin_delete_saju_user(
     request: Request,
     saju_user_id: int,
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     saju_user = db.query(SajuUser).filter(SajuUser.id == saju_user_id).first()
     if saju_user:
         db.delete(saju_user)
@@ -596,6 +651,7 @@ async def admin_edit_filtered(
         logger.warning(f"FilteredContent not found: content_id={content_id}")
         raise NotFoundError("콘텐츠를 찾을 수 없습니다.")
     form = FilteredContentForm(obj=content)
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "admin/filtered_content_form.html",
         {
@@ -603,6 +659,7 @@ async def admin_edit_filtered(
             "form": form,
             "content": content,
             "action": "edit",
+            "csrf_token": csrf_token,
         },
     )
 
@@ -615,9 +672,11 @@ async def admin_edit_filtered_submit(
     reasoning: str = Form(""),
     confidence_score: int = Form(None),
     suitable_for_blog: bool = Form(False),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     content = (
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
@@ -637,9 +696,11 @@ async def admin_edit_filtered_submit(
 async def admin_delete_filtered(
     request: Request,
     content_id: int,
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    validate_csrf_token(request, csrf_token)
     content = (
         db.query(FilteredContent).filter(FilteredContent.id == content_id).first()
     )
