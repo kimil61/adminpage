@@ -2,6 +2,9 @@
 
 from fastapi import APIRouter, Request, Depends
 from app.exceptions import NotFoundError
+import logging
+
+logger = logging.getLogger(__name__)
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from urllib.parse import unquote
@@ -59,6 +62,7 @@ async def blog_category(
         # 디버깅: 존재하는 카테고리들 출력
         existing_categories = db.query(Category).all()
         print(f"📋 존재하는 카테고리들: {[c.slug for c in existing_categories]}")
+        logger.warning(f"Category not found: slug={category_slug}")
         raise NotFoundError("카테고리를 찾을 수 없습니다.")
     
     per_page = 6
@@ -111,6 +115,7 @@ async def blog_detail(
         ).first()
     
     if not post:
+        logger.warning(f"Post not found: slug={slug}")
         raise NotFoundError("포스트를 찾을 수 없습니다.")
     
     # 조회수 증가
