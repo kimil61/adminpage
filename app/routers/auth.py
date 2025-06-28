@@ -6,6 +6,7 @@ from app.models import User
 from app.forms import LoginForm, RegisterForm
 from app.utils import hash_password, verify_password, flash_message
 from app.template import templates
+from app.utils.csrf import generate_csrf_token, validate_csrf_token
 
 router = APIRouter()
 
@@ -13,10 +14,11 @@ router = APIRouter()
 async def login_page(request: Request):
     """Render login form."""
     form = LoginForm()
-    return templates.TemplateResponse("auth/login.html", {
-        "request": request,
-        "form": form
-    })
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "auth/login.html",
+        {"request": request, "form": form, "csrf_token": csrf_token},
+    )
 
 @router.post("/login")
 async def login(
@@ -24,8 +26,10 @@ async def login(
     username: str = Form(...),
     password: str = Form(...),
     remember_me: bool = Form(False),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    validate_csrf_token(request, csrf_token)
     user = db.query(User).filter(User.username == username).first()
     
     if user and verify_password(password, user.password):
@@ -38,19 +42,21 @@ async def login(
     else:
         flash_message(request, "사용자명 또는 비밀번호가 잘못되었습니다.", "error")
         form = LoginForm()
+        csrf_token = generate_csrf_token(request)
         return templates.TemplateResponse(
             "auth/login.html",
-            {"request": request, "form": form},
+            {"request": request, "form": form, "csrf_token": csrf_token},
             status_code=400,
         )
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     form = RegisterForm()
-    return templates.TemplateResponse("auth/register.html", {
-        "request": request,
-        "form": form
-    })
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse(
+        "auth/register.html",
+        {"request": request, "form": form, "csrf_token": csrf_token},
+    )
 
 @router.post("/register")
 async def register(
@@ -59,8 +65,10 @@ async def register(
     email: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
+    csrf_token: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    validate_csrf_token(request, csrf_token)
     existing_user = db.query(User).filter(
         (User.username == username) | (User.email == email)
     ).first()
@@ -76,14 +84,15 @@ async def register(
         )
         db.add(new_user)
         db.commit()
-        
+
         flash_message(request, "회원가입이 완료되었습니다. 로그인해주세요.", "success")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
     form = RegisterForm()
+    csrf_token = generate_csrf_token(request)
     return templates.TemplateResponse(
         "auth/register.html",
-        {"request": request, "form": form},
+        {"request": request, "form": form, "csrf_token": csrf_token},
     )
 
 @router.get("/logout")

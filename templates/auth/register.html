@@ -8,6 +8,7 @@
         <div class="bg-white rounded shadow p-6">
             <h4 class="text-xl font-semibold text-center mb-6">회원가입</h4>
             <form method="POST" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div>
                     <label for="username" class="block text-sm font-medium mb-1">사용자명</label>
                     <input type="text" id="username" name="username" required
