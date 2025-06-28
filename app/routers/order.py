@@ -577,109 +577,48 @@ async def view_report(
 ################################################################################
 # 9-2) 빠른 리포트 보기 (새로운 utils.py 함수 사용)
 ################################################################################
-@router.get("/report/live/{order_id}", response_class=HTMLResponse)
+from fastapi.templating import Jinja2Templates
+templates = Jinja2Templates(directory="templates")
+
+@router.get("/report/live/{report_id}", response_class=HTMLResponse)
 async def view_live_report(
-    order_id: int,
+    report_id: int,
     request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
     """실시간 리포트 생성 및 표시 (utils.py 함수 사용)"""
     import logging
-    
+
     logger = logging.getLogger(__name__)
-    
+
+    from app.models import Post
+    from fastapi import HTTPException
+    report = db.query(Post).get(report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
+    from app.models import User as ReportUser
+    report_user = db.query(ReportUser).get(report.user_id)
+
     try:
         # ✅ utils.py의 새로운 함수 사용 - 권한 확인 포함
         from app.utils import generate_live_report_for_user
-        
+
         html_content = generate_live_report_for_user(
-            order_id=order_id,
+            order_id=report_id,
             user_id=user.id,
             db=db
         )
-        
-        logger.info(f"✅ 실시간 리포트 생성 성공: order_id={order_id}, user_id={user.id}")
+
+        logger.info(f"✅ 실시간 리포트 생성 성공: order_id={report_id}, user_id={user.id}")
         return HTMLResponse(content=html_content, status_code=200)
-        
+
     except Exception as e:
-        logger.error(f"❌ 실시간 리포트 생성 실패: order_id={order_id}, user_id={user.id}, error={e}")
-        
-        # 에러 페이지 반환
-        error_html = f"""
-        <!DOCTYPE html>
-        <html lang="ko">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>리포트 생성 오류</title>
-            <style>
-                body {{
-                    font-family: 'Noto Sans KR', sans-serif;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    margin: 0;
-                    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-                }}
-                .error-container {{
-                    background: white;
-                    padding: 3rem;
-                    border-radius: 20px;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-                    text-align: center;
-                    max-width: 500px;
-                }}
-                .error-icon {{
-                    font-size: 4rem;
-                    margin-bottom: 1rem;
-                }}
-                .error-title {{
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #e53e3e;
-                    margin-bottom: 1rem;
-                }}
-                .error-message {{
-                    color: #4a5568;
-                    margin-bottom: 2rem;
-                    line-height: 1.6;
-                }}
-                .btn {{
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    font-weight: 600;
-                    display: inline-block;
-                    transition: transform 0.2s;
-                }}
-                .btn:hover {{
-                    transform: translateY(-2px);
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="error-container">
-                <div class="error-icon">😔</div>
-                <div class="error-title">리포트 생성 오류</div>
-                <div class="error-message">
-                    죄송합니다. 리포트를 생성하는 중 오류가 발생했습니다.<br>
-                    잠시 후 다시 시도해주세요.
-                    <br><br>
-                    <small style="color: #a0aec0;">
-                        오류가 계속 발생하면 고객센터로 문의해주세요.
-                    </small>
-                </div>
-                <a href="/order/mypage" class="btn">내 주문 목록으로 돌아가기</a>
-            </div>
-        </body>
-        </html>
-        """
-        
-        return HTMLResponse(content=error_html, status_code=500)
+        logger.error(f"❌ 실시간 리포트 생성 실패: order_id={report_id}, user_id={user.id}, error={e}")
+        return templates.TemplateResponse("error/500.html", {
+            "request": request,
+            "error_message": "리포트를 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+        }, status_code=500)
 
 
 ################################################################################

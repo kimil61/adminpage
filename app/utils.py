@@ -33,6 +33,15 @@ logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def hex_to_rgb(hex_code: str):
+    hex_code = hex_code.lstrip('#')
+    return tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
+
+def contrast_text(hex_code: str) -> str:
+    r, g, b = hex_to_rgb(hex_code)
+    yiq = (r * 299 + g * 587 + b * 114) / 1000
+    return "#ffffff" if yiq < 128 else "#000000"
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -215,6 +224,8 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             loader=FileSystemLoader('templates'),
             autoescape=select_autoescape(['html'])
         )
+
+        env.filters['contrast_text'] = contrast_text
         
         # 날짜 필터 추가
         def strftime_filter(value, format='%Y-%m-%d %H:%M'):
@@ -415,3 +426,5 @@ def generate_live_report_for_user(order_id: int, user_id: int, db: Session) -> s
     except Exception as e:
         logger.error(f"사용자 리포트 생성 실패: {e}")
         raise
+
+

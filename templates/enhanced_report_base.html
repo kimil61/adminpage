@@ -453,9 +453,11 @@
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                animation: none !important;
+                transition: none !important;
             }
-            
+
             body {
                 background: white !important;
                 margin: 0 !important;
@@ -463,57 +465,56 @@
                 font-size: 12px !important;
                 line-height: 1.4 !important;
             }
-            
+
             .report-container {
                 box-shadow: none !important;
                 border: none !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 max-width: none !important;
                 width: 100% !important;
+                padding: 0 !important;
             }
-            
-            .cover-page {
-                page-break-inside: avoid !important;
-                height: auto !important;
-                padding: 2rem !important;
-            }
-            
+
             .content-section {
-                padding: 1rem !important;
+                padding: 1rem 1rem !important;  /* 상하 여백 축소 */
+                margin: 0 !important;
             }
-            
+
             .section-header {
+                /* 헤더와 다음 카드(또는 섹션)를 같은 페이지에 유지 */
                 page-break-inside: avoid !important;
-                margin: 1rem 0 0.5rem 0 !important;
-                padding: 0.5rem !important;
+                break-inside: avoid !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+
+                /* 여백 축소로 공간 확보 */
+                margin: 0 0 0.5rem 0 !important;
+                padding: 0.75rem 1rem !important;
             }
-            
-            .info-card {
+
+            .cover-page,
+            .info-card,
+            .calendar-section,
+            .balance-section,
+            .highlight-box,
+            .chart-container,
+            .checklist-table,
+            .calendar-legend {
                 page-break-inside: avoid !important;
-                margin: 0.5rem 0 !important;
-                padding: 1rem !important;
+                break-inside: avoid !important;
+                break-after: auto !important;
             }
-            
-            .chart-container {
-                page-break-inside: avoid !important;
-                max-width: 100% !important;
-                margin: 1rem 0 !important;
-            }
-            
+
+            .divider,
             .action-buttons {
                 display: none !important;
             }
-            
-            .divider {
-                margin: 1rem 0 !important;
-                height: 1px !important;
-            }
-            
+
             .mini-cal {
                 page-break-inside: avoid !important;
                 font-size: 10px !important;
             }
-            
+
             .mini-cal th,
             .mini-cal td {
                 padding: 4px !important;
@@ -773,7 +774,7 @@
                     📋 구매 내역 확인
                 </a>
                 
-                <button onclick="window.print()" class="btn btn-secondary">
+                <button id="print-btn" class="btn btn-secondary">
                     🖨️ 인쇄하기
                 </button>
                 
@@ -793,5 +794,10 @@
             </div>
         </div>
     </div>
+    <script>
+    document.getElementById('print-btn').addEventListener('click', () => {
+        window.print();
+    });
+    </script>
 </body>
 </html>

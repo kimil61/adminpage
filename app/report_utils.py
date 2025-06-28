@@ -575,6 +575,8 @@ def keyword_card_improved(color: str, numbers: List[int], stone: str, explanatio
         }
         
         bg_color = color_bg_map.get(color, '#F8FAFC')
+        from app.utils import contrast_text
+        color_text = contrast_text(bg_color)
         
         html = f'''
         <div class="info-card" style="background: {bg_color}; border: 2px solid #E5E7EB;">
@@ -584,7 +586,7 @@ def keyword_card_improved(color: str, numbers: List[int], stone: str, explanatio
                     <span style="font-size: 20px; margin-right: 12px;">🎨</span>
                     <div>
                         <strong style="color: #374151;">행운의 색상:</strong> 
-                        <span style="font-weight: bold; font-size: 16px; padding: 4px 8px; background: white; border-radius: 4px; color: #374151;">{color}</span>
+                        <span style="font-weight: bold; font-size: 16px; padding: 4px 8px; background: white; border-radius: 4px; color: {color_text};">{color}</span>
                     </div>
                 </div>
                 
