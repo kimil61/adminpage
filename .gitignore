@@ -158,3 +158,8 @@ update_new_result.py
 daewoon_report_generator.py
 sajupalja_prompt_v13_ok.md
 *.zip
+
+ctextdb.py
+setup_saju_db.py
+주휴수당계산하는거웹에_추가해야함.py
+create_admin.py
