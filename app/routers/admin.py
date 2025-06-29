@@ -153,10 +153,12 @@ async def admin_create_post_submit(
                 status_code=400,
             )
     
+    from app.utils import sanitize_html
+
     new_post = Post(
         title=title,
         slug=slug,
-        content=content,
+        content=sanitize_html(content),
         excerpt=excerpt,
         author_id=current_user.id,
         category_id=category_id if category_id > 0 else None,
@@ -249,7 +251,8 @@ async def admin_edit_post_submit(
             )
 
     post.title = title
-    post.content = content
+    from app.utils import sanitize_html
+    post.content = sanitize_html(content)
     post.excerpt = excerpt
     post.category_id = category_id if category_id > 0 else None
     post.is_published = is_published

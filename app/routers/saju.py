@@ -33,10 +33,14 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter(prefix="/saju")
 
+from app.utils import sanitize_html
+from markupsafe import Markup
+
 def safe_markdown(value):
     if not value:
         return ""
-    return markdown(value.replace('\n', '<br>'))
+    html = markdown(value.replace('\n', '<br>'))
+    return Markup(sanitize_html(html))
 
 
 ####################################################################
@@ -863,6 +867,7 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     saju_analyzer_result = analyzer.analyze_saju(
         pillars['year'], pillars['month'], pillars['day'], pillars['hour']
     )
+    saju_analyzer_result = Markup(sanitize_html(saju_analyzer_result))
     
     # 삼명통회 원문 해석
     ctext_rows = get_ctext_match(pillars["day"], pillars["hour"])
@@ -870,8 +875,8 @@ async def saju_page2(request: Request, db: Session = Depends(get_db)):
     ctext_kr_literal = None
     ctext_kr_explained = None
     if ctext_rows:
-        ctext_explanation = "\n\n".join([row["content"] for row in ctext_rows])
-        ctext_kr_literal = "\n\n".join([row["kr_literal"] for row in ctext_rows if row["kr_literal"]])
+        ctext_explanation = Markup(sanitize_html("\n\n".join([row["content"] for row in ctext_rows])))
+        ctext_kr_literal = Markup(sanitize_html("\n\n".join([row["kr_literal"] for row in ctext_rows if row["kr_literal"]])))
         ctext_kr_explained = "\n\n".join([row["kr_explained"] for row in ctext_rows if row["kr_explained"]])
     
     # 환경변수에서 후원 링크 가져오기

@@ -56,7 +56,7 @@
     {% if calendar_html %}
     <h2>📅 2025년 월별 운세 달력</h2>
     <div class="card">
-        {{ calendar_html|safe }}
+        {{ calendar_html }}
         <div style="margin-top: 15px; font-size: 12px; color: #666;">
             <strong>범례:</strong> 
             <span style="background-color: #DCFCE7; padding: 2px 6px; border-radius: 3px;">좋음</span>
@@ -69,7 +69,7 @@
     <!-- 행운 키워드 -->
     {% if keyword_html %}
     <h2>🍀 행운 키워드</h2>
-    {{ keyword_html|safe }}
+    {{ keyword_html }}
     {% endif %}
 
     <!-- Next-Step 체크리스트 -->
@@ -100,7 +100,7 @@
     {% if analysis_result %}
     <h2>🤖 AI 심층 해석</h2>
     <div class="ai-analysis">
-        {{ analysis_result|safe }}
+        {{ analysis_result }}
     </div>
     {% endif %}
 

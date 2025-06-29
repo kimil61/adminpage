@@ -2,7 +2,18 @@
 
 from app.celery_app import celery_app
 from app.tasks import test_task, generate_full_report
+import redis
+import pytest
 
+def redis_available():
+    try:
+        r = redis.Redis()
+        r.ping()
+        return True
+    except Exception:
+        return False
+
+@pytest.mark.skipif(not redis_available(), reason="Redis not available")
 def test_basic_task():
     """기본 태스크 테스트"""
     print("📝 기본 태스크 테스트...")
