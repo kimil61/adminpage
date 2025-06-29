@@ -11,6 +11,7 @@ from urllib.parse import unquote
 from app.database import get_db
 from app.models import Post, Category
 from app.template import templates
+from markupsafe import Markup
 
 router = APIRouter()
 
@@ -131,8 +132,12 @@ async def blog_detail(
         Post.is_published == True
     ).limit(3).all()
     
+    from app.utils import sanitize_html
+    post_content = Markup(sanitize_html(post.content)) if post.content else ""
+
     return templates.TemplateResponse("blog/detail.html", {
         "request": request,
         "post": post,
+        "post_content": post_content,
         "related_posts": related_posts
     })

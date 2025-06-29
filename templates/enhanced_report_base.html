@@ -577,7 +577,7 @@
             </div>
             
             <div class="info-card">
-                {{ executive_summary|safe }}
+                {{ executive_summary }}
             </div>
             {% endif %}
 
@@ -639,7 +639,7 @@
                             {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
                             <strong style="color: 
                                 {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
-                                {{ element }}({{ element|safe }})
+                                {{ element }}({{ element }})
                             </strong>
                             <span style="float: right; font-weight: bold;">{{ count }}개</span>
                             <br>
@@ -675,7 +675,7 @@
             <div class="calendar-section">
                 <h3 style="margin: 0 0 1.5rem 0; color: #4a5568; text-align: center;">🗓️ {{ user_name }}님의 2025년 맞춤 운세</h3>
                 
-                {{ calendar_html|safe }}
+                {{ calendar_html }}
                 
                 <div class="calendar-legend">
                     <h4 style="margin: 0 0 1rem 0; color: #22543d;">📖 운세 해석 가이드</h4>
@@ -703,7 +703,7 @@
             </div>
             
             <div class="info-card">
-                {{ fortune_summary|safe }}
+                {{ fortune_summary }}
             </div>
             {% endif %}
 
@@ -717,7 +717,7 @@
             </div>
             
             <div class="info-card">
-                {{ analysis_result_html|safe }}
+                {{ analysis_result_html }}
             </div>
             {% endif %}
 
@@ -729,7 +729,7 @@
                 <span class="section-icon">🍀</span>
                 <h2 class="section-title">2025년 행운 키워드</h2>
             </div>
-            {{ keyword_html|safe }}
+            {{ keyword_html }}
             {% endif %}
 
             <div class="divider"></div>

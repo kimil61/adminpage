@@ -14,6 +14,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models import Order, SajuAnalysisCache, SajuUser
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
+import bleach
 from markdown import markdown
 import re
 import html as html_module
@@ -33,6 +35,24 @@ from app.report_utils import (
 logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# HTML sanitization settings
+ALLOWED_TAGS = list(bleach.sanitizer.ALLOWED_TAGS) + [
+    "p", "br", "span", "h1", "h2", "h3", "h4", "h5", "h6",
+    "img", "table", "thead", "tbody", "tr", "th", "td", "div", "hr"
+]
+ALLOWED_ATTRIBUTES = {
+    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
+    "img": ["src", "alt", "title"],
+    "a": ["href", "title", "rel"],
+    "*": ["class", "id", "style"],
+}
+
+def sanitize_html(value: str) -> str:
+    """Return sanitized HTML using bleach."""
+    if not value:
+        return ""
+    return bleach.clean(value, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
 
 def hex_to_rgb(hex_code: str):
     hex_code = hex_code.lstrip('#')
@@ -218,7 +238,7 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
 
             return html
 
-        analysis_result_html = format_ai_analysis(analysis_result)
+        analysis_result_html = Markup(sanitize_html(format_ai_analysis(analysis_result)))
 
         # Jinja2 환경 설정
         env = Environment(
@@ -243,17 +263,17 @@ def generate_enhanced_report_html(user_name, pillars, analysis_result, elem_dict
             pillars=pillars,
             executive_summary=executive_summary,
             radar_base64=radar_base64,
-            calendar_html=calendar_html, 
-            keyword_html=keyword_html,  # 개선된 키워드 HTML (설명 포함)
+            calendar_html=Markup(sanitize_html(calendar_html)),
+            keyword_html=Markup(sanitize_html(keyword_html)),  # 개선된 키워드 HTML (설명 포함)
             checklist=checklist,
-            fortune_summary=fortune_summary,
+            fortune_summary=Markup(sanitize_html(fortune_summary)),
             analysis_result_html=analysis_result_html,  # 변환된 HTML
             analysis_result=analysis_result,  # 원본 텍스트
             elem_dict_kr=elem_dict_kr,
             birthdate=birthdate_str
         )
-        
-        return html_content
+
+        return sanitize_html(html_content)
         
     except Exception as e:
         logger.error(f"향상된 HTML 리포트 생성 실패: {e}")
@@ -308,8 +328,8 @@ def generate_live_report_from_db(order_id: int, db: Session) -> str:
             elem_dict_kr=elem_dict_kr,
             birthdate_str=birthdate_str
         )
-        
-        return html_content
+
+        return sanitize_html(html_content)
         
     except Exception as e:
         logger.error(f"실시간 리포트 생성 실패: {e}")
