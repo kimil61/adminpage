@@ -1,0 +1,103 @@
+
+
+{% extends "base.html" %}
+{% block title %}개인정보처리방침 | AI 사주팔자{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">🔒 개인정보처리방침</h1>
+
+    <p class="mb-4"><strong>시행일자: 2025년 6월 29일</strong></p>
+
+    <p class="mb-4">SkyLoom(이하 "회사")는 개인정보보호법에 따라 이용자의 개인정보 보호 및 권익을 보호하고, 개인정보와 관련한 이용자의 고충을 원활하게 처리할 수 있도록 다음과 같은 처리방침을 수립·공개합니다.</p>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제1조 (개인정보의 처리목적)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li><strong>사주팔자 서비스 제공</strong>: 생년월일, 시간, 성별 등 사주 분석에 필요한 정보, 맞춤형 해석 및 분석 결과 제공</li>
+        <li><strong>회원관리</strong>: 회원가입 의사 확인, 회원자격 유지·관리, 서비스 부정이용 방지</li>
+        <li><strong>마케팅 및 광고 활용</strong>: 신규 서비스 개발, 맞춤 서비스 제공, 이벤트 및 광고성 정보 제공 (동의 시)</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제2조 (개인정보 처리 항목)</h2>
+    <p class="mb-2"><strong>필수 정보</strong></p>
+    <ul class="list-disc list-inside mb-4">
+        <li>사주 분석용: 생년월일, 출생시간, 성별, 출생지역</li>
+        <li>회원가입용: 이메일, 비밀번호, 닉네임</li>
+    </ul>
+    <p class="mb-2"><strong>선택 정보</strong></p>
+    <ul class="list-disc list-inside mb-4">
+        <li>서비스 개선용: 이름, 전화번호</li>
+        <li>결제 관련: 결제 정보 (외부 PG사 처리)</li>
+    </ul>
+    <p class="mb-2"><strong>자동 수집 정보</strong></p>
+    <ul class="list-disc list-inside mb-4">
+        <li>접속 로그: IP주소, 쿠키, 접속 시간</li>
+        <li>서비스 이용 기록: 이용한 서비스, 검색 기록</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제3조 (개인정보의 처리 및 보유기간)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>사주 분석 정보: 서비스 제공 완료 후 즉시 삭제</li>
+        <li>회원 정보: 회원 탈퇴 후 5년</li>
+        <li>접속 로그: 3개월</li>
+        <li>결제 기록: 5년</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제4조 (개인정보의 제3자 제공)</h2>
+    <p class="mb-4">회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 법령에 의거하거나 수사기관의 요청 시 제공할 수 있습니다.</p>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제5조 (개인정보 처리 위탁)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>결제 처리: 토스페이먼츠, 카카오페이 등</li>
+        <li>이메일 발송: AWS SES</li>
+        <li>서버 호스팅: AWS, 네이버클라우드플랫폼</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제6조 (이용자의 권리·의무)</h2>
+    <p class="mb-2 font-semibold">이용자의 권리</p>
+    <ul class="list-disc list-inside mb-4">
+        <li>열람, 정정·삭제, 처리정지, 손해배상청구</li>
+    </ul>
+    <p class="mb-2 font-semibold">권리행사 방법</p>
+    <ul class="list-disc list-inside mb-4">
+        <li>이메일: help@infowow.kr</li>
+        <li>전화: 02-881-0775</li>
+        <li>우편: 인천광역시 미추홀구 낙섬동로 134, 105동 403호(용현동)</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제7조 (개인정보의 안전성 확보조치)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>관리적 조치: 담당자 교육, 보호책임자 지정</li>
+        <li>기술적 조치: 암호화, 접근권한 관리, 해킹방지</li>
+        <li>물리적 조치: 전산실 등 접근통제</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제8조 (쿠키의 설치·운영·거부)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>목적: 개인화 서비스 및 이용형태 분석</li>
+        <li>거부 방법: 브라우저 설정에서 거부 가능 (일부 서비스 제한될 수 있음)</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제9조 (개인정보 보호책임자)</h2>
+    <p class="mb-2 font-semibold">책임자</p>
+    <ul class="list-disc list-inside mb-4">
+        <li>성명: 김일</li>
+        <li>직책: 대표</li>
+        <li>연락처: help@infowow.kr / 02-881-0775</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">제10조 (권익침해 구제방법)</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>개인정보 침해신고센터: privacy.go.kr (국번없이 118)</li>
+        <li>개인정보 분쟁조정위원회: kopico.go.kr</li>
+        <li>대검찰청 사이버수사과: spo.go.kr</li>
+        <li>경찰청 사이버안전국: cyberbureau.police.go.kr</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">📋 부칙</h2>
+    <ul class="list-disc list-inside mb-4">
+        <li>본 방침은 2025년 6월 29일부터 시행됩니다.</li>
+        <li>변경 시 웹사이트 공지 예정</li>
+    </ul>
+</div>
+{% endblock %}

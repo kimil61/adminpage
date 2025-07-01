@@ -141,3 +141,19 @@ async def blog_detail(
         "post_content": post_content,
         "related_posts": related_posts
     })
+
+
+
+# 이용약관 페이지
+@router.get("/legal/terms", response_class=HTMLResponse)
+async def legal_terms(request: Request):
+    return templates.TemplateResponse("legal/terms.html", {
+        "request": request
+    })
+
+# 개인정보처리방침 페이지
+@router.get("/legal/privacy", response_class=HTMLResponse)
+async def legal_privacy(request: Request):
+    return templates.TemplateResponse("legal/privacy.html", {
+        "request": request
+    })
