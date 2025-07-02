@@ -9,8 +9,8 @@
 
 {% block content %}
 <div id="loadingInitial" class="text-center py-20 px-5">
-  <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin mx-auto my-5"></div>
-  <div class="text-center text-purple-700 text-base mt-2">사주를 정성껏 분석하고 있습니다...</div>
+    <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin mx-auto my-5"></div>
+    <div class="text-center text-purple-700 text-base mt-2">사주를 정성껏 분석하고 있습니다...</div>
 </div>
 
 <!-- <div class="welcome-banner" id="welcomeBanner">
@@ -18,438 +18,462 @@
 </div> -->
 
 <div id="sajuContent" style="display: none;">
-  <div class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-xl shadow-lg">
-    <h1 class="text-3xl md:text-4xl font-bold text-center text-purple-800 mb-8">🔮 {{ name }}님의 사주팔자</h1>
+    <div class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-xl shadow-lg">
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-purple-800 mb-8">🔮 {{ name }}님의 사주팔자</h1>
 
-    <!-- 사주 기둥 표시 -->
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🌿 사주팔자</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
-        {% set pillar_labels = {'year': '년주 (年柱)', 'month': '월주 (月柱)', 'day': '일주 (日柱)', 'hour': '시주 (時柱)'} %}
-        {% set pillar_info = saju_info[pillar_name] %}
-        <div class="bg-gradient-to-br from-purple-100 to-purple-200 p-5 rounded-lg text-center shadow">
-          <div class="text-sm text-gray-600 mb-2 font-medium">{{ pillar_labels[pillar_name] }}</div>
-          <div class="text-2xl font-bold text-purple-900 mb-2">{{ pillar_info.gan }}{{ pillar_info.zhi }}</div>
-          <div class="text-xs text-gray-700 space-y-1">
-            <div><strong>천간:</strong> {{ pillar_info.gan }} ({{ pillar_info.element_gan }})</div>
-            <div><strong>지지:</strong> {{ pillar_info.zhi }} ({{ pillar_info.element_zhi }})</div>
-            {% if pillar_info.ten_god %}
-            <div><strong>십성:</strong> {{ pillar_info.ten_god }}</div>
-            {% endif %}
-            {% if pillar_info.twelve_stage %}
-            <div><strong>운성:</strong> {{ pillar_info.twelve_stage }}</div>
-            {% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-
-    <!-- 기본 분석 결과 -->
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🧠 기본 분석 결과</h2>
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
-        {{ saju_analyzer_result }}
-      </div>
-    </div>
-
-    <!-- 상세 사주 정보 -->
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📊 상세 사주 정보</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-        <!-- 십성 정보 -->
-        <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700">
-          <h4 class="text-purple-800 font-semibold mb-3">십성 (十星) 분석</h4>
-          {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
-          {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
-          {% set pillar_info = saju_info[pillar_name] %}
-          <div class="mb-2">
-            <strong>{{ pillar_labels[pillar_name] }}주:</strong> 
-            {{ pillar_info.gan }} ({{ pillar_info.ten_god }})
-            {% if pillar_info.ten_god_zhi %} | {{ pillar_info.zhi }} ({{ pillar_info.ten_god_zhi }}){% endif %}
-          </div>
-          {% endfor %}
+        <!-- 사주 기둥 표시 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🌿 사주팔자</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+                {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+                {% set pillar_labels = {'year': '년주 (年柱)', 'month': '월주 (月柱)', 'day': '일주 (日柱)', 'hour': '시주 (時柱)'} %}
+                {% set pillar_info = saju_info[pillar_name] %}
+                <div class="bg-gradient-to-br from-purple-100 to-purple-200 p-5 rounded-lg text-center shadow">
+                    <div class="text-sm text-gray-600 mb-2 font-medium">{{ pillar_labels[pillar_name] }}</div>
+                    <div class="text-2xl font-bold text-purple-900 mb-2">{{ pillar_info.gan }}{{ pillar_info.zhi }}
+                    </div>
+                    <div class="text-xs text-gray-700 space-y-1">
+                        <div><strong>천간:</strong> {{ pillar_info.gan }} ({{ pillar_info.element_gan }})</div>
+                        <div><strong>지지:</strong> {{ pillar_info.zhi }} ({{ pillar_info.element_zhi }})</div>
+                        {% if pillar_info.ten_god %}
+                        <div><strong>십성:</strong> {{ pillar_info.ten_god }}</div>
+                        {% endif %}
+                        {% if pillar_info.twelve_stage %}
+                        <div><strong>운성:</strong> {{ pillar_info.twelve_stage }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <!-- 십이운성 정보 -->
-        <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700">
-          <h4 class="text-purple-800 font-semibold mb-3">십이운성 (十二運星)</h4>
-          {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
-          {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
-          {% set pillar_info = saju_info[pillar_name] %}
-          <div class="mb-2">
-            <strong>{{ pillar_labels[pillar_name] }}지 {{ pillar_info.zhi }}:</strong> 
-            {{ pillar_info.twelve_stage if pillar_info.twelve_stage else '미산출' }}
-          </div>
-          {% endfor %}
+
+        <!-- 기본 분석 결과 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">🧠 기본 분석 결과</h2>
+            <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
+                {{ saju_analyzer_result | safe }}
+            </div>
         </div>
-      </div>
 
-      <!-- 십이신살 정보 -->
-      {% if get_twelve_gods_by_day_branch %}
-      {% set twelve_gods = get_twelve_gods_by_day_branch(pillars.day[1]) %}
-      {% if twelve_gods %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 mt-5">
-        <h4 class="text-purple-800 font-semibold mb-3">십이신살 (十二神殺)</h4>
-        <p class="mb-3 text-sm text-gray-600">일지 {{ pillars.day[1] }} 기준</p>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
-          {% for god_name, god_branch in twelve_gods.items() %}
-          <div class="bg-white border border-purple-200 p-2 rounded text-center text-sm">
-            <strong>{{ god_name }}</strong><br>{{ god_branch }}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-      {% endif %}
-    </div>
-
-    <!-- 일주 해석 -->
-    {% if ilju_interpretation %}
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📖 일주 해석: {{ ilju }}</h2>
-      
-      {% if ilju_interpretation.cn %}
-      <div class="mb-4">
-        <button onclick="toggleCnText()" class="text-sm text-purple-700 underline hover:text-purple-900 transition">
-          📜 고전 원문 보기 ▾
-        </button>
-        <div id="cnText" class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
-          {{ ilju_interpretation.cn }}
-        </div>
-      </div>
-      {% endif %}
-
-      {% if ilju_interpretation.kr %}
-      <div class="bg-gray-50 p-6 rounded-lg leading-relaxed mb-4">
-        {{ ilju_interpretation.kr }}
-      </div>
-      {% endif %}
-
-      
-    </div>
-    {% endif %}
-
-    <!-- 삼명통회 원문 해석 -->
-    {% if ctext_explanation or ctext_kr_literal or ctext_kr_explained %}
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📜 삼명통회 원문 해석</h2>
-      
-      {% if ctext_explanation %}
-      <div class="mb-4">
-        <button onclick="toggleSamhyeongOriginal()" class="text-sm text-purple-700 underline hover:text-purple-900 transition">
-          📜 고전 원문 보기 ▾
-        </button>
-        <div id="samhyeongOriginalText" class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
-          {{ ctext_explanation }}
-        </div>
-      </div>
-      {% endif %}
-
-      {% if ctext_kr_literal %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6 hidden">
-        <h4 class="text-purple-800 font-semibold mb-3">한국어 해석</h4>
-        {{ ctext_kr_literal }}
-      </div>
-      {% endif %}
-
-      {% if ctext_kr_explained %}
-      <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
-        <h4 class="text-purple-800 font-semibold mb-3">자세한 해석</h4>
-        {{ ctext_kr_explained }}
-      </div>
-      {% endif %} 
-    </div>
-    {% endif %}
-
-    <!-- AI 분석 섹션 -->
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">✨ AI 심화 분석</h2>
-      <button class="w-full py-4 mt-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200" onclick="loadAIAnalysis()" id="aiAnalysisBtn">
-        🤖 AI가 분석한 종합 해석 보기
-      </button>
-      
-      <div id="aiLoadingSpinner" style="display: none;">
-        <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin mx-auto my-5"></div>
-        <div class="text-center text-purple-700 text-base mt-2">AI가 당신만을 위한 종합 해석을 작성하고 있습니다...</div>
-      </div>
-      
-      <div id="aiAnalysisResult" style="display: none;" class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6"></div>
-    </div>
-
-    <!-- 프리미엄 PDF 구매 CTA -->
-    <!-- 기존 결제 버튼 부분을 다음으로 교체 -->
-    <div id="premiumSection" class="preium-section mt-8 p-6 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl border" style="display: none;">
-        <div class="text-center">
-            <h3 class="text-2xl font-bold text-purple-800 mb-4">
-                👤 당신만을 위한 사주 분석서
-            </h3>
-
-            
-            <div class="bg-white rounded-lg p-6 mb-6 shadow-md">
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-                    .conversion-content * { font-family: 'Noto Sans KR', sans-serif; }
-                    
-                    .pulse-button {
-                        animation: pulse 2s infinite;
-                    }
-                    
-                    @keyframes pulse {
-                        0%, 100% { transform: scale(1); }
-                        50% { transform: scale(1.05); }
-                    }
-                    
-                    .gradient-text {
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        -webkit-background-clip: text;
-                        -webkit-text-fill-color: transparent;
-                        background-clip: text;
-                    }
-                </style>
-                
-                <div class="conversion-content">
-                    
-                    <!-- 구분선 -->
-                    <div class="border-t-2 border-dashed border-gray-300 my-6 relative">
-                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-4">
-                            <span class="text-gray-500 text-sm">여기까지 무료 체험 ⬆️</span>
-                        </div>
+        <!-- 상세 사주 정보 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📊 상세 사주 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                <!-- 십성 정보 -->
+                <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700">
+                    <h4 class="text-purple-800 font-semibold mb-3">십성 (十星) 분석</h4>
+                    {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+                    {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
+                    {% set pillar_info = saju_info[pillar_name] %}
+                    <div class="mb-2">
+                        <strong>{{ pillar_labels[pillar_name] }}주:</strong>
+                        {{ pillar_info.gan }} ({{ pillar_info.ten_god }})
+                        {% if pillar_info.ten_god_zhi %} | {{ pillar_info.zhi }}
+                        ({{ pillar_info.ten_god_zhi }}){% endif %}
                     </div>
-                    
-                    <!-- 메인 메시지 -->
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-3">
-                            <span class="gradient-text">5대 고서 기반 전문 해석</span>을 받아보세요
-                        </h3>
-                        <p class="text-gray-600 mb-2">
-                            지금까지는 기본 정보였습니다.
-                        </p>
-                        <p class="text-lg font-semibold text-gray-800">
-                            <strong class="text-blue-600">명리학 원리에 따른 체계적 분석</strong>이 남아있어요.
-                        </p>
-                    </div>
+                    {% endfor %}
+                </div>
 
-                    <!-- 실제 차별점 강조 -->
-                    <div class="bg-blue-50 rounded-xl p-5 mb-6">
-                        <h4 class="font-bold text-gray-800 mb-3 flex items-center">
-                            📚 전문 해석에서 추가로 확인할 수 있는 내용
-                        </h4>
-                        <div class="grid md:grid-cols-2 gap-3 text-sm">
-                            <div class="space-y-2">
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>용신과 희신</strong> 활용 전략</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>십신 관계</strong> 세부 분석</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>계절별</strong> 건강 관리법</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>재물 운</strong> 구체적 전략</span>
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>인간관계</strong> 패턴 해석</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>직업 적성</strong> 세부 분석</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>기신 극복</strong> 방안</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-blue-600 mr-2">•</span>
-                                    <span><strong>장기 인생</strong> 전략</span>
-                                </div>
-                            </div>
-                        </div>
+                <!-- 십이운성 정보 -->
+                <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700">
+                    <h4 class="text-purple-800 font-semibold mb-3">십이운성 (十二運星)</h4>
+                    {% for pillar_name in ['year', 'month', 'day', 'hour'] %}
+                    {% set pillar_labels = {'year': '년', 'month': '월', 'day': '일', 'hour': '시'} %}
+                    {% set pillar_info = saju_info[pillar_name] %}
+                    <div class="mb-2">
+                        <strong>{{ pillar_labels[pillar_name] }}지 {{ pillar_info.zhi }}:</strong>
+                        {{ pillar_info.twelve_stage if pillar_info.twelve_stage else '미산출' }}
                     </div>
-
-                    <!-- 무료 vs 유료 비교 (현실적으로) -->
-                    <div class="grid md:grid-cols-2 gap-4 mb-6">
-                        <div class="bg-gray-50 rounded-lg p-4 text-center">
-                            <h4 class="text-lg font-bold text-gray-600 mb-3">🔍 무료 체험</h4>
-                            <div class="space-y-1 text-sm text-gray-600 mb-3">
-                                <div>✓ 기본 사주 정보</div>
-                                <div>✓ 간단한 성격 분석</div>
-                                <div>✓ 맛보기 해석</div>
-                            </div>
-                            <div class="text-xl font-bold text-gray-600">0원</div>
-                        </div>
-                        
-                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-4 text-center text-white">
-                            <h4 class="text-lg font-bold mb-3">📋 전문 해석서</h4>
-                            <div class="space-y-1 text-sm mb-3">
-                                <div>✅ <strong>8개 영역</strong> 체계적 분석</div>
-                                <div>✅ <strong>A4 4-7장</strong> 상세 리포트</div>
-                                <div>✅ <strong>개인 맞춤</strong> 실천 조언</div>
-                                <div>✅ <strong>PDF 다운로드</strong> 가능</div>
-                            </div>
-                            <div>
-                                <div class="text-lg line-through opacity-70">3,900원</div>
-                                <div class="text-2xl font-bold">{{ "{:,}".format(product.price) }}원</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 전문성 어필 -->
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6 text-center">
-                        <div class="text-2xl mb-3">🏛️</div>
-                        <h4 class="font-bold text-gray-800 mb-3">체계적인 명리학 해석 방식</h4>
-                        <div class="text-sm text-gray-700 space-y-2">
-                            <div>• <strong>자평진전, 연해자평, 삼명통회</strong> 등 5대 고서 원문 기반</div>
-                            <div>• 같은 사주라면 어느 전문가가 봐도 <strong>일관된 해석</strong></div>
-                            <div>• 점술이 아닌 <strong>논리적 성향 분석</strong> 접근법</div>
-                        </div>
-                    </div>
-
-                    <!-- 호기심 자극 -->
-                    <div class="text-center mb-6">
-                        <p class="text-gray-700 mb-3">
-                            🤔 <strong>내 사주의 용신이 뭔지, 언제가 좋은 타이밍인지</strong><br>
-                            궁금하지 않으세요?
-                        </p>
-                        <div class="text-sm text-gray-600">
-                            이런 구체적인 내용들이 전문 해석서에 담겨있어요
-                        </div>
-                    </div>
-
-                    <!-- 할인 정보 (과장 없이) -->
-                    <div class="text-center mb-6">
-                        <div class="inline-flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold mb-2">
-                            🏷️ 런칭 기념 50% 할인
-                        </div>
-                        <p class="text-gray-600 text-sm">
-                            정식 서비스 시작 후 정가로 돌아갑니다
-                        </p>
-                    </div>
-
-                    <!-- 메인 CTA -->
-                    <div class="text-center">
-                        <button 
-                            onclick="scrollToPayment()"
-                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg font-bold py-3 px-8 rounded-lg shadow-md transform transition duration-300 hover:scale-105 pulse-button mb-3"
-                        >
-                            📋 전문 해석서 {{ "{:,}".format(product.price) }}원으로 보기
-                        </button>
-                        <div class="text-xs text-gray-500">
-                            💳 카카오페이 간편결제 · 결제 후 즉시 확인
-                        </div>
-                    </div>
-
-                    <!-- 추가 안심 요소 -->
-                    <div class="mt-6 pt-4 border-t border-gray-200">
-                        <div class="grid md:grid-cols-3 gap-4 text-center text-xs text-gray-600">
-                            <div>
-                                <div class="font-semibold mb-1">🔒 안전한 결제</div>
-                                <div>카카오페이 보안 시스템</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold mb-1">📱 즉시 이용</div>
-                                <div>결제 후 바로 확인 가능</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold mb-1">💾 평생 보관</div>
-                                <div>언제든 다시 열람</div>
-                            </div>
-                        </div>
-                    </div>
-                    
+                    {% endfor %}
                 </div>
             </div>
 
-            <script>
-            function scrollToPayment() {
-                const paymentSection = document.getElementById('payment-section');
-                if (paymentSection) {
-                    paymentSection.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                    
-                    setTimeout(() => {
-                        paymentSection.classList.add('highlight');
-                    }, 800);
-                } else {
-                    window.scrollTo({
-                        top: document.body.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }
-            }
-            </script>
-
-            <!-- 가격 표시 -->
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <div class="flex items-center justify-center space-x-4">
-                    <span class="text-lg text-gray-500 line-through">3,900원</span>
-                    <span class="text-3xl font-bold text-red-600">{{ "{:,}".format(product.price) }}원</span>
-                    <span class="bg-red-500 text-white px-2 py-1 rounded text-sm">50% 할인</span>
+            <!-- 십이신살 정보 -->
+            {% if get_twelve_gods_by_day_branch %}
+            {% set twelve_gods = get_twelve_gods_by_day_branch(pillars.day[1]) %}
+            {% if twelve_gods %}
+            <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 mt-5">
+                <h4 class="text-purple-800 font-semibold mb-3">십이신살 (十二神殺)</h4>
+                <p class="mb-3 text-sm text-gray-600">일지 {{ pillars.day[1] }} 기준</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
+                    {% for god_name, god_branch in twelve_gods.items() %}
+                    <div class="bg-white border border-purple-200 p-2 rounded text-center text-sm">
+                        <strong>{{ god_name }}</strong><br>{{ god_branch }}
+                    </div>
+                    {% endfor %}
                 </div>
-                <p class="text-sm text-gray-600 mt-2">런칭 기념 특가 (한정 기간)</p>
             </div>
-            
-            <!-- 2. 카카오페이 결제 버튼 수정 (pulse-button 클래스 추가) -->
-            <div class="space-y-3">
-                <button id="premium-purchase-btn" 
-                        class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-4 px-6 rounded-lg text-lg shadow-lg transform transition duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none pulse-button">
-                    💳 카카오페이로 결제하기 ({{ "{:,}".format(product.price) }}원)
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- 일주 해석 -->
+        {% if ilju_interpretation %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📖 일주 해석:
+                {{ ilju }}</h2>
+
+            {% if ilju_interpretation.cn %}
+            <div class="mb-4">
+                <button onclick="toggleCnText()"
+                    class="text-sm text-purple-700 underline hover:text-purple-900 transition">
+                    📜 고전 원문 보기 ▾
                 </button>
-                
-                <!-- 로딩 스피너 (기본적으로 숨김) -->
-                <div id="payment-loading" class="hidden text-center py-4">
-                    <div class="inline-flex items-center space-x-2">
-                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                        <span class="text-purple-600">결제 준비 중...</span>
-                    </div>
+                <div id="cnText"
+                    class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
+                    {{ ilju_interpretation.cn | safe }}
                 </div>
-                
-                <p class="text-xs text-gray-500 mt-3">
-                    ✓ 안전한 카카오페이 결제 시스템<br>
-                    ✓ 결제 후 즉시 AI 분석 시작<br>
-                    ✓ 개인정보는 암호화 보관
-                </p>
-            </div>
-            
-            <!-- 로그인이 필요한 경우 -->
-            {% if not request.session.get('user_id') %}
-            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-blue-700 text-sm mb-3">
-                    🔐 결제를 위해 먼저 로그인해주세요
-                </p>
-                <a href="/auth/login?next={{ request.url }}" 
-                  class="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition duration-200">
-                    로그인하기
-                </a>
             </div>
             {% endif %}
-            
-            <!-- 이미 구매한 경우 (JavaScript로 동적 처리) -->
-            <div id="already-purchased" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p class="text-green-700 text-sm mb-3">
-                    ✅ 이미 구매하신 리포트입니다
-                </p>
-                <a href="/order/mypage" 
-                  class="bg-green-600 text-white px-4 py-2 rounded font-semibold hover:bg-green-700 transition duration-200">
-                    구매 내역 보기
-                </a>
+
+            {% if ilju_interpretation.kr %}
+            <div class="bg-gray-50 p-6 rounded-lg leading-relaxed mb-4">
+                {{ ilju_interpretation.kr | safe }}
+            </div>
+            {% endif %}
+
+
+        </div>
+        {% endif %}
+
+        <!-- 삼명통회 원문 해석 -->
+        {% if ctext_explanation or ctext_kr_literal or ctext_kr_explained %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">📜 삼명통회 원문 해석</h2>
+
+            {% if ctext_explanation %}
+            <div class="mb-4">
+                <button onclick="toggleSamhyeongOriginal()"
+                    class="text-sm text-purple-700 underline hover:text-purple-900 transition">
+                    📜 고전 원문 보기 ▾
+                </button>
+                <div id="samhyeongOriginalText"
+                    class="cn-text bg-white p-4 mt-3 border-l-4 border-gray-400 text-gray-700 leading-loose text-[15px] hidden">
+                    {{ ctext_explanation | safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if ctext_kr_literal %}
+            <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6 hidden">
+                <h4 class="text-purple-800 font-semibold mb-3">한국어 해석</h4>
+                {{ ctext_kr_literal | safe }}
+            </div>
+            {% endif %}
+
+            {% if ctext_kr_explained %}
+            <div class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6">
+                <h4 class="text-purple-800 font-semibold mb-3">자세한 해석</h4>
+                {{ ctext_kr_explained | safe }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- AI 분석 섹션 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-purple-800 border-b-2 border-purple-300 pb-2 mb-6">✨ AI 심화 분석</h2>
+            <button
+                class="w-full py-4 mt-4 bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-xl text-lg font-semibold hover:shadow-lg hover:-translate-y-1 transition-transform duration-200"
+                onclick="loadAIAnalysis()" id="aiAnalysisBtn">
+                🤖 AI가 분석한 종합 해석 보기
+            </button>
+
+            <div id="aiLoadingSpinner" style="display: none;">
+                <div
+                    class="w-10 h-10 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin mx-auto my-5">
+                </div>
+                <div class="text-center text-purple-700 text-base mt-2">AI가 당신만을 위한 종합 해석을 작성하고 있습니다...</div>
+            </div>
+
+            <div id="aiAnalysisResult" style="display: none;"
+                class="bg-gray-50 p-6 rounded-lg border-l-4 border-purple-700 leading-relaxed my-6"></div>
+        </div>
+
+        <!-- 프리미엄 PDF 구매 CTA -->
+        <!-- 기존 결제 버튼 부분을 다음으로 교체 -->
+        <div id="premiumSection"
+            class="preium-section mt-8 p-6 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl border"
+            style="display: none;">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold text-purple-800 mb-4">
+                    👤 당신만을 위한 사주 분석서
+                </h3>
+
+
+                <div class="bg-white rounded-lg p-6 mb-6 shadow-md">
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+                        .conversion-content * {
+                            font-family: 'Noto Sans KR', sans-serif;
+                        }
+
+                        .pulse-button {
+                            animation: pulse 2s infinite;
+                        }
+
+                        @keyframes pulse {
+
+                            0%,
+                            100% {
+                                transform: scale(1);
+                            }
+
+                            50% {
+                                transform: scale(1.05);
+                            }
+                        }
+
+                        .gradient-text {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                        }
+                    </style>
+
+                    <div class="conversion-content">
+
+                        <!-- 구분선 -->
+                        <div class="border-t-2 border-dashed border-gray-300 my-6 relative">
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-4">
+                                <span class="text-gray-500 text-sm">여기까지 무료 체험 ⬆️</span>
+                            </div>
+                        </div>
+
+                        <!-- 메인 메시지 -->
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-3">
+                                <span class="gradient-text">5대 고서 기반 전문 해석</span>을 받아보세요
+                            </h3>
+                            <p class="text-gray-600 mb-2">
+                                지금까지는 기본 정보였습니다.
+                            </p>
+                            <p class="text-lg font-semibold text-gray-800">
+                                <strong class="text-blue-600">명리학 원리에 따른 체계적 분석</strong>이 남아있어요.
+                            </p>
+                        </div>
+
+                        <!-- 실제 차별점 강조 -->
+                        <div class="bg-blue-50 rounded-xl p-5 mb-6">
+                            <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                                📚 전문 해석에서 추가로 확인할 수 있는 내용
+                            </h4>
+                            <div class="grid md:grid-cols-2 gap-3 text-sm">
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>용신과 희신</strong> 활용 전략</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>십신 관계</strong> 세부 분석</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>계절별</strong> 건강 관리법</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>재물 운</strong> 구체적 전략</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>인간관계</strong> 패턴 해석</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>직업 적성</strong> 세부 분석</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>기신 극복</strong> 방안</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-blue-600 mr-2">•</span>
+                                        <span><strong>장기 인생</strong> 전략</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 무료 vs 유료 비교 (현실적으로) -->
+                        <div class="grid md:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                <h4 class="text-lg font-bold text-gray-600 mb-3">🔍 무료 체험</h4>
+                                <div class="space-y-1 text-sm text-gray-600 mb-3">
+                                    <div>✓ 기본 사주 정보</div>
+                                    <div>✓ 간단한 성격 분석</div>
+                                    <div>✓ 맛보기 해석</div>
+                                </div>
+                                <div class="text-xl font-bold text-gray-600">0원</div>
+                            </div>
+
+                            <div
+                                class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-4 text-center text-white">
+                                <h4 class="text-lg font-bold mb-3">📋 전문 해석서</h4>
+                                <div class="space-y-1 text-sm mb-3">
+                                    <div>✅ <strong>8개 영역</strong> 체계적 분석</div>
+                                    <div>✅ <strong>A4 4-7장</strong> 상세 리포트</div>
+                                    <div>✅ <strong>개인 맞춤</strong> 실천 조언</div>
+                                    <div>✅ <strong>PDF 다운로드</strong> 가능</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg line-through opacity-70">3,900원</div>
+                                    <div class="text-2xl font-bold">{{ "{:,}".format(product.price) }}원</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 전문성 어필 -->
+                        <div class="bg-gray-50 rounded-lg p-4 mb-6 text-center">
+                            <div class="text-2xl mb-3">🏛️</div>
+                            <h4 class="font-bold text-gray-800 mb-3">체계적인 명리학 해석 방식</h4>
+                            <div class="text-sm text-gray-700 space-y-2">
+                                <div>• <strong>자평진전, 연해자평, 삼명통회</strong> 등 5대 고서 원문 기반</div>
+                                <div>• 같은 사주라면 어느 전문가가 봐도 <strong>일관된 해석</strong></div>
+                                <div>• 점술이 아닌 <strong>논리적 성향 분석</strong> 접근법</div>
+                            </div>
+                        </div>
+
+                        <!-- 호기심 자극 -->
+                        <div class="text-center mb-6">
+                            <p class="text-gray-700 mb-3">
+                                🤔 <strong>내 사주의 용신이 뭔지, 언제가 좋은 타이밍인지</strong><br>
+                                궁금하지 않으세요?
+                            </p>
+                            <div class="text-sm text-gray-600">
+                                이런 구체적인 내용들이 전문 해석서에 담겨있어요
+                            </div>
+                        </div>
+
+                        <!-- 할인 정보 (과장 없이) -->
+                        <div class="text-center mb-6">
+                            <div
+                                class="inline-flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold mb-2">
+                                🏷️ 런칭 기념 50% 할인
+                            </div>
+                            <p class="text-gray-600 text-sm">
+                                정식 서비스 시작 후 정가로 돌아갑니다
+                            </p>
+                        </div>
+
+                        <!-- 메인 CTA -->
+                        <div class="text-center">
+                            <button onclick="scrollToPayment()"
+                                class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg font-bold py-3 px-8 rounded-lg shadow-md transform transition duration-300 hover:scale-105 pulse-button mb-3">
+                                📋 전문 해석서 {{ "{:,}".format(product.price) }}원으로 보기
+                            </button>
+                            <div class="text-xs text-gray-500">
+                                💳 카카오페이 간편결제 · 결제 후 즉시 확인
+                            </div>
+                        </div>
+
+                        <!-- 추가 안심 요소 -->
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <div class="grid md:grid-cols-3 gap-4 text-center text-xs text-gray-600">
+                                <div>
+                                    <div class="font-semibold mb-1">🔒 안전한 결제</div>
+                                    <div>카카오페이 보안 시스템</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold mb-1">📱 즉시 이용</div>
+                                    <div>결제 후 바로 확인 가능</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold mb-1">💾 평생 보관</div>
+                                    <div>언제든 다시 열람</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <script>
+                    function scrollToPayment() {
+                        const paymentSection = document.getElementById('payment-section');
+                        if (paymentSection) {
+                            paymentSection.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+
+                            setTimeout(() => {
+                                paymentSection.classList.add('highlight');
+                            }, 800);
+                        } else {
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                </script>
+
+                <!-- 가격 표시 -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-center space-x-4">
+                        <span class="text-lg text-gray-500 line-through">3,900원</span>
+                        <span class="text-3xl font-bold text-red-600">{{ "{:,}".format(product.price) }}원</span>
+                        <span class="bg-red-500 text-white px-2 py-1 rounded text-sm">50% 할인</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">런칭 기념 특가 (한정 기간)</p>
+                </div>
+
+                <!-- 2. 카카오페이 결제 버튼 수정 (pulse-button 클래스 추가) -->
+                <div class="space-y-3">
+                    <button id="premium-purchase-btn"
+                        class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold py-4 px-6 rounded-lg text-lg shadow-lg transform transition duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none pulse-button">
+                        💳 카카오페이로 결제하기 ({{ "{:,}".format(product.price) }}원)
+                    </button>
+
+                    <!-- 로딩 스피너 (기본적으로 숨김) -->
+                    <div id="payment-loading" class="hidden text-center py-4">
+                        <div class="inline-flex items-center space-x-2">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                            <span class="text-purple-600">결제 준비 중...</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mt-3">
+                        ✓ 안전한 카카오페이 결제 시스템<br>
+                        ✓ 결제 후 즉시 AI 분석 시작<br>
+                        ✓ 개인정보는 암호화 보관
+                    </p>
+                </div>
+
+                <!-- 로그인이 필요한 경우 -->
+                {% if not request.session.get('user_id') %}
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-blue-700 text-sm mb-3">
+                        🔐 결제를 위해 먼저 로그인해주세요
+                    </p>
+                    <a href="/auth/login?next={{ request.url }}"
+                        class="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition duration-200">
+                        로그인하기
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- 이미 구매한 경우 (JavaScript로 동적 처리) -->
+                <div id="already-purchased" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-green-700 text-sm mb-3">
+                        ✅ 이미 구매하신 리포트입니다
+                    </p>
+                    <a href="/order/mypage"
+                        class="bg-green-600 text-white px-4 py-2 rounded font-semibold hover:bg-green-700 transition duration-200">
+                        구매 내역 보기
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
-  </div>
+    </div>
 </div>
 
 {% endblock %}
@@ -459,219 +483,219 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
-.cn-text {
-  font-family: 'Zhi Mang Xing', cursive;
-  font-size: 22px;
-  line-height: 1.9;
-  letter-spacing: 0.03em;
-  background-color: #fdf6e3;
-  border-left: 4px solid #b39f73;
-  padding: 1rem;
-  border-radius: 0.5rem;
-}
+    .cn-text {
+        font-family: 'Zhi Mang Xing', cursive;
+        font-size: 22px;
+        line-height: 1.9;
+        letter-spacing: 0.03em;
+        background-color: #fdf6e3;
+        border-left: 4px solid #b39f73;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
 </style>
 <script>
-// 전역 변수
-let aiAnalysisCached = null;
-let paymentWindow = null;
-let paymentCheckInterval = null;
+    // 전역 변수
+    let aiAnalysisCached = null;
+    let paymentWindow = null;
+    let paymentCheckInterval = null;
 
-// 사주 정보를 안전하게 설정 (JSON 필터 사용)
-const sajuInfo = {
-  birthdate: "{{ birthdate.strftime('%Y-%m-%d') }}",
-  birthhour: {{ birth_hour }},
-  gender: "{{ request.session.get('gender', '') }}",
-  name: "{{ name }}",
-  saju_key: "{{ saju_key }}"
+    // 사주 정보를 안전하게 설정 (JSON 필터 사용)
+    const sajuInfo = {
+        birthdate: "{{ birthdate.strftime('%Y-%m-%d') }}",
+        birthhour: {{ birth_hour }},
+    gender: "{{ request.session.get('gender', '') }}",
+        name: "{{ name }}",
+            saju_key: "{{ saju_key }}"
 };
 
-// 서버에서 전달한 CSRF 토큰 (주문 생성 시 필요)
-const csrfToken = "{{ csrf_token if csrf_token is defined else '' }}";
+    // 서버에서 전달한 CSRF 토큰 (주문 생성 시 필요)
+    const csrfToken = "{{ csrf_token if csrf_token is defined else '' }}";
 
-// 페이지 로딩 애니메이션
-window.addEventListener('load', function() {
-  setTimeout(() => {
-    document.getElementById('loadingInitial').style.display = 'none';
-    document.getElementById('sajuContent').style.display = 'block';
-    
-    // 축하 효과
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
+    // 페이지 로딩 애니메이션
+    window.addEventListener('load', function () {
+        setTimeout(() => {
+            document.getElementById('loadingInitial').style.display = 'none';
+            document.getElementById('sajuContent').style.display = 'block';
+
+            // 축하 효과
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // 환영 배너 표시 (있는 경우)
+            const banner = document.getElementById('welcomeBanner');
+            if (banner) {
+                banner.style.display = 'block';
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                }, 4000);
+            }
+        }, 3000);
     });
-    
-    // 환영 배너 표시 (있는 경우)
-    const banner = document.getElementById('welcomeBanner');
-    if (banner) {
-      banner.style.display = 'block';
-      setTimeout(() => {
-        banner.style.display = 'none';
-      }, 4000);
-    }
-  }, 3000);
-});
 
-// AI 분석 로드
-async function loadAIAnalysis() {
-  const btn = document.getElementById('aiAnalysisBtn');
-  const spinner = document.getElementById('aiLoadingSpinner');
-  const result = document.getElementById('aiAnalysisResult');
-  const premiumSection = document.getElementById('premiumSection');
-  
-  if (aiAnalysisCached) {
-    result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + aiAnalysisCached;
-    result.style.display = 'block';
-    if (premiumSection) premiumSection.style.display = 'block';
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.textContent = '분석 중...';
-  spinner.style.display = 'block';
-  
-  try {
-    const response = await fetch('/saju/api/saju_ai_analysis', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
-    
-    const data = await response.json();
-    
-    if (data.result) {
-      aiAnalysisCached = data.result;
-      result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + data.result;
-      result.style.display = 'block';
-      if (premiumSection) premiumSection.style.display = 'block';
-    } else if (data.error) {
-      result.innerHTML = '<p style="color: red;">AI 분석 중 오류가 발생했습니다: ' + data.error + '</p>';
-      result.style.display = 'block';
-    } else {
-      result.innerHTML = '<p style="color: red;">AI 분석에 실패했습니다. 다시 시도해주세요.</p>';
-      result.style.display = 'block';
-    }
-  } catch (error) {
-    result.innerHTML = '<p style="color: red;">서버 통신 오류가 발생했습니다.</p>';
-    result.style.display = 'block';
-    console.error('AI 분석 오류:', error);
-  } finally {
-    spinner.style.display = 'none';
-    btn.disabled = false;
-    btn.textContent = '🤖 AI가 분석한 종합 해석 보기';
-  }
-}
+    // AI 분석 로드
+    async function loadAIAnalysis() {
+        const btn = document.getElementById('aiAnalysisBtn');
+        const spinner = document.getElementById('aiLoadingSpinner');
+        const result = document.getElementById('aiAnalysisResult');
+        const premiumSection = document.getElementById('premiumSection');
 
-
-function toggleCnText() {
-  const cn = document.getElementById('cnText');
-  if (cn) {
-    if (cn.classList.contains('hidden')) {
-      cn.classList.remove('hidden');
-    } else {
-      cn.classList.add('hidden');
-    }
-  }
-}
-
-function toggleSamhyeongOriginal() {
-  const el = document.getElementById('samhyeongOriginalText');
-  if (el) {
-    if (el.classList.contains('hidden')) {
-      el.classList.remove('hidden');
-    } else {
-      el.classList.add('hidden');
-    }
-  }
-}
-
-// 화면 최하단으로 스크롤하는 함수
-function scrollToBottom() {
-    // 화면 최하단으로 부드럽게 스크롤
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
-}
-///////////////////////////////////////////////////////////////////////////////////
-// 결제 프로세스 시작
-async function startPremiumPurchase() {
-    try {
-        // 로그인 체크
-        const userId = '{{ request.session.get("user_id", "") }}';
-        if (!userId) {
-            alert('로그인이 필요합니다.');
-            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+        if (aiAnalysisCached) {
+            result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + aiAnalysisCached;
+            result.style.display = 'block';
+            if (premiumSection) premiumSection.style.display = 'block';
             return;
         }
-        
-        // 사주 정보 확인
-        if (!sajuInfo || !sajuInfo.saju_key) {
-            alert('사주 정보가 없습니다. 먼저 사주를 조회해주세요.');
-            return;
+
+        btn.disabled = true;
+        btn.textContent = '분석 중...';
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch('/saju/api/saju_ai_analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (data.result) {
+                aiAnalysisCached = data.result;
+                result.innerHTML = '<strong>🔍 AI 종합 분석 결과:</strong><br><br>' + data.result;
+                result.style.display = 'block';
+                if (premiumSection) premiumSection.style.display = 'block';
+            } else if (data.error) {
+                result.innerHTML = '<p style="color: red;">AI 분석 중 오류가 발생했습니다: ' + data.error + '</p>';
+                result.style.display = 'block';
+            } else {
+                result.innerHTML = '<p style="color: red;">AI 분석에 실패했습니다. 다시 시도해주세요.</p>';
+                result.style.display = 'block';
+            }
+        } catch (error) {
+            result.innerHTML = '<p style="color: red;">서버 통신 오류가 발생했습니다.</p>';
+            result.style.display = 'block';
+            console.error('AI 분석 오류:', error);
+        } finally {
+            spinner.style.display = 'none';
+            btn.disabled = false;
+            btn.textContent = '🤖 AI가 분석한 종합 해석 보기';
         }
-        
-        // 로딩 상태 표시
-        showPaymentLoading(true);
-        
-        // CSRF 토큰 가져오기
-        const csrfToken = getCSRFToken();
-        
-        // 서버에 주문 생성 요청
-        const response = await fetch('/order/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
-        },
-        body: JSON.stringify({ saju_key: sajuInfo.saju_key })
-      });
-
-      // 🔐 응답이 JSON인지 확인
-      let data = null;
-      const contentType = response.headers.get('content-type') || '';
-
-      if (contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();              // HTML·텍스트 그대로 읽기
-        throw new Error('서버 오류: ' + text.slice(0, 120));
-      }
-
-      if (!response.ok) {
-        throw new Error((data?.detail || data?.message) ?? '주문 생성에 실패했습니다.');
-      }
-
-      if (!data.success) {
-        throw new Error(data.message || '주문 생성에 실패했습니다.');
-      }
-
-      // 정상일 때만 결제창 열기
-      openKakaoPayment(data);
-              
-    } catch (error) {
-        console.error('결제 시작 실패:', error);
-        showPaymentError(error.message);
-    } finally {
-        showPaymentLoading(false);
     }
-}
 
-// 카카오페이 결제창 오픈
-function openKakaoPayment(orderData) {
-    const { redirect_url, is_mobile, order_id, dev_mode, message } = orderData;
-    
-    // 🔧 개발 모드: 결제창 없이 바로 성공 처리
-    if (dev_mode) {
-        console.log('🔧 개발 모드: 결제 건너뛰기');
-        console.log('응답 메시지:', message);
-        
-        // 개발 모드 알림
-        const devAlert = document.createElement('div');
-        devAlert.className = 'fixed top-4 right-4 bg-yellow-500 text-white p-4 rounded-lg shadow-lg z-50';
-        devAlert.innerHTML = `
+
+    function toggleCnText() {
+        const cn = document.getElementById('cnText');
+        if (cn) {
+            if (cn.classList.contains('hidden')) {
+                cn.classList.remove('hidden');
+            } else {
+                cn.classList.add('hidden');
+            }
+        }
+    }
+
+    function toggleSamhyeongOriginal() {
+        const el = document.getElementById('samhyeongOriginalText');
+        if (el) {
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+    }
+
+    // 화면 최하단으로 스크롤하는 함수
+    function scrollToBottom() {
+        // 화면 최하단으로 부드럽게 스크롤
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+    ///////////////////////////////////////////////////////////////////////////////////
+    // 결제 프로세스 시작
+    async function startPremiumPurchase() {
+        try {
+            // 로그인 체크
+            const userId = '{{ request.session.get("user_id", "") }}';
+            if (!userId) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
+            // 사주 정보 확인
+            if (!sajuInfo || !sajuInfo.saju_key) {
+                alert('사주 정보가 없습니다. 먼저 사주를 조회해주세요.');
+                return;
+            }
+
+            // 로딩 상태 표시
+            showPaymentLoading(true);
+
+            // CSRF 토큰 가져오기
+            const csrfToken = getCSRFToken();
+
+            // 서버에 주문 생성 요청
+            const response = await fetch('/order/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ saju_key: sajuInfo.saju_key })
+            });
+
+            // 🔐 응답이 JSON인지 확인
+            let data = null;
+            const contentType = response.headers.get('content-type') || '';
+
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();              // HTML·텍스트 그대로 읽기
+                throw new Error('서버 오류: ' + text.slice(0, 120));
+            }
+
+            if (!response.ok) {
+                throw new Error((data?.detail || data?.message) ?? '주문 생성에 실패했습니다.');
+            }
+
+            if (!data.success) {
+                throw new Error(data.message || '주문 생성에 실패했습니다.');
+            }
+
+            // 정상일 때만 결제창 열기
+            openKakaoPayment(data);
+
+        } catch (error) {
+            console.error('결제 시작 실패:', error);
+            showPaymentError(error.message);
+        } finally {
+            showPaymentLoading(false);
+        }
+    }
+
+    // 카카오페이 결제창 오픈
+    function openKakaoPayment(orderData) {
+        const { redirect_url, is_mobile, order_id, dev_mode, message } = orderData;
+
+        // 🔧 개발 모드: 결제창 없이 바로 성공 처리
+        if (dev_mode) {
+            console.log('🔧 개발 모드: 결제 건너뛰기');
+            console.log('응답 메시지:', message);
+
+            // 개발 모드 알림
+            const devAlert = document.createElement('div');
+            devAlert.className = 'fixed top-4 right-4 bg-yellow-500 text-white p-4 rounded-lg shadow-lg z-50';
+            devAlert.innerHTML = `
             <div class="flex items-center space-x-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -682,174 +706,174 @@ function openKakaoPayment(orderData) {
                 </div>
             </div>
         `;
-        document.body.appendChild(devAlert);
-        
+            document.body.appendChild(devAlert);
+
+            // 성공 메시지 표시
+            showPaymentSuccess();
+
+            // 3초 후 마이페이지로 이동
+            setTimeout(() => {
+                devAlert.remove();
+                window.location.href = '/order/mypage';
+            }, 3000);
+
+            return;
+        }
+
+        // 🏭 프로덕션 모드: 기존 카카오페이 로직
+        if (is_mobile || isMobileDevice()) {
+            // 모바일: 현재 창에서 리다이렉트
+            window.location.href = redirect_url;
+        } else {
+            // PC: 팝업창으로 결제
+            const popup = window.open(
+                redirect_url,
+                'kakaopay',
+                'width=500,height=700,scrollbars=yes,resizable=yes'
+            );
+
+            if (!popup) {
+                alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
+                return;
+            }
+
+            paymentWindow = popup;
+
+            // 팝업 모니터링 시작
+            startPaymentMonitoring(order_id);
+        }
+    }
+
+    // 결제 진행상황 모니터링 (PC 팝업용)
+    function startPaymentMonitoring(orderId) {
+        let checkCount = 0;
+        const maxChecks = 300; // 5분 (1초마다 체크)
+
+        paymentCheckInterval = setInterval(async () => {
+            checkCount++;
+
+            // 팝업이 닫혔는지 확인
+            if (paymentWindow && paymentWindow.closed) {
+                clearInterval(paymentCheckInterval);
+
+                // 잠시 후 결제 결과 확인
+                setTimeout(() => checkPaymentResult(orderId), 1000);
+                return;
+            }
+
+            // 최대 체크 횟수 초과
+            if (checkCount >= maxChecks) {
+                clearInterval(paymentCheckInterval);
+                if (paymentWindow && !paymentWindow.closed) {
+                    paymentWindow.close();
+                }
+                showPaymentError('결제 시간이 초과되었습니다.');
+                return;
+            }
+
+            // 주기적으로 결제 상태 확인 (30초마다)
+            if (checkCount % 30 === 0) {
+                try {
+                    const status = await checkOrderStatus(orderId);
+                    if (status.order_status === 'paid') {
+                        clearInterval(paymentCheckInterval);
+                        if (paymentWindow && !paymentWindow.closed) {
+                            paymentWindow.close();
+                        }
+                        handlePaymentSuccess(orderId);
+                    }
+                } catch (error) {
+                    console.error('결제 상태 확인 실패:', error);
+                }
+            }
+        }, 1000);
+    }
+
+    // 결제 결과 확인
+    async function checkPaymentResult(orderId) {
+        try {
+            const status = await checkOrderStatus(orderId);
+
+            if (status.order_status === 'paid') {
+                handlePaymentSuccess(orderId);
+            } else if (status.order_status === 'cancelled') {
+                showPaymentError('결제가 취소되었습니다.');
+            } else {
+                // 아직 결제 진행 중이거나 실패
+                setTimeout(() => checkPaymentResult(orderId), 2000);
+            }
+        } catch (error) {
+            console.error('결제 결과 확인 실패:', error);
+            showPaymentError('결제 결과를 확인할 수 없습니다.');
+        }
+    }
+
+    // 주문 상태 확인 API 호출
+    async function checkOrderStatus(orderId) {
+        const response = await fetch(`/order/status/${orderId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('상태 확인 실패');
+        }
+
+        return await response.json();
+    }
+
+    // 결제 성공 처리
+    function handlePaymentSuccess(orderId) {
         // 성공 메시지 표시
         showPaymentSuccess();
-        
+
         // 3초 후 마이페이지로 이동
         setTimeout(() => {
-            devAlert.remove();
             window.location.href = '/order/mypage';
         }, 3000);
-        
-        return;
     }
-    
-    // 🏭 프로덕션 모드: 기존 카카오페이 로직
-    if (is_mobile || isMobileDevice()) {
-        // 모바일: 현재 창에서 리다이렉트
-        window.location.href = redirect_url;
-    } else {
-        // PC: 팝업창으로 결제
-        const popup = window.open(
-            redirect_url,
-            'kakaopay',
-            'width=500,height=700,scrollbars=yes,resizable=yes'
-        );
-        
-        if (!popup) {
-            alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
-            return;
-        }
-        
-        paymentWindow = popup;
-        
-        // 팝업 모니터링 시작
-        startPaymentMonitoring(order_id);
+
+    // 모바일 디바이스 감지
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
-}
 
-// 결제 진행상황 모니터링 (PC 팝업용)
-function startPaymentMonitoring(orderId) {
-    let checkCount = 0;
-    const maxChecks = 300; // 5분 (1초마다 체크)
-    
-    paymentCheckInterval = setInterval(async () => {
-        checkCount++;
-        
-        // 팝업이 닫혔는지 확인
-        if (paymentWindow && paymentWindow.closed) {
-            clearInterval(paymentCheckInterval);
-            
-            // 잠시 후 결제 결과 확인
-            setTimeout(() => checkPaymentResult(orderId), 1000);
-            return;
+    // CSRF 토큰 가져오기
+    function getCSRFToken() {
+        // 메타 태그에서 CSRF 토큰 읽기
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+            return meta.getAttribute('content');
         }
-        
-        // 최대 체크 횟수 초과
-        if (checkCount >= maxChecks) {
-            clearInterval(paymentCheckInterval);
-            if (paymentWindow && !paymentWindow.closed) {
-                paymentWindow.close();
-            }
-            showPaymentError('결제 시간이 초과되었습니다.');
-            return;
-        }
-        
-        // 주기적으로 결제 상태 확인 (30초마다)
-        if (checkCount % 30 === 0) {
-            try {
-                const status = await checkOrderStatus(orderId);
-                if (status.order_status === 'paid') {
-                    clearInterval(paymentCheckInterval);
-                    if (paymentWindow && !paymentWindow.closed) {
-                        paymentWindow.close();
-                    }
-                    handlePaymentSuccess(orderId);
-                }
-            } catch (error) {
-                console.error('결제 상태 확인 실패:', error);
-            }
-        }
-    }, 1000);
-}
 
-// 결제 결과 확인
-async function checkPaymentResult(orderId) {
-    try {
-        const status = await checkOrderStatus(orderId);
-        
-        if (status.order_status === 'paid') {
-            handlePaymentSuccess(orderId);
-        } else if (status.order_status === 'cancelled') {
-            showPaymentError('결제가 취소되었습니다.');
+        // 세션에서 토큰 생성 (대안)
+        const timestamp = Date.now();
+        return 'csrf_' + timestamp;
+    }
+
+    // UI 상태 관리 함수들
+    function showPaymentLoading(show) {
+        const button = document.getElementById('premium-purchase-btn');
+        const loadingSpinner = document.getElementById('payment-loading');
+
+        if (show) {
+            if (button) button.disabled = true;
+            if (loadingSpinner) loadingSpinner.classList.remove('hidden');
         } else {
-            // 아직 결제 진행 중이거나 실패
-            setTimeout(() => checkPaymentResult(orderId), 2000);
+            if (button) button.disabled = false;
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
         }
-    } catch (error) {
-        console.error('결제 결과 확인 실패:', error);
-        showPaymentError('결제 결과를 확인할 수 없습니다.');
     }
-}
-
-// 주문 상태 확인 API 호출
-async function checkOrderStatus(orderId) {
-    const response = await fetch(`/order/status/${orderId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    if (!response.ok) {
-        throw new Error('상태 확인 실패');
-    }
-    
-    return await response.json();
-}
-
-// 결제 성공 처리
-function handlePaymentSuccess(orderId) {
-    // 성공 메시지 표시
-    showPaymentSuccess();
-    
-    // 3초 후 마이페이지로 이동
-    setTimeout(() => {
-        window.location.href = '/order/mypage';
-    }, 3000);
-}
-
-// 모바일 디바이스 감지
-function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-// CSRF 토큰 가져오기
-function getCSRFToken() {
-    // 메타 태그에서 CSRF 토큰 읽기
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    if (meta) {
-        return meta.getAttribute('content');
-    }
-    
-    // 세션에서 토큰 생성 (대안)
-    const timestamp = Date.now();
-    return 'csrf_' + timestamp;
-}
-
-// UI 상태 관리 함수들
-function showPaymentLoading(show) {
-    const button = document.getElementById('premium-purchase-btn');
-    const loadingSpinner = document.getElementById('payment-loading');
-    
-    if (show) {
-        if (button) button.disabled = true;
-        if (loadingSpinner) loadingSpinner.classList.remove('hidden');
-    } else {
-        if (button) button.disabled = false;
-        if (loadingSpinner) loadingSpinner.classList.add('hidden');
-    }
-}
 
 
-// showPaymentSuccess 함수도 개발 모드 메시지 추가
-function showPaymentSuccess() {
-    // 성공 메시지 표시
-    const successDiv = document.createElement('div');
-    successDiv.className = 'fixed top-24 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
-    successDiv.innerHTML = `
+    // showPaymentSuccess 함수도 개발 모드 메시지 추가
+    function showPaymentSuccess() {
+        // 성공 메시지 표시
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-24 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
+        successDiv.innerHTML = `
         <div class="flex items-center space-x-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -860,21 +884,21 @@ function showPaymentSuccess() {
             </div>
         </div>
     `;
-    document.body.appendChild(successDiv);
-    
-    // 5초 후 제거
-    setTimeout(() => {
-        if (successDiv.parentNode) {
-            successDiv.remove();
-        }
-    }, 5000);
-}
+        document.body.appendChild(successDiv);
 
-function showPaymentError(message) {
-    // 에러 메시지 표시
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed top-24 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
-    errorDiv.innerHTML = `
+        // 5초 후 제거
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.remove();
+            }
+        }, 5000);
+    }
+
+    function showPaymentError(message) {
+        // 에러 메시지 표시
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed top-24 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
+        errorDiv.innerHTML = `
         <div class="flex items-center space-x-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -885,55 +909,54 @@ function showPaymentError(message) {
             </div>
         </div>
     `;
-    document.body.appendChild(errorDiv);
-    
-    // 7초 후 제거
-    setTimeout(() => {
-        errorDiv.remove();
-    }, 7000);
-}
+        document.body.appendChild(errorDiv);
 
-// 페이지 로드 시 이벤트 리스너 등록
-document.addEventListener('DOMContentLoaded', function() {
-    // 결제 버튼 이벤트 리스너
-    const purchaseBtn = document.getElementById('premium-purchase-btn');
-    if (purchaseBtn) {
-        purchaseBtn.addEventListener('click', startPremiumPurchase);
+        // 7초 후 제거
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 7000);
     }
-    
-    // 페이지 언로드 시 팝업 정리
-    window.addEventListener('beforeunload', function() {
-        if (paymentCheckInterval) {
-            clearInterval(paymentCheckInterval);
+
+    // 페이지 로드 시 이벤트 리스너 등록
+    document.addEventListener('DOMContentLoaded', function () {
+        // 결제 버튼 이벤트 리스너
+        const purchaseBtn = document.getElementById('premium-purchase-btn');
+        if (purchaseBtn) {
+            purchaseBtn.addEventListener('click', startPremiumPurchase);
         }
-        if (paymentWindow && !paymentWindow.closed) {
-            paymentWindow.close();
-        }
-    });
-    
-    // 뒤로가기 시 팝업 정리
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
+
+        // 페이지 언로드 시 팝업 정리
+        window.addEventListener('beforeunload', function () {
             if (paymentCheckInterval) {
                 clearInterval(paymentCheckInterval);
             }
             if (paymentWindow && !paymentWindow.closed) {
                 paymentWindow.close();
             }
-        }
+        });
+
+        // 뒤로가기 시 팝업 정리
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                if (paymentCheckInterval) {
+                    clearInterval(paymentCheckInterval);
+                }
+                if (paymentWindow && !paymentWindow.closed) {
+                    paymentWindow.close();
+                }
+            }
+        });
     });
-});
 
-// 디버그용 함수 (개발 시에만 사용)
-function debugPayment() {
-    console.log('사주 정보:', sajuInfo);
-    console.log('결제 창 상태:', paymentWindow ? '열림' : '닫힘');
-    console.log('모니터링 상태:', paymentCheckInterval ? '실행중' : '정지');
-}
+    // 디버그용 함수 (개발 시에만 사용)
+    function debugPayment() {
+        console.log('사주 정보:', sajuInfo);
+        console.log('결제 창 상태:', paymentWindow ? '열림' : '닫힘');
+        console.log('모니터링 상태:', paymentCheckInterval ? '실행중' : '정지');
+    }
 
-// 전역으로 노출 (디버그용)
-window.debugPayment = debugPayment;
+    // 전역으로 노출 (디버그용)
+    window.debugPayment = debugPayment;
 
 </script>
 {% endblock %}
-

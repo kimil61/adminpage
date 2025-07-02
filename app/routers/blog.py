@@ -132,8 +132,8 @@ async def blog_detail(
         Post.is_published == True
     ).limit(3).all()
     
-    from app.utils import sanitize_html
-    post_content = Markup(sanitize_html(post.content)) if post.content else ""
+
+    post_content = post.content if post.content else ""
 
     return templates.TemplateResponse("blog/detail.html", {
         "request": request,

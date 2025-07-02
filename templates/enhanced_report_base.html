@@ -1,6 +1,7 @@
 <!-- templates/enhanced_report_base.html - 월별 운세 달력 추가 버전 -->
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,13 @@
     <style>
         /* 폰트 설정 - 한글 호환성 강화 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
             line-height: 1.8;
@@ -24,17 +25,17 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
+
         .report-container {
             max-width: 900px;
             margin: 2rem auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             border: 1px solid #e2e8f0;
         }
-        
+
         /* 커버 페이지 */
         .cover-page {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -44,7 +45,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .cover-page::before {
             content: '✨';
             position: absolute;
@@ -54,7 +55,7 @@
             opacity: 0.7;
             animation: sparkle 2s ease-in-out infinite alternate;
         }
-        
+
         .cover-page::after {
             content: '🔮';
             position: absolute;
@@ -64,43 +65,50 @@
             opacity: 0.7;
             animation: sparkle 2s ease-in-out infinite alternate-reverse;
         }
-        
+
         @keyframes sparkle {
-            0% { opacity: 0.5; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.1); }
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
         }
-        
+
         .cover-title {
             font-size: 2.5rem;
             font-weight: 700;
             margin: 0 0 1rem 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             letter-spacing: -0.5px;
         }
-        
+
         .cover-subtitle {
             font-size: 1.25rem;
             opacity: 0.95;
             margin: 0 0 2rem 0;
             font-weight: 300;
         }
-        
+
         .purchase-badge {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             padding: 0.75rem 1.5rem;
             border-radius: 50px;
             font-size: 1.1rem;
             font-weight: 500;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             display: inline-block;
         }
-        
+
         /* 메인 콘텐츠 */
         .content-section {
             padding: 3rem 2.5rem 2rem;
         }
-        
+
         .section-header {
             display: flex;
             align-items: center;
@@ -112,24 +120,24 @@
             border-radius: 12px;
             margin-bottom: 2rem;
         }
-        
+
         .section-header:first-child {
             margin-top: 0;
         }
-        
+
         .section-icon {
             font-size: 2rem;
             margin-right: 1rem;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
-        
+
         .section-title {
             font-size: 1.75rem;
             font-weight: 700;
             color: #2d3748;
             letter-spacing: -0.5px;
         }
-        
+
         /* 정보 카드 */
         .info-card {
             background: #f8fafc;
@@ -137,9 +145,9 @@
             border-radius: 16px;
             margin: 1.5rem 0;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        
+
         .info-card h3 {
             margin: 0 0 1.5rem 0;
             color: #4a5568;
@@ -158,9 +166,9 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        
+
         .pillars-table th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -169,7 +177,7 @@
             font-weight: 600;
             font-size: 1rem;
         }
-        
+
         .pillars-table td {
             padding: 1.5rem;
             text-align: center;
@@ -178,13 +186,13 @@
             font-weight: 700;
             color: #2d3748;
         }
-        
+
         .pillars-table .day-pillar {
             background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
             color: #234e52;
             position: relative;
         }
-        
+
         .pillars-table .day-pillar::after {
             content: '⭐';
             position: absolute;
@@ -192,12 +200,12 @@
             right: 0.5rem;
             font-size: 0.8rem;
         }
-        
+
         /* 오행 밸런스 차트 */
         .balance-section {
             text-align: center;
         }
-        
+
         .balance-title {
             font-size: 1.25rem;
             font-weight: 600;
@@ -208,18 +216,18 @@
             justify-content: center;
             gap: 0.5rem;
         }
-        
+
         .chart-container {
             margin: 2rem 0;
         }
-        
+
         .chart-container img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
         }
-        
+
         /* 월별 운세 달력 특별 스타일 */
         .calendar-section {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -228,7 +236,7 @@
             margin: 1.5rem 0;
             border: 1px solid #e2e8f0;
         }
-        
+
         .mini-cal {
             width: 100% !important;
             border-collapse: collapse !important;
@@ -236,9 +244,9 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        
+
         .mini-cal th {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
             color: white !important;
@@ -247,7 +255,7 @@
             font-size: 0.9rem !important;
             border: none !important;
         }
-        
+
         .mini-cal td {
             padding: 12px 8px !important;
             text-align: center !important;
@@ -255,11 +263,11 @@
             font-size: 16px !important;
             font-weight: 600 !important;
         }
-        
+
         .mini-cal tr:hover {
             background: #f7fafc !important;
         }
-        
+
         .calendar-legend {
             margin-top: 1.5rem;
             padding: 1.5rem;
@@ -267,7 +275,7 @@
             border-radius: 12px;
             border-left: 4px solid #48bb78;
         }
-        
+
         .legend-item {
             display: inline-block;
             margin: 0.5rem 1rem 0.5rem 0;
@@ -276,12 +284,27 @@
             font-size: 0.9rem;
             font-weight: 500;
         }
-        
-        .legend-good { background: #DCFCE7; color: #166534; }
-        .legend-caution { background: #FEFCE8; color: #854D0E; }
-        .legend-normal { background: #F3F4F6; color: #374151; }
-        .legend-risk { background: #FEE2E2; color: #991B1B; }
-        
+
+        .legend-good {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .legend-caution {
+            background: #FEFCE8;
+            color: #854D0E;
+        }
+
+        .legend-normal {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .legend-risk {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
         /* 하이라이트 박스 */
         .highlight-box {
             background: linear-gradient(135deg, #fff5f5 0%, #fed7e2 100%);
@@ -291,20 +314,20 @@
             border-left: 5px solid #e53e3e;
             box-shadow: 0 4px 12px rgba(229, 62, 62, 0.1);
         }
-        
+
         .highlight-box h4 {
             margin: 0 0 0.75rem 0;
             color: #c53030;
             font-size: 1.1rem;
             font-weight: 600;
         }
-        
+
         .highlight-box p {
             margin: 0;
             color: #2d3748;
             line-height: 1.6;
         }
-        
+
         /* 체크리스트 테이블 */
         .checklist-table {
             width: 100%;
@@ -313,9 +336,9 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        
+
         .checklist-table th {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
@@ -323,17 +346,17 @@
             text-align: center;
             font-weight: 600;
         }
-        
+
         .checklist-table td {
             padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
         }
-        
+
         .checklist-table tr:hover {
             background: #f7fafc;
         }
-        
+
         /* 구분선 */
         .divider {
             height: 2px;
@@ -341,7 +364,7 @@
             margin: 3rem 0;
             border-radius: 1px;
         }
-        
+
         /* 액션 버튼들 */
         .action-buttons {
             background: #f8fafc;
@@ -351,7 +374,7 @@
             margin: 2rem 0 0 0;
             border: 1px solid #e2e8f0;
         }
-        
+
         .btn {
             display: inline-block;
             padding: 1rem 2rem;
@@ -363,92 +386,92 @@
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
-        
+
         .btn-secondary {
             background: linear-gradient(135deg, #4fd1c7 0%, #81e6d9 100%);
             color: white;
         }
-        
+
         .btn-secondary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
         }
-        
+
         .btn-outline {
             background: white;
             color: #667eea;
             border: 2px solid #667eea;
         }
-        
+
         .btn-outline:hover {
             background: #667eea;
             color: white;
             transform: translateY(-2px);
         }
-        
+
         /* 반응형 디자인 */
         @media (max-width: 768px) {
             .report-container {
                 margin: 1rem;
                 border-radius: 16px;
             }
-            
+
             .cover-page {
                 padding: 2rem 1.5rem;
             }
-            
+
             .cover-title {
                 font-size: 2rem;
             }
-            
+
             .content-section {
                 padding: 2rem 1.5rem;
             }
-            
+
             .section-header {
                 padding: 1rem;
                 margin: 2rem 0 1rem 0;
             }
-            
+
             .section-title {
                 font-size: 1.5rem;
             }
-            
+
             .info-card {
                 padding: 1.5rem;
             }
-            
+
             .pillars-table th,
             .pillars-table td {
                 padding: 0.75rem 0.5rem;
                 font-size: 0.9rem;
             }
-            
+
             .btn {
                 display: block;
                 margin: 0.5rem 0;
                 width: 100%;
             }
-            
+
             .mini-cal th,
             .mini-cal td {
                 padding: 8px 4px !important;
                 font-size: 12px !important;
             }
         }
-        
+
         /* 프린트 최적화 */
         @media print {
             * {
@@ -476,7 +499,8 @@
             }
 
             .content-section {
-                padding: 1rem 1rem !important;  /* 상하 여백 축소 */
+                padding: 1rem 1rem !important;
+                /* 상하 여백 축소 */
                 margin: 0 !important;
             }
 
@@ -521,33 +545,35 @@
                 font-size: 9px !important;
             }
         }
-        
+
         /* 추가 애니메이션 */
         .info-card {
             animation: fadeInUp 0.6s ease-out;
         }
-        
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         /* 스크롤 시 부드러운 효과 */
         .section-header {
             animation: slideInLeft 0.8s ease-out;
         }
-        
+
         @keyframes slideInLeft {
             from {
                 opacity: 0;
                 transform: translateX(-50px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -555,6 +581,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="report-container">
         <!-- 커버 페이지 -->
@@ -568,28 +595,28 @@
 
         <!-- 메인 콘텐츠 -->
         <div class="content-section">
-            
+
             <!-- 임원급 요약 정보 -->
             {% if executive_summary %}
             <div class="section-header">
                 <span class="section-icon">📊</span>
                 <h2 class="section-title">Executive Summary</h2>
             </div>
-            
+
             <div class="info-card">
-                {{ executive_summary }}
+                {{ executive_summary | safe }}
             </div>
             {% endif %}
 
             <div class="divider"></div>
-            
+
             <!-- 사주팔자 기본 정보 -->
             {% if pillars %}
             <div class="section-header">
                 <span class="section-icon">📅</span>
-                <h2 class="section-title">{{ user_name }}님의 사주팔자</h2>
+                <h2 class="section-title">{{ user_name | safe }}님의 사주팔자</h2>
             </div>
-            
+
             <div class="info-card">
                 <h3>🏛️ 사주 (四柱)</h3>
                 <table class="pillars-table">
@@ -609,7 +636,7 @@
                 <div class="highlight-box">
                     <h4>🎯 핵심 포인트</h4>
                     <p>일주 <strong>{{ pillars.day }}</strong>가 {{ user_name }}님의 본질적 성향을 나타냅니다.
-                    이를 중심으로 전체적인 운세 흐름을 파악할 수 있습니다.</p>
+                        이를 중심으로 전체적인 운세 흐름을 파악할 수 있습니다.</p>
                 </div>
             </div>
             {% endif %}
@@ -620,24 +647,27 @@
                 <span class="section-icon">⚖️</span>
                 <h2 class="section-title">오행 밸런스 분석</h2>
             </div>
-            
+
             <div class="balance-section">
                 <div class="balance-title">
                     <span>🌟</span>
                     <span>{{ user_name }}님의 오행 분포</span>
                 </div>
-                
+
                 <div class="chart-container">
                     <img src="{{ radar_base64 }}" alt="오행 밸런스 차트" style="width: 100%; height: auto;">
                 </div>
-                
+
                 <div class="info-card" style="margin-top: 2rem; text-align: left;">
                     <h3>📊 분석 해석</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
                         {% for element, count in elem_dict_kr.items() %}
-                        <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid 
+                        <div
+                            style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid 
                             {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
-                            <strong style="color: 
+                            <strong
+                                style="color: 
                                 {% if element == '목' %}#10b981{% elif element == '화' %}#ef4444{% elif element == '토' %}#f59e0b{% elif element == '금' %}#6b7280{% else %}#3b82f6{% endif %};">
                                 {{ element }}({{ element }})
                             </strong>
@@ -645,15 +675,15 @@
                             <br>
                             <small style="color: #6b7280; line-height: 1.4;">
                                 {% if element == '목' %}
-                                    성장, 창조, 유연성
+                                성장, 창조, 유연성
                                 {% elif element == '화' %}
-                                    열정, 활동성, 표현력
+                                열정, 활동성, 표현력
                                 {% elif element == '토' %}
-                                    안정, 신뢰, 포용력
+                                안정, 신뢰, 포용력
                                 {% elif element == '금' %}
-                                    결단, 정의, 완성
+                                결단, 정의, 완성
                                 {% else %}
-                                    지혜, 적응, 소통
+                                지혜, 적응, 소통
                                 {% endif %}
                             </small>
                         </div>
@@ -671,12 +701,13 @@
                 <span class="section-icon">📅</span>
                 <h2 class="section-title">2025년 월별 운세 달력</h2>
             </div>
-            
+
             <div class="calendar-section">
-                <h3 style="margin: 0 0 1.5rem 0; color: #4a5568; text-align: center;">🗓️ {{ user_name }}님의 2025년 맞춤 운세</h3>
-                
-                {{ calendar_html }}
-                
+                <h3 style="margin: 0 0 1.5rem 0; color: #4a5568; text-align: center;">🗓️ {{ user_name }}님의 2025년 맞춤 운세
+                </h3>
+
+                {{ calendar_html | safe }}
+
                 <div class="calendar-legend">
                     <h4 style="margin: 0 0 1rem 0; color: #22543d;">📖 운세 해석 가이드</h4>
                     <div style="text-align: center;">
@@ -686,7 +717,7 @@
                         <span class="legend-item legend-risk">■ 조심 - 보수적으로</span>
                     </div>
                     <p style="margin-top: 1rem; color: #22543d; font-size: 0.9rem; line-height: 1.6;">
-                        <strong>💡 활용법:</strong> 중요한 결정이나 새로운 시작을 계획할 때 이 달력을 참고하세요. 
+                        <strong>💡 활용법:</strong> 중요한 결정이나 새로운 시작을 계획할 때 이 달력을 참고하세요.
                         연인관계(Love), 재물운(Money), 직업운(Career) 세 영역을 종합적으로 고려하여 최적의 타이밍을 잡으실 수 있습니다.
                     </p>
                 </div>
@@ -701,9 +732,9 @@
                 <span class="section-icon">🌟</span>
                 <h2 class="section-title">운세 요약</h2>
             </div>
-            
+
             <div class="info-card">
-                {{ fortune_summary }}
+                {{ fortune_summary | safe }}
             </div>
             {% endif %}
 
@@ -715,9 +746,9 @@
                 <span class="section-icon">🧠</span>
                 <h2 class="section-title">AI 심층 분석</h2>
             </div>
-            
+
             <div class="info-card">
-                {{ analysis_result_html }}
+                {{ analysis_result_html | safe }}
             </div>
             {% endif %}
 
@@ -729,7 +760,7 @@
                 <span class="section-icon">🍀</span>
                 <h2 class="section-title">2025년 행운 키워드</h2>
             </div>
-            {{ keyword_html }}
+            {{ keyword_html | safe }}
             {% endif %}
 
             <div class="divider"></div>
@@ -740,7 +771,7 @@
                 <span class="section-icon">✅</span>
                 <h2 class="section-title">맞춤형 실천 가이드</h2>
             </div>
-            
+
             <div class="info-card">
                 <h3>🎯 30일 실천 체크리스트</h3>
                 <table class="checklist-table">
@@ -757,9 +788,10 @@
                     </tr>
                     {% endfor %}
                 </table>
-                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #f0fff4; border-radius: 12px; border-left: 4px solid #48bb78;">
+                <div
+                    style="margin-top: 1.5rem; padding: 1.5rem; background: #f0fff4; border-radius: 12px; border-left: 4px solid #48bb78;">
                     <p style="margin: 0; font-size: 0.9rem; color: #22543d; line-height: 1.6;">
-                        <strong>💡 활용 팁:</strong> 이 리포트를 인쇄하여 체크박스를 하나씩 체크해보세요! 
+                        <strong>💡 활용 팁:</strong> 이 리포트를 인쇄하여 체크박스를 하나씩 체크해보세요!
                         작은 실천이 큰 변화를 만듭니다. 매주 점검하며 자신만의 성장 스토리를 만들어가세요. 🌟
                     </p>
                 </div>
@@ -769,25 +801,26 @@
             <!-- 웹 전용 액션 버튼들 -->
             <div class="action-buttons">
                 <h3 style="margin: 0 0 1.5rem 0; color: #4a5568;">리포트를 어떻게 활용하시겠어요?</h3>
-                
+
                 <a href="/order/mypage" class="btn btn-primary">
                     📋 구매 내역 확인
                 </a>
-                
+
                 <button id="print-btn" class="btn btn-secondary">
                     🖨️ 인쇄하기
                 </button>
-                
+
                 <a href="/saju/page1" class="btn btn-outline">
                     🔮 새로운 사주 보기
                 </a>
-                
-                <div style="margin-top: 1.5rem; padding: 1.5rem; background: #edf2f7; border-radius: 12px; border-left: 4px solid #667eea;">
+
+                <div
+                    style="margin-top: 1.5rem; padding: 1.5rem; background: #edf2f7; border-radius: 12px; border-left: 4px solid #667eea;">
                     <small style="color: #2d3748; display: block; margin-bottom: 0.5rem;">
                         <strong>💡 활용 팁:</strong>
                     </small>
                     <small style="color: #4a5568; line-height: 1.6;">
-                        이 리포트를 인쇄해서 보관하시거나, 중요한 결정을 내릴 때 참고자료로 활용해보세요. 
+                        이 리포트를 인쇄해서 보관하시거나, 중요한 결정을 내릴 때 참고자료로 활용해보세요.
                         가족이나 친구들과 함께 보시면 더욱 재미있을 거예요!
                     </small>
                 </div>
@@ -795,9 +828,10 @@
         </div>
     </div>
     <script>
-    document.getElementById('print-btn').addEventListener('click', () => {
-        window.print();
-    });
+        document.getElementById('print-btn').addEventListener('click', () => {
+            window.print();
+        });
     </script>
 </body>
+
 </html>
