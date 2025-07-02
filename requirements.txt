@@ -29,4 +29,3 @@ fpdf
 requests
 matplotlib
 pandas
-bleach==6.1.0

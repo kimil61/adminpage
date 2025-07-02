@@ -35,17 +35,6 @@ logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# HTML sanitization settings
-ALLOWED_TAGS = list(bleach.sanitizer.ALLOWED_TAGS) + [
-    "p", "br", "span", "h1", "h2", "h3", "h4", "h5", "h6",
-    "img", "table", "thead", "tbody", "tr", "th", "td", "div", "hr"
-]
-ALLOWED_ATTRIBUTES = {
-    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
-    "img": ["src", "alt", "title"],
-    "a": ["href", "title", "rel"],
-    "*": ["class", "id", "style"],
-}
 
 def hex_to_rgb(hex_code: str):
     hex_code = hex_code.lstrip('#')
