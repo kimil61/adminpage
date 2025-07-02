@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from app.models import Order, SajuAnalysisCache, SajuUser
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
-import bleach
 from markdown import markdown
 import re
 import html as html_module
