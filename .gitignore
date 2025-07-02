@@ -147,7 +147,8 @@ logs/
 ehthumbs.db
 Thumbs.db
 
-
+# 삼명통회 db 는 우선 로컬에만.
+saju_data_backup.sql
 
 # 프롬프트
 improved_saju_prompt_v*.md
