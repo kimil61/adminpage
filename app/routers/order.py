@@ -10,6 +10,11 @@ from app.exceptions import (
     PermissionDeniedError,
     InternalServerError,
 )
+from app.utils import (
+    generate_live_report_for_user,
+    generate_live_report_from_db,
+    get_flashed_messages
+)
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -381,7 +386,8 @@ async def order_mypage(
     return templates.TemplateResponse("order/mypage.html", {
         "request": request,
         "orders": orders,
-        "user": user
+        "user": user,
+        "get_flashed_messages": lambda req: get_flashed_messages(req)
     })
 
 def format_saju_key_for_display(saju_key: str) -> str:
@@ -637,7 +643,6 @@ async def view_live_report(
 
     try:
         # ✅ utils.py의 새로운 함수 사용 - 권한 확인 포함
-        from app.utils import generate_live_report_for_user
 
         html_content = generate_live_report_for_user(
             order_id=report_id,
@@ -679,7 +684,6 @@ async def dev_view_report(
     
     try:
         # ✅ DB에서 직접 조회하는 방식 사용
-        from app.utils import generate_live_report_from_db
         
         html_content = generate_live_report_from_db(order_id, db)
         
