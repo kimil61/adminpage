@@ -1036,7 +1036,7 @@ DELAY_BETWEEN_REQUESTS = os.getenv('DELAY_BETWEEN_REQUESTS', 2)  # 요청 간 �
 def load_prompt():
     """improved_saju_prompt_v2.md 파일에서 프롬프트 로드"""
     try:
-        with open('improved_saju_prompt_v4.md', 'r', encoding='utf-8') as f:
+        with open('improved_saju_prompt_v5.md', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         print("❌ improved_saju_prompt_v4.md 파일을 찾을 수 없습니다.")
@@ -1113,7 +1113,7 @@ async def ai_sajupalja_with_chatgpt(prompt: str, content: str) -> str:
             ],
             # 새 프롬프트(8섹션 상세 분석)에 최적화된 설정
             temperature=0.4,      # 창의적 인사이트를 위해 약간 상향 (0.3→0.4)
-            max_tokens=6000,      # 8섹션 상세 분석을 위해 증가 (4000→6000)
+            max_tokens=8000,      # 8섹션 상세 분석을 위해 증가 (4000→6000)
             top_p=0.9,           # 일관성 있는 품질
             frequency_penalty=0.15, # 8섹션 반복 방지 강화 (0.1→0.15)
             presence_penalty=0.2,  # 다양한 표현과 창의적 인사이트 (0.1→0.2)
