@@ -4,352 +4,443 @@
 
 {% block extra_head %}
 <style>
-    /* 히어로 섹션 */
-    .hero {
-        text-align: center;
-        padding: 4rem 0;
-        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-        margin: 0 -20px;
-    }
-    
-    .hero-title {
-        font-size: clamp(2.5rem, 5vw, 4rem);
-        font-weight: 800;
-        color: #2d3748;
-        margin-bottom: 1.5rem;
-        line-height: 1.2;
-    }
-    
-    .hero-subtitle {
-        font-size: 1.25rem;
-        color: #4a5568;
-        margin-bottom: 2rem;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .hero-cta {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-bottom: 3rem;
-    }
-    
-    .primary-button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-    
-    .primary-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-    
-    .secondary-button {
-        background: white;
-        color: #4a5568;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        border: 2px solid #e2e8f0;
-    }
-    
-    .secondary-button:hover {
-        background: #f7fafc;
-        border-color: #cbd5e0;
-        transform: translateY(-2px);
-        color: #4a5568;
-    }
-    
-    /* 특징 섹션 */
-    .features {
-        padding: 4rem 0;
-    }
-    
-    .section-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-align: center;
-        color: #2d3748;
-        margin-bottom: 1rem;
-    }
-    
-    .section-subtitle {
-        font-size: 1.125rem;
-        color: #4a5568;
-        text-align: center;
-        margin-bottom: 3rem;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin-bottom: 3rem;
-    }
-    
-    .feature-card {
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    }
-    
-    .feature-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        display: block;
-    }
-    
-    .feature-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 1rem;
-    }
-    
-    .feature-description {
-        color: #4a5568;
-        line-height: 1.6;
-    }
-    
-    /* 통계 섹션 */
-    .stats {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 4rem 0;
-        margin: 4rem -20px;
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 2rem;
-        text-align: center;
-    }
-    
-    .stat-number {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-label {
-        font-size: 1.125rem;
-        opacity: 0.9;
-    }
-    
-    /* CTA 섹션 */
-    .cta-section {
-        background: #f7fafc;
-        padding: 4rem 0;
-        margin: 4rem -20px 0;
-        text-align: center;
-    }
-    
-    .cta-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #2d3748;
-        margin-bottom: 1rem;
-    }
-    
-    .cta-description {
-        font-size: 1.125rem;
-        color: #4a5568;
-        margin-bottom: 2rem;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    /* 반응형 */
-    @media (max-width: 768px) {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
         .hero {
-            padding: 2rem 0;
-            margin: 0 -10px;
-        }
-        
-        .hero-cta {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: white;
+            min-height: 100vh;
+            display: flex;
             flex-direction: column;
-            align-items: center;
+            justify-content: center;
+            position: relative;
         }
-        
-        .primary-button,
-        .secondary-button {
-            width: 100%;
-            max-width: 300px;
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="grad"><stop offset="0%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23grad)"/><circle cx="80" cy="40" r="1.5" fill="url(%23grad)"/><circle cx="40" cy="70" r="1" fill="url(%23grad)"/><circle cx="90" cy="80" r="2.5" fill="url(%23grad)"/><circle cx="10" cy="60" r="1.8" fill="url(%23grad)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-20px) translateX(10px); }
+            100% { transform: translateY(0px) translateX(0px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            animation: slideUp 1s ease-out 0.3s both;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem auto;
+            max-width: 600px;
+            animation: slideUp 1s ease-out 0.6s both;
+        }
+
+        .stat {
             text-align: center;
         }
-        
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .cta-container {
+            margin-top: 3rem;
+            animation: slideUp 1s ease-out 0.9s both;
+        }
+
+        .cta-primary {
+            display: inline-block;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.6);
+            color: white;
+            text-decoration: none;
+        }
+
+        .cta-secondary {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .features {
+            background: white;
+            padding: 4rem 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
         .feature-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
         }
-        
+
         .feature-card {
-            padding: 1.5rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
         }
-        
-        .stats {
-            margin: 2rem -10px;
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
-        
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
         }
-        
-        .cta-section {
-            margin: 2rem -10px 0;
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
         }
-    }
-</style>
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .testimonials {
+            background: #f8f9fa;
+            padding: 4rem 2rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .testimonial {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .rating {
+            color: #FFD700;
+            margin-bottom: 1rem;
+        }
+
+        .urgency-section {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .urgency-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .urgency-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .feature-grid,
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-    <!-- 히어로 섹션 -->
-    <section class="hero">
-        <h1 class="hero-title">
-            🔮 AI와 전통이 만나는<br>
-            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">새로운 사주팔자</span>
-        </h1>
-        
-        <p class="hero-subtitle">
-            천년의 지혜와 최신 인공지능 기술로 더욱 정확하고 깊이 있는 운세를 만나보세요
-        </p>
-        
-        <div class="hero-cta">
-            <a href="/saju/page1" class="primary-button">✨ 무료로 시작하기</a>
-            <a href="/saju/wiki" class="secondary-button">📖 사주 배우기</a>
-        </div>
-    </section>
-
-    <!-- 특징 섹션 -->
-    <section class="features">
-        <h2 class="section-title">왜 AI 사주팔자인가요?</h2>
-        <p class="section-subtitle">
-            전통 명리학의 깊은 지혜를 AI 기술로 현대적으로 재해석했습니다
-        </p>
-        
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">🤖</span>
-                <h3 class="feature-title">AI 기반 분석</h3>
-                <p class="feature-description">
-                    최신 AI 기술로 수천 가지 변수를 동시에 분석하여 더욱 정확한 사주 해석을 제공합니다.
-                </p>
+    <div class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                🔮 1초만에 내 운명을<br>
+                <span style="background: linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI가 정확히 분석</span>
+            </h1>
+            
+            <p class="hero-subtitle">
+                천년의 명리학 지혜 + 최신 AI가 만나 더욱 정확하고 깊이 있는 사주 해석을 제공합니다
+            </p>
+            
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">50,000+</div>
+                    <div class="stat-label">이미 확인한 사람들</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">만족도</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">1초</div>
+                    <div class="stat-label">분석 시간</div>
+                </div>
             </div>
             
-            <div class="feature-card">
-                <span class="feature-icon">📚</span>
-                <h3 class="feature-title">전통 명리학</h3>
-                <p class="feature-description">
-                    수천 년간 검증된 전통 명리학 이론을 기반으로 신뢰할 수 있는 결과를 제공합니다.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3 class="feature-title">즉석 분석</h3>
-                <p class="feature-description">
-                    생년월일시만 입력하면 몇 초 만에 상세한 사주 분석 결과를 확인할 수 있습니다.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <span class="feature-icon">💎</span>
-                <h3 class="feature-title">프리미엄 품질</h3>
-                <p class="feature-description">
-                    전문가 수준의 분석을 누구나 쉽게 이용할 수 있도록 사용자 친화적으로 설계했습니다.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <span class="feature-icon">🔒</span>
-                <h3 class="feature-title">개인정보 보호</h3>
-                <p class="feature-description">
-                    모든 개인정보는 암호화되어 안전하게 보호되며, 분석 후 즉시 삭제됩니다.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <span class="feature-icon">📱</span>
-                <h3 class="feature-title">모든 기기 지원</h3>
-                <p class="feature-description">
-                    PC, 태블릿, 스마트폰 어디서나 편리하게 사주 분석을 받을 수 있습니다.
-                </p>
-            </div>
-        </div>
-    </section>
-</div>
-
-<!-- 통계 섹션 -->
-<section class="stats">
-    <div class="container">
-        <div class="stats-grid">
-            <div>
-                <div class="stat-number">50,000+</div>
-                <div class="stat-label">누적 분석 건수</div>
-            </div>
-            <div>
-                <div class="stat-number">98%</div>
-                <div class="stat-label">고객 만족도</div>
-            </div>
-            <div>
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">언제든 이용 가능</div>
-            </div>
-            <div>
-                <div class="stat-number">5초</div>
-                <div class="stat-label">평균 분석 시간</div>
+            <div class="cta-container">
+                <a href="/saju/page1" class="cta-primary pulse">✨ 지금 무료로 확인하기</a>
+                <a href="/saju/wiki" class="cta-secondary">📚 사주 알아보기</a>
             </div>
         </div>
     </div>
-</section>
 
-<!-- 최종 CTA 섹션 -->
-<section class="cta-section">
-    <div class="container">
-        <h2 class="cta-title">지금 바로 당신의 운명을 확인해보세요</h2>
-        <p class="cta-description">
-            무료로 기본 사주 분석을 받아보고, AI와 전통의 만남을 경험해보세요
-        </p>
-        
-        <div class="hero-cta">
-            <a href="/saju" class="primary-button">🔮 내 사주 보러가기</a>
-            <a href="/blog" class="secondary-button">📚 더 알아보기</a>
+    <div class="features">
+        <div class="container">
+            <h2 class="section-title">왜 우리 AI 사주인가요?</h2>
+            <p class="section-subtitle">
+                다른 곳과는 완전히 다른 차별화된 분석을 경험해보세요
+            </p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <h3 class="feature-title">8가지 상세 분석</h3>
+                    <p class="feature-description">
+                        성격, 직업운, 인간관계, 재물운, 건강운 등 8가지 영역을 심층 분석
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">📚</span>
+                    <h3 class="feature-title">전통 고서 기반</h3>
+                    <p class="feature-description">
+                        자평진전, 삼명통회 등 검증된 명리학 고서의 원리를 AI가 현대적으로 해석
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🚀</span>
+                    <h3 class="feature-title">GPT-4o 최신 AI</h3>
+                    <p class="feature-description">
+                        최신 AI 기술로 수천 가지 변수를 동시에 분석하여 정확도 극대화
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">💎</span>
+                    <h3 class="feature-title">개인 맞춤형</h3>
+                    <p class="feature-description">
+                        천편일률적 해석이 아닌, 당신만을 위한 개인화된 전략과 조언 제공
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <h3 class="feature-title">즉시 확인</h3>
+                    <p class="feature-description">
+                        생년월일시만 입력하면 몇 초 만에 전문가급 분석 결과 확인
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🔒</span>
+                    <h3 class="feature-title">완벽한 보안</h3>
+                    <p class="feature-description">
+                        개인정보는 암호화 처리되며 분석 후 즉시 삭제로 안전 보장
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
-</section>
 
-<!-- 최근 블로그 포스트 섹션 (기존 컨텐츠 유지) -->
+    <div class="testimonials">
+        <div class="container">
+            <h2 class="section-title">실제 이용자 후기</h2>
+            <p class="section-subtitle">이미 많은 분들이 정확한 분석에 놀라고 계세요</p>
+            
+            <div class="testimonial-grid">
+                <div class="testimonial">
+                    <div class="rating">⭐⭐⭐⭐⭐</div>
+                    <p class="testimonial-text">
+                        "다른 곳에서는 뻔한 이야기만 하는데, 여기는 정말 나만의 구체적인 전략을 알려줘서 놀랐어요!"
+                    </p>
+                    <p class="testimonial-author">- 김○○님 (직장인, 32세)</p>
+                </div>
+                
+                <div class="testimonial">
+                    <div class="rating">⭐⭐⭐⭐⭐</div>
+                    <p class="testimonial-text">
+                        "창업을 고민하고 있었는데, AI 분석 결과를 보고 확신을 얻었어요. 정말 정확해요!"
+                    </p>
+                    <p class="testimonial-author">- 박○○님 (창업준비생, 28세)</p>
+                </div>
+                
+                <div class="testimonial">
+                    <div class="rating">⭐⭐⭐⭐⭐</div>
+                    <p class="testimonial-text">
+                        "8가지 상세 분석이 너무 도움됐어요. 특히 건강운 부분에서 주의할 점을 미리 알게 되어 감사해요."
+                    </p>
+                    <p class="testimonial-author">- 이○○님 (주부, 35세)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="urgency-section">
+        <div class="container">
+            <h2 class="urgency-title">🎁 지금 시작하면 무료!</h2>
+            <p class="urgency-text">
+                기본 사주 분석은 완전 무료로 제공됩니다<br>
+                더 상세한 8가지 분석은 단 9,900원에 이용 가능해요
+            </p>
+            <a href="/saju/page1" class="cta-primary" style="font-size: 1.4rem; padding: 1.5rem 4rem;">
+                🔮 지금 바로 내 운명 확인하기
+            </a>
+        </div>
+    </div>
+
+<!-- 최근 블로그 포스트 섹션 (기존 컨텐츠 유지)
 {% if recent_posts %}
 <div class="container" style="padding: 4rem 0;">
     <h2 class="section-title">📚 최근 블로그 포스트</h2>
@@ -384,6 +475,6 @@
 <div style="height: 1px; background: linear-gradient(to right, #e2e8f0, #cbd5e0); margin: 3rem 0;"></div>    <div class="text-center mt-4">
         <a href="/blog" class="secondary-button">📚 모든 포스트 보기</a>
     </div>
-</div>
+</div> -->
 {% endif %}
 {% endblock %}
