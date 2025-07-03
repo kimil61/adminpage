@@ -12,7 +12,7 @@ from decimal import Decimal
 import logging
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # Logging
 
 def setup_database():
     """데이터베이스 테이블 생성 및 초기 데이터 설정"""
@@ -27,7 +27,7 @@ def setup_database():
     
     db = SessionLocal()
     
-    try:
+    try: # Error Handling
         # 2. 기본 사용자 생성
         create_users(db)
         
@@ -73,7 +73,7 @@ def create_users(db):
     print("\n👥 사용자 계정 생성 중...")
     
     users_data = [
-        {
+        {   # 샘플 유저들
             "username": "admin",
             "email": "admin@fortune.com",
             "password": "admin123",
@@ -102,7 +102,7 @@ def create_users(db):
             "points": 800
         }
     ]
-    
+
     for user_data in users_data:
         existing_user = db.query(User).filter(User.username == user_data["username"]).first()
         if not existing_user:
@@ -117,7 +117,7 @@ def create_users(db):
             print(f"   ✅ {user_data['username']} 계정 생성됨")
 
 def create_categories(db):
-    """블로그 카테고리 생성"""
+    """블로그 카테고리 생성""" # 블로그 카테고리
     print("\n📂 카테고리 생성 중...")
     
     categories_data = [
@@ -135,7 +135,7 @@ def create_categories(db):
             print(f"   ✅ {cat_data['name']} 카테고리 생성됨")
 
 def create_subscriptions(db):
-    """구독 플랜 및 샘플 구독자 생성"""
+    """구독 플랜 및 샘플 구독자 생성""" # 구독 플랜 샘플
     print("\n💎 구독 서비스 설정 중...")
     
     # 프리미엄 사용자를 구독자로 설정
@@ -164,7 +164,7 @@ def create_products(db):
     print("\n🛒 상품 생성 중...")
     
     # 기본 상품들
-    products_data = [
+    products_data = [ # 데이터 베이스 상품들
         {
             "name": "무료 기본 운세",
             "description": "간단한 사주 기본 분석 서비스",
@@ -242,7 +242,7 @@ def create_products(db):
     
     for product_data in products_data:
         existing_product = db.query(Product).filter(Product.code == product_data["code"]).first()
-        if not existing_product:
+        if not existing_product: # product 생성
             product = Product(**product_data)
             db.add(product)
             db.flush()  # ID를 얻기 위해
@@ -281,7 +281,7 @@ def get_analysis_type(code):
         return "detailed"
 
 def create_fortune_packages(db):
-    """행운 충전 패키지 생성"""
+    """행운 충전 패키지 생성""" # 행운 충전
     print("\n⭐ 행운 충전 패키지 생성 중...")
     
     packages_data = [
@@ -332,7 +332,7 @@ def create_fortune_packages(db):
     
     for package_data in packages_data:
         existing_package = db.query(FortunePackage).filter(FortunePackage.name == package_data["name"]).first()
-        if not existing_package:
+        if not existing_package: # 패키지 생성
             package = FortunePackage(**package_data)
             db.add(package)
             print(f"   ✅ {package_data['name']} 패키지 생성됨")
@@ -340,7 +340,7 @@ def create_fortune_packages(db):
 def create_service_costs(db):
     """서비스별 행운 비용 설정"""
     print("\n💰 서비스별 행운 비용 설정 중...")
-    
+
     service_costs_data = [
         {
             "service_name": "free_basic",
@@ -381,7 +381,7 @@ def create_service_costs(db):
     ]
     
     for cost_data in service_costs_data:
-        existing_cost = db.query(ServiceFortuneCost).filter(ServiceFortuneCost.service_name == cost_data["service_name"]).first()
+        existing_cost = db.query(ServiceFortuneCost).filter(ServiceFortuneCost.service_name == cost_data["service_name"]).first() # 서비스 비용
         if not existing_cost:
             service_cost = ServiceFortuneCost(**cost_data)
             db.add(service_cost)
@@ -389,7 +389,7 @@ def create_service_costs(db):
 
 def setup_initial_fortune_points(db):
     """사용자별 행운 포인트 초기 설정"""
-    print("\n🎲 행운 포인트 초기 설정 중...")
+    print("\n🎲 행운 포인트 초기 설정 중...") # 행운 포인트
     
     users = db.query(User).all()
     
@@ -425,7 +425,7 @@ def setup_initial_fortune_points(db):
 
 def create_referral_codes(db):
     """추천 코드 생성"""
-    print("\n🔗 추천 코드 생성 중...")
+    print("\n🔗 추천 코드 생성 중...") # 추천코드 생성
     
     users = db.query(User).filter(User.is_admin == False).all()
     
@@ -448,7 +448,7 @@ def create_referral_codes(db):
 
 def create_sample_posts(db):
     """샘플 포스트 생성"""
-    print("\n📝 샘플 포스트 생성 중...")
+    print("\n📝 샘플 포스트 생성 중...") # 샘플 포스트
     
     admin = db.query(User).filter(User.username == "admin").first()
     saju_category = db.query(Category).filter(Category.slug == "saju").first()
@@ -505,7 +505,7 @@ def create_sample_posts(db):
 
 def create_sample_reviews(db):
     """샘플 리뷰 생성"""
-    print("\n⭐ 샘플 리뷰 생성 중...")
+    print("\n⭐ 샘플 리뷰 생성 중...") # 샘플 리뷰
     
     user1 = db.query(User).filter(User.username == "user1").first()
     user2 = db.query(User).filter(User.username == "user2").first()
@@ -555,7 +555,7 @@ def create_sample_reviews(db):
                 print(f"   ✅ {review_data['title']} 리뷰 생성됨")
 
 def print_success_summary():
-    """설정 완료 요약 출력"""
+    """설정 완료 요약 출력""" # 완료 요약
     print("\n" + "=" * 60)
     print("🎉 Fortune Commerce 데이터베이스 초기화 완료!")
     print("=" * 60)
