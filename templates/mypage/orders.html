@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}주문/결제 내역{% endblock %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h1 class="text-2xl font-bold mb-4">주문/결제 내역</h1>
+  <table class="min-w-full bg-white rounded shadow">
+    <thead>
+      <tr>
+        <th class="py-2 px-4">주문번호</th>
+        <th class="py-2 px-4">상품명</th>
+        <th class="py-2 px-4">결제금액</th>
+        <th class="py-2 px-4">상태</th>
+        <th class="py-2 px-4">주문일시</th>
+        <th class="py-2 px-4">액션</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td class="py-2 px-4">{{ order.id }}</td>
+        <td class="py-2 px-4">{{ order.product_name }}</td>
+        <td class="py-2 px-4">{{ order.amount }}원</td>
+        <td class="py-2 px-4">{{ order.status }}</td>
+        <td class="py-2 px-4">{{ order.created_at }}</td>
+        <td class="py-2 px-4">
+          {% if order.status == 'paid' %}
+            <a href="/shop/purchase/{{ order.id }}/report" 
+               class="text-blue-600 hover:text-blue-800 underline">리포트 보기</a>
+          {% else %}
+            <span class="text-gray-400">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="py-4 text-center text-gray-400">주문 내역이 없습니다.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} 

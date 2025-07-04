@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}추천인 마케팅 도구{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">추천인 마케팅 도구</h1>
+                <p class="text-gray-600">친구를 초대할 수 있는 다양한 마케팅 도구를 활용하세요</p>
+            </div>
+            <a href="/referral/dashboard" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-arrow-left"></i> 대시보드로
+            </a>
+        </div>
+    </div>
+
+    {% if not referral_info.has_referral %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-yellow-900">추천인 코드가 필요합니다</h3>
+                <p class="text-yellow-700">마케팅 도구를 사용하려면 먼저 추천인 코드를 생성해주세요.</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="/referral/dashboard" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">
+                추천인 코드 생성하기
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <!-- 추천인 코드 공유 -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">추천인 코드 공유</h2>
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="bg-white border-2 border-blue-300 rounded-lg px-4 py-3 flex-1">
+                    <span class="text-2xl font-mono font-bold text-blue-600" id="referralCode">{{ referral_info.referral_code }}</span>
+                </div>
+                <button onclick="copyReferralCode()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-copy"></i> 복사
+                </button>
+            </div>
+            <p class="text-sm text-gray-600">이 코드를 친구에게 공유하세요!</p>
+        </div>
+    </div>
+
+    <!-- 마케팅 도구들 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 직접 링크 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-link text-blue-600"></i> 직접 링크
+            </h3>
+            <p class="text-gray-600 mb-4">친구에게 직접 전달할 수 있는 링크입니다.</p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+                <span class="text-sm font-mono text-gray-700" id="directLink">{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}</span>
+            </div>
+            <button onclick="copyDirectLink()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-copy"></i> 링크 복사
+            </button>
+        </div>
+
+        <!-- QR 코드 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-qrcode text-green-600"></i> QR 코드
+            </h3>
+            <p class="text-gray-600 mb-4">스마트폰으로 스캔하여 바로 접속할 수 있습니다.</p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 flex justify-center">
+                <div id="qrcode" class="w-32 h-32"></div>
+            </div>
+            <button onclick="downloadQRCode()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                <i class="fas fa-download"></i> QR 코드 다운로드
+            </button>
+        </div>
+
+        <!-- 소셜 미디어 공유 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-share-alt text-purple-600"></i> 소셜 미디어 공유
+            </h3>
+            <p class="text-gray-600 mb-4">소셜 미디어에 추천인 코드를 공유하세요.</p>
+            <div class="space-y-3">
+                <button onclick="shareToKakao()" class="w-full bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500">
+                    <i class="fas fa-comment"></i> 카카오톡 공유
+                </button>
+                <button onclick="shareToFacebook()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fab fa-facebook"></i> 페이스북 공유
+                </button>
+                <button onclick="shareToTwitter()" class="w-full bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500">
+                    <i class="fab fa-twitter"></i> 트위터 공유
+                </button>
+            </div>
+        </div>
+
+        <!-- 이메일 템플릿 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-envelope text-red-600"></i> 이메일 템플릿
+            </h3>
+            <p class="text-gray-600 mb-4">이메일로 친구를 초대할 수 있는 템플릿입니다.</p>
+            <div class="space-y-3">
+                <button onclick="copyEmailTemplate()" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    <i class="fas fa-copy"></i> 이메일 템플릿 복사
+                </button>
+                <button onclick="openEmailClient()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    <i class="fas fa-envelope-open"></i> 이메일 클라이언트 열기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공유 메시지 템플릿 -->
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-comment-dots text-indigo-600"></i> 공유 메시지 템플릿
+        </h3>
+        <p class="text-gray-600 mb-4">다양한 상황에 맞는 공유 메시지를 준비했습니다.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 친구 초대 메시지 -->
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">친구 초대 메시지</h4>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-gray-700" id="friendMessage">
+안녕하세요! 🎉
+
+저희 사이트에서 정말 유용한 서비스를 이용하고 있는데, 
+친구분도 함께 이용하시면 좋을 것 같아서 추천드려요!
+
+제 추천인 코드로 가입하시면 바로 1,000포인트를 받으실 수 있어요.
+추천인 코드: {{ referral_info.referral_code }}
+
+가입 링크: {{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}
+
+함께 이용해보세요! 😊
+                    </p>
+                </div>
+                <button onclick="copyFriendMessage()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                    <i class="fas fa-copy"></i> 메시지 복사
+                </button>
+            </div>
+
+            <!-- SNS 공유 메시지 -->
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">SNS 공유 메시지</h4>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-gray-700" id="snsMessage">
+🌟 친구 추천 이벤트! 🌟
+
+정말 좋은 서비스를 발견했어요!
+제 추천인 코드로 가입하시면 바로 1,000포인트 지급!
+
+추천인 코드: {{ referral_info.referral_code }}
+
+가입 링크: {{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}
+
+#추천인 #포인트 #이벤트
+                    </p>
+                </div>
+                <button onclick="copySNSMessage()" class="w-full bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700">
+                    <i class="fas fa-copy"></i> 메시지 복사
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보상 정책 안내 -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-4">
+            <i class="fas fa-gift"></i> 추천인 보상 정책
+        </h3>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-medium text-blue-900 mb-2">가입 보상</h4>
+                <ul class="text-sm text-blue-800 space-y-1">
+                    <li>• 친구가 추천인 코드로 가입 시: <strong>1,000P</strong></li>
+                    <li>• 즉시 지급됩니다</li>
+                    <li>• 1인당 1회만 지급됩니다</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-blue-900 mb-2">구매 보상</h4>
+                <ul class="text-sm text-blue-800 space-y-1">
+                    <li>• 추천받은 친구가 구매 시: <strong>구매금액의 5%</strong></li>
+                    <li>• 최대 5,000P까지 지급</li>
+                    <li>• 월 1회까지 지급됩니다</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- QR 코드 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<script>
+// 추천인 코드 복사
+function copyReferralCode() {
+    const code = document.getElementById('referralCode').textContent;
+    copyToClipboard(code, '추천인 코드가 클립보드에 복사되었습니다!');
+}
+
+// 직접 링크 복사
+function copyDirectLink() {
+    const link = document.getElementById('directLink').textContent;
+    copyToClipboard(link, '직접 링크가 클립보드에 복사되었습니다!');
+}
+
+// 친구 메시지 복사
+function copyFriendMessage() {
+    const message = document.getElementById('friendMessage').textContent;
+    copyToClipboard(message, '친구 초대 메시지가 클립보드에 복사되었습니다!');
+}
+
+// SNS 메시지 복사
+function copySNSMessage() {
+    const message = document.getElementById('snsMessage').textContent;
+    copyToClipboard(message, 'SNS 공유 메시지가 클립보드에 복사되었습니다!');
+}
+
+// 이메일 템플릿 복사
+function copyEmailTemplate() {
+    const subject = '추천인 초대 - 정말 좋은 서비스를 발견했어요!';
+    const body = `안녕하세요!
+
+정말 유용한 서비스를 이용하고 있는데, 친구분도 함께 이용하시면 좋을 것 같아서 추천드려요!
+
+제 추천인 코드로 가입하시면 바로 1,000포인트를 받으실 수 있어요.
+
+추천인 코드: {{ referral_info.referral_code }}
+가입 링크: {{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}
+
+함께 이용해보세요!
+
+감사합니다.`;
+
+    const emailContent = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    copyToClipboard(emailContent, '이메일 템플릿이 클립보드에 복사되었습니다!');
+}
+
+// 이메일 클라이언트 열기
+function openEmailClient() {
+    const subject = '추천인 초대 - 정말 좋은 서비스를 발견했어요!';
+    const body = `안녕하세요!
+
+정말 유용한 서비스를 이용하고 있는데, 친구분도 함께 이용하시면 좋을 것 같아서 추천드려요!
+
+제 추천인 코드로 가입하시면 바로 1,000포인트를 받으실 수 있어요.
+
+추천인 코드: {{ referral_info.referral_code }}
+가입 링크: {{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}
+
+함께 이용해보세요!
+
+감사합니다.`;
+
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// 소셜 미디어 공유
+function shareToKakao() {
+    const text = `🌟 친구 추천 이벤트! 🌟\n\n정말 좋은 서비스를 발견했어요!\n제 추천인 코드로 가입하시면 바로 1,000포인트 지급!\n\n추천인 코드: {{ referral_info.referral_code }}\n가입 링크: {{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: '추천인 초대',
+            text: text,
+            url: '{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}'
+        });
+    } else {
+        copyToClipboard(text, '카카오톡 공유 메시지가 클립보드에 복사되었습니다!');
+    }
+}
+
+function shareToFacebook() {
+    const url = '{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}';
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+}
+
+function shareToTwitter() {
+    const text = '🌟 친구 추천 이벤트! 제 추천인 코드로 가입하시면 1,000포인트 지급!';
+    const url = '{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}';
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+}
+
+// QR 코드 생성
+function generateQRCode() {
+    const link = '{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}';
+    QRCode.toCanvas(document.getElementById('qrcode'), link, {
+        width: 128,
+        margin: 2
+    }, function (error) {
+        if (error) console.error(error);
+    });
+}
+
+// QR 코드 다운로드
+function downloadQRCode() {
+    const link = '{{ request.base_url }}auth/register?ref={{ referral_info.referral_code }}';
+    QRCode.toDataURL(link, {
+        width: 256,
+        margin: 2
+    }, function (error, url) {
+        if (error) {
+            console.error(error);
+            return;
+        }
+        
+        const a = document.createElement('a');
+        a.download = 'referral-qr-code.png';
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+}
+
+// 클립보드 복사 유틸리티
+function copyToClipboard(text, message) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert(message);
+    }).catch(() => {
+        // 폴백: 텍스트 선택
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert(message);
+    });
+}
+
+// 페이지 로드 시 QR 코드 생성
+document.addEventListener('DOMContentLoaded', function() {
+    {% if referral_info.has_referral %}
+    generateQRCode();
+    {% endif %}
+});
+</script>
+{% endblock %} 

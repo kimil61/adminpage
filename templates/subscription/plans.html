@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}구독 플랜 - 운세 커머스{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">구독 플랜</h1>
+        <p class="text-xl text-gray-600">매월 정기적으로 운세 분석을 받아보세요</p>
+    </div>
+
+    <!-- 현재 구독 상태 -->
+    {% if current_subscription %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900">현재 구독 중</h3>
+                <p class="text-blue-700">{{ current_subscription.plan_type|title }} 플랜</p>
+                <p class="text-sm text-blue-600">다음 결제일: {{ current_subscription.next_billing_date.strftime('%Y년 %m월 %d일') }}</p>
+            </div>
+            <a href="/subscription/dashboard" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                대시보드 보기
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 구독 플랜 카드 -->
+    <div class="grid md:grid-cols-3 gap-8 mb-12">
+        {% for plan_key, plan in plans.items() %}
+        <div class="bg-white rounded-lg shadow-lg border-2 {% if plan_key == 'premium' %}border-purple-500{% else %}border-gray-200{% endif %} p-8 relative">
+            {% if plan_key == 'premium' %}
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span class="bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">인기</span>
+            </div>
+            {% endif %}
+            
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
+                <div class="text-4xl font-bold text-gray-900 mb-2">
+                    ₩{{ "{:,}".format(plan.monthly_price) }}
+                    <span class="text-lg text-gray-500">/월</span>
+                </div>
+                <p class="text-gray-600">{{ plan.description }}</p>
+            </div>
+
+            <!-- 혜택 목록 -->
+            <ul class="space-y-3 mb-8">
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>월 {{ "{:,}".format(plan.monthly_fortune_points) }} 행운 포인트</span>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>모든 상품 {{ plan.discount_rate }}% 할인</span>
+                </li>
+                {% if plan.priority_support %}
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>우선 고객 지원</span>
+                </li>
+                {% endif %}
+                {% if plan.exclusive_content %}
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>독점 콘텐츠 접근</span>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- 구독 버튼 -->
+            {% if user %}
+                {% if current_subscription and current_subscription.plan_type == plan_key %}
+                <button class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-semibold cursor-not-allowed">
+                    현재 구독 중
+                </button>
+                {% else %}
+                <button 
+                    onclick="subscribeToPlan('{{ plan_key }}')"
+                    class="w-full {% if plan_key == 'premium' %}bg-purple-600 hover:bg-purple-700{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white py-3 rounded-lg font-semibold transition duration-200">
+                    구독 시작하기
+                </button>
+                {% endif %}
+            {% else %}
+            <a href="/auth/login" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold text-center transition duration-200">
+                로그인 후 구독
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- FAQ 섹션 -->
+    <div class="bg-gray-50 rounded-lg p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">자주 묻는 질문</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-2">언제든지 해지할 수 있나요?</h3>
+                <p class="text-gray-600">네, 언제든지 구독을 해지할 수 있습니다. 해지 시 다음 결제일까지 서비스를 이용할 수 있습니다.</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-2">행운 포인트는 언제 지급되나요?</h3>
+                <p class="text-gray-600">구독 시작일과 매월 결제일에 자동으로 지급됩니다. 포인트는 1년간 유효합니다.</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-2">할인은 모든 상품에 적용되나요?</h3>
+                <p class="text-gray-600">네, 구독 중에는 모든 운세 분석 상품에 할인이 적용됩니다.</p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-2">구독을 일시정지할 수 있나요?</h3>
+                <p class="text-gray-600">네, 최대 3개월까지 일시정지할 수 있습니다. 일시정지 중에는 서비스 이용이 제한됩니다.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 구독 확인 모달 -->
+<div id="subscriptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">구독 확인</h3>
+        <p class="text-gray-600 mb-6">선택한 플랜으로 구독을 시작하시겠습니까?</p>
+        <div class="flex space-x-4">
+            <button onclick="closeSubscriptionModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg">
+                취소
+            </button>
+            <button onclick="confirmSubscription()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg">
+                구독 시작
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedPlan = null;
+
+function subscribeToPlan(planType) {
+    selectedPlan = planType;
+    document.getElementById('subscriptionModal').classList.remove('hidden');
+    document.getElementById('subscriptionModal').classList.add('flex');
+}
+
+function closeSubscriptionModal() {
+    document.getElementById('subscriptionModal').classList.add('hidden');
+    document.getElementById('subscriptionModal').classList.remove('flex');
+    selectedPlan = null;
+}
+
+async function confirmSubscription() {
+    if (!selectedPlan) return;
+    
+    try {
+        const response = await fetch('/subscription/api/v1/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                plan_type: selectedPlan
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('구독이 성공적으로 시작되었습니다!');
+            window.location.href = '/subscription/dashboard';
+        } else {
+            alert(result.error || '구독 신청 중 오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('구독 신청 실패:', error);
+        alert('구독 신청 중 오류가 발생했습니다.');
+    }
+    
+    closeSubscriptionModal();
+}
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('subscriptionModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSubscriptionModal();
+    }
+});
+</script>
+{% endblock %} 

@@ -21,6 +21,11 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     points = Column(Integer, default=0)  # 일반 포인트 (유지)
+    
+    # 추천인 관련 필드
+    referred_by = Column(Integer, ForeignKey("blog_users.id"), nullable=True)  # 추천인 ID
+    referral_signup_date = Column(DateTime, nullable=True)  # 추천인 가입일
+    
     created_at = Column(DateTime, default=datetime.now)
     
     # 관계 설정
@@ -506,3 +511,37 @@ def create_referral_code(user_id: int) -> str:
     base = f"REF{user_id:04d}"
     suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
     return f"{base}{suffix}"
+
+################################################################################
+# 🆕 추천인 시스템 모델 추가
+################################################################################
+
+class UserReferral(Base):
+    """추천인 코드 관리"""
+    __tablename__ = "user_referrals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("blog_users.id"), nullable=False)
+    referral_code = Column(String(20), unique=True, nullable=False)  # 추천인 코드
+    is_active = Column(Boolean, default=True)  # 활성화 여부
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # 관계
+    user = relationship("User")
+
+class UserReferralReward(Base):
+    """추천인 보상 내역"""
+    __tablename__ = "user_referral_rewards"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    referrer_id = Column(Integer, ForeignKey("blog_users.id"), nullable=False)  # 추천인 ID
+    referred_user_id = Column(Integer, ForeignKey("blog_users.id"), nullable=False)  # 추천받은 사용자 ID
+    points = Column(Integer, nullable=False)  # 보상 포인트
+    reward_type = Column(String(20), nullable=False)  # 'signup', 'purchase'
+    description = Column(String(255))  # 보상 설명
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # 관계
+    referrer = relationship("User", foreign_keys=[referrer_id])
+    referred_user = relationship("User", foreign_keys=[referred_user_id])
+

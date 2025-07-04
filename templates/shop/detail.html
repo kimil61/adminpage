@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - 상품 상세{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-2">
+                <i class="fas fa-gem text-primary"></i>
+                {{ product.name }}
+            </h1>
+            <p class="text-muted">{{ product.description }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            {% if product.thumbnail %}
+            <img src="{{ product.thumbnail }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 300px;">
+                <i class="fas fa-magic fa-4x text-muted"></i>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">상품 정보</h4>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item">
+                            <strong>카테고리:</strong> {{ product.category or '기타' }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>가격:</strong>
+                            {% if product.price > 0 %}
+                                {% if discount_info and discount_info.has_discount %}
+                                <div>
+                                    <span class="text-muted text-decoration-line-through">{{ "{:,}".format(discount_info.original_price) }}원</span>
+                                    <span class="text-danger fw-bold ms-2">{{ "{:,}".format(discount_info.discounted_price) }}원</span>
+                                    <span class="badge bg-danger ms-1">{{ discount_info.discount_rate }}% 할인</span>
+                                </div>
+                                <small class="text-muted">{{ discount_info.discount_reason }}</small>
+                                {% if discount_info.discount_type == 'subscription' %}
+                                <div class="mt-1">
+                                    <span class="badge bg-purple-100 text-purple-800">
+                                        <i class="fas fa-crown"></i> 구독 혜택
+                                    </span>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-primary fw-bold">{{ "{:,}".format(product.price) }}원</span>
+                                {% endif %}
+                            {% endif %}
+                            {% if product.fortune_cost > 0 %}
+                                <span class="text-success fw-bold ms-2">{{ "{:,}".format(product.fortune_cost) }}P</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>등록일:</strong> {{ product.created_at.strftime('%Y-%m-%d') if product.created_at else '' }}
+                        </li>
+                    </ul>
+                    <div class="mb-3">
+                        {% if user %}
+                            {% if can_purchase_with_points %}
+                            <span class="badge bg-success">포인트 구매 가능</span>
+                            {% elif product.fortune_cost > 0 %}
+                            <span class="badge bg-warning">포인트 부족</span>
+                            {% endif %}
+                            {% if product.price > 0 %}
+                            <span class="badge bg-primary">현금 구매 가능</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-secondary">로그인 필요</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('shop_buy', slug=product.slug) }}" class="btn btn-lg btn-primary">
+                            <i class="fas fa-shopping-cart"></i> 구매하기
+                        </a>
+                        {% if user %}
+                        <button onclick="addToCart({{ product.id }})" class="btn btn-lg btn-outline-success">
+                            <i class="fas fa-cart-plus"></i> 장바구니 추가
+                        </button>
+                        {% endif %}
+                        <a href="{{ url_for('shop_list') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 리뷰 섹션 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="fas fa-star text-warning"></i> 상품 리뷰</h4>
+                <div class="d-flex gap-2">
+                    {% if user %}
+                    <a href="/review/write/{{ product.slug }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-pen"></i> 리뷰 작성
+                    </a>
+                    {% endif %}
+                    <a href="/review/list/{{ product.slug }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-list"></i> 전체 리뷰
+                    </a>
+                </div>
+            </div>
+            
+            {% if reviews and reviews.count > 0 %}
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center">
+                        <span class="h5 mb-0 text-warning">{{ reviews.average_rating }}</span>
+                        <div class="ms-2">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star {% if i <= reviews.average_rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <span class="text-muted">({{ reviews.count }}건의 리뷰)</span>
+                </div>
+            </div>
+            
+            <div class="list-group">
+                {% for review in reviews.recent_reviews[:3] %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex">
+                                {% for i in range(1, 6) %}
+                                <i class="fas fa-star {% if i <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            {% if review.is_verified %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> 구매 인증
+                            </span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    {% if review.title %}
+                    <h6 class="fw-bold mb-1">{{ review.title }}</h6>
+                    {% endif %}
+                    <p class="mb-1">{{ review.content[:200] }}{% if review.content|length > 200 %}...{% endif %}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            {% if review.reviewer_age_group %}{{ review.reviewer_age_group }}{% endif %}
+                            {% if review.reviewer_gender %}{{ review.reviewer_gender }}{% endif %}
+                        </small>
+                        <small class="text-muted">
+                            <i class="fas fa-thumbs-up"></i> {{ review.helpful_count }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if reviews.count > 3 %}
+            <div class="mt-3 text-center">
+                <a href="/review/list/{{ product.slug }}" class="btn btn-outline-primary">
+                    전체 {{ reviews.count }}건의 리뷰 보기
+                </a>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                아직 리뷰가 없습니다. 첫 번째 리뷰를 남겨보세요!
+                {% if user %}
+                <div class="mt-2">
+                    <a href="/review/write/{{ product.slug }}" class="btn btn-sm btn-primary">
+                        리뷰 작성하기
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function addToCart(productId) {
+    fetch('/cart/api/v1/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1,
+            csrf_token: '{{ csrf_token }}',
+            idempotency_key: Date.now().toString()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('장바구니 추가 실패: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('장바구니 추가 중 오류가 발생했습니다.');
+    });
+}
+</script>
+{% endblock %} 

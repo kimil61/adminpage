@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}추천인 대시보드{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">추천인 대시보드</h1>
+        <p class="text-gray-600">친구를 추천하고 포인트를 받아보세요!</p>
+    </div>
+
+    <!-- 추천인 코드 섹션 -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">내 추천인 코드</h2>
+            {% if not referral_info.has_referral %}
+            <button onclick="generateReferralCode()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-plus"></i> 코드 생성
+            </button>
+            {% endif %}
+        </div>
+
+        {% if referral_info.has_referral %}
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">추천인 코드</h3>
+                    <p class="text-gray-600">친구에게 이 코드를 공유하세요</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if referral_info.is_active %}
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-check-circle"></i> 활성
+                    </span>
+                    {% else %}
+                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-times-circle"></i> 비활성
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="bg-white border-2 border-blue-300 rounded-lg px-4 py-3 flex-1">
+                    <span class="text-2xl font-mono font-bold text-blue-600" id="referralCode">{{ referral_info.referral_code }}</span>
+                </div>
+                <button onclick="copyReferralCode()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-copy"></i> 복사
+                </button>
+            </div>
+
+            <div class="flex space-x-2">
+                {% if referral_info.is_active %}
+                <button onclick="deactivateCode()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    <i class="fas fa-pause"></i> 비활성화
+                </button>
+                {% else %}
+                <button onclick="reactivateCode()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-play"></i> 활성화
+                </button>
+                {% endif %}
+                <a href="/referral/marketing" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-share-alt"></i> 마케팅 도구
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <i class="fas fa-gift text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">아직 추천인 코드가 없습니다</h3>
+            <p class="text-gray-600 mb-4">추천인 코드를 생성하고 친구를 초대해보세요!</p>
+            <button onclick="generateReferralCode()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-plus"></i> 추천인 코드 생성
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- 총 추천 수 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">총 추천 수</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ statistics.total_referrals }}명</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 이번 달 추천 수 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-calendar-alt text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">이번 달 추천</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ statistics.this_month_referrals }}명</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 총 보상 포인트 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-coins text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">총 보상 포인트</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ "{:,}".format(statistics.total_rewards) }}P</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 이번 달 보상 포인트 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">이번 달 보상</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ "{:,}".format(statistics.this_month_rewards) }}P</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보상 상세 통계 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- 보상 타입별 통계 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">보상 타입별 통계</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-plus text-blue-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">가입 보상</span>
+                    </div>
+                    <span class="text-lg font-bold text-blue-600">{{ "{:,}".format(statistics.signup_rewards) }}P</span>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-shopping-cart text-green-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">구매 보상</span>
+                    </div>
+                    <span class="text-lg font-bold text-green-600">{{ "{:,}".format(statistics.purchase_rewards) }}P</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 최근 추천받은 사용자 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">최근 추천받은 사용자</h3>
+            {% if referral_info.recent_referrals %}
+            <div class="space-y-3">
+                {% for referred_user in referral_info.recent_referrals %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-user text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">{{ referred_user.username }}</p>
+                            <p class="text-sm text-gray-500">{{ referred_user.created_at.strftime('%Y-%m-%d') }}</p>
+                        </div>
+                    </div>
+                    <span class="text-sm text-green-600 font-medium">+1,000P</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500">아직 추천받은 사용자가 없습니다</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 보상 내역 링크 -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">보상 내역</h3>
+                <p class="text-gray-600">추천인 보상 지급 내역을 확인하세요</p>
+            </div>
+            <a href="/referral/rewards" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-list"></i> 내역 보기
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// 추천인 코드 생성
+async function generateReferralCode() {
+    try {
+        const response = await fetch('/referral/api/v1/generate-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('추천인 코드가 생성되었습니다!');
+            location.reload();
+        } else {
+            alert('추천인 코드 생성 실패: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('추천인 코드 생성 중 오류가 발생했습니다.');
+    }
+}
+
+// 추천인 코드 복사
+function copyReferralCode() {
+    const code = document.getElementById('referralCode').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        alert('추천인 코드가 클립보드에 복사되었습니다!');
+    }).catch(() => {
+        // 폴백: 텍스트 선택
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('추천인 코드가 클립보드에 복사되었습니다!');
+    });
+}
+
+// 추천인 코드 비활성화
+async function deactivateCode() {
+    if (!confirm('정말로 추천인 코드를 비활성화하시겠습니까?')) return;
+    
+    try {
+        const response = await fetch('/referral/api/v1/deactivate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            location.reload();
+        } else {
+            alert('비활성화 실패: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('비활성화 중 오류가 발생했습니다.');
+    }
+}
+
+// 추천인 코드 재활성화
+async function reactivateCode() {
+    try {
+        const response = await fetch('/referral/api/v1/reactivate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            location.reload();
+        } else {
+            alert('재활성화 실패: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('재활성화 중 오류가 발생했습니다.');
+    }
+}
+</script>
+{% endblock %} 

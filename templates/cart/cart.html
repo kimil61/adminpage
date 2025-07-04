@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}장바구니{% endblock %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h1 class="text-2xl font-bold mb-4">장바구니</h1>
+  
+  {% if cart.items %}
+    <div class="bg-white rounded shadow">
+      <div class="p-4 border-b">
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-semibold">상품 목록 ({{ cart.total_items }}개)</span>
+          <button onclick="clearCart()" class="text-red-500 hover:text-red-700">장바구니 비우기</button>
+        </div>
+      </div>
+      
+      <div class="divide-y">
+        {% for item in cart.items %}
+        <div class="p-4 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-gray-200 rounded"></div>
+            <div>
+              <h3 class="font-semibold">{{ item.name }}</h3>
+              <p class="text-gray-600">{{ item.price }}원</p>
+              {% if item.fortune_cost %}
+              <p class="text-blue-600">{{ item.fortune_cost }}P</p>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center border rounded">
+              <button onclick="updateQuantity({{ item.id }}, {{ item.quantity - 1 }})" 
+                      class="px-3 py-1 hover:bg-gray-100">-</button>
+              <span class="px-3 py-1">{{ item.quantity }}</span>
+              <button onclick="updateQuantity({{ item.id }}, {{ item.quantity + 1 }})" 
+                      class="px-3 py-1 hover:bg-gray-100">+</button>
+            </div>
+            <button onclick="removeFromCart({{ item.id }})" 
+                    class="text-red-500 hover:text-red-700">삭제</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <div class="p-4 border-t bg-gray-50">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-lg font-semibold">총 {{ cart.total_items }}개 상품</p>
+            <p class="text-gray-600">총 {{ cart.total_price }}원</p>
+            {% if cart.total_fortune_cost %}
+            <p class="text-blue-600">총 {{ cart.total_fortune_cost }}P</p>
+            {% endif %}
+          </div>
+          <button onclick="checkout()" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+            구매하기
+          </button>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center py-12">
+      <div class="text-gray-400 text-6xl mb-4">🛒</div>
+      <h2 class="text-xl font-semibold mb-2">장바구니가 비어있습니다</h2>
+      <p class="text-gray-600 mb-6">원하는 상품을 장바구니에 추가해보세요!</p>
+      <a href="{{ url_for('shop_list') }}" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+        쇼핑하러 가기
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function updateQuantity(productId, quantity) {
+  if (quantity <= 0) {
+    removeFromCart(productId);
+    return;
+  }
+  
+  fetch('/cart/api/v1/update', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      quantity: quantity,
+      csrf_token: '{{ csrf_token }}',
+      idempotency_key: Date.now().toString()
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('수량 변경 실패: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('수량 변경 중 오류가 발생했습니다.');
+  });
+}
+
+function removeFromCart(productId) {
+  if (!confirm('이 상품을 장바구니에서 제거하시겠습니까?')) {
+    return;
+  }
+  
+  fetch(`/cart/api/v1/remove/${productId}`, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('제거 실패: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('제거 중 오류가 발생했습니다.');
+  });
+}
+
+function clearCart() {
+  if (!confirm('장바구니를 비우시겠습니까?')) {
+    return;
+  }
+  
+  fetch('/cart/api/v1/clear', {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('장바구니 비우기 실패: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('장바구니 비우기 중 오류가 발생했습니다.');
+  });
+}
+
+function checkout() {
+  // TODO: 구매 페이지로 이동
+  alert('구매 기능은 추후 구현 예정입니다.');
+}
+</script>
+{% endblock %} 

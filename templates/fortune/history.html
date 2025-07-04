@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}거래 내역 - 행운 포인트{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 페이지 헤더 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-history text-info"></i>
+                거래 내역
+            </h1>
+            <p class="text-muted">{{ user.username }}님의 포인트 거래 내역을 확인하세요</p>
+        </div>
+    </div>
+
+    <!-- 현재 포인트 정보 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-coins me-2"></i>
+                <div>
+                    <strong>현재 보유 포인트:</strong> {{ "{:,}".format(fortune_info.points) }}P
+                    <a href="{{ url_for('fortune_dashboard') }}" class="btn btn-sm btn-outline-primary ms-3">
+                        대시보드로
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 필터 및 검색 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('fortune_history') }}" class="row g-3">
+                        <!-- 거래 타입 필터 -->
+                        <div class="col-md-4">
+                            <label for="transaction_type" class="form-label">거래 타입</label>
+                            <select class="form-select" id="transaction_type" name="transaction_type">
+                                <option value="">전체</option>
+                                <option value="earn" {% if transaction_type == 'earn' %}selected{% endif %}>적립</option>
+                                <option value="spend" {% if transaction_type == 'spend' %}selected{% endif %}>사용</option>
+                                <option value="refund" {% if transaction_type == 'refund' %}selected{% endif %}>환불</option>
+                                <option value="expire" {% if transaction_type == 'expire' %}selected{% endif %}>만료</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 페이지 크기 -->
+                        <div class="col-md-3">
+                            <label for="per_page" class="form-label">페이지당 항목</label>
+                            <select class="form-select" id="per_page" name="per_page">
+                                <option value="10" {% if pagination.per_page == 10 %}selected{% endif %}>10개</option>
+                                <option value="20" {% if pagination.per_page == 20 %}selected{% endif %}>20개</option>
+                                <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50개</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 검색 버튼 -->
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> 필터 적용
+                            </button>
+                        </div>
+                        
+                        <!-- 초기화 버튼 -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <a href="{{ url_for('fortune_history') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-undo"></i> 초기화
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 거래 내역 테이블 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        거래 내역 ({{ pagination.total }}건)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>유형</th>
+                                    <th>금액</th>
+                                    <th>잔액</th>
+                                    <th>설명</th>
+                                    <th>만료일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ transaction.created_at.strftime('%m-%d') }}</div>
+                                        <small class="text-muted">{{ transaction.created_at.strftime('%H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'earn' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-arrow-up"></i> 적립
+                                        </span>
+                                        {% elif transaction.transaction_type == 'spend' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-arrow-down"></i> 사용
+                                        </span>
+                                        {% elif transaction.transaction_type == 'refund' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-undo"></i> 환불
+                                        </span>
+                                        {% elif transaction.transaction_type == 'expire' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> 만료
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold {% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {% if transaction.amount > 0 %}+{% endif %}{{ "{:,}".format(transaction.amount) }}P
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ "{:,}".format(transaction.balance_after) }}P</span>
+                                    </td>
+                                    <td>
+                                        <div>{{ transaction.description or transaction.source }}</div>
+                                        {% if transaction.reference_id %}
+                                        <small class="text-muted">#{{ transaction.reference_id }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.expires_at %}
+                                        <div class="text-warning">{{ transaction.expires_at.strftime('%m-%d') }}</div>
+                                        <small class="text-muted">{{ transaction.expires_at.strftime('%Y') }}</small>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5>거래 내역이 없습니다</h5>
+                        <p class="text-muted">첫 번째 포인트 거래를 시작해보세요!</p>
+                        <a href="{{ url_for('fortune_charge') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 포인트 충전하기
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 페이징 -->
+    {% if pagination.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="거래 내역 페이지">
+                <ul class="pagination justify-content-center">
+                    <!-- 이전 페이지 -->
+                    {% if pagination.page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('fortune_history', page=pagination.page-1, transaction_type=transaction_type, per_page=pagination.per_page) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- 페이지 번호 -->
+                    {% for page_num in range(max(1, pagination.page-2), min(pagination.pages+1, pagination.page+3)) %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('fortune_history', page=page_num, transaction_type=transaction_type, per_page=pagination.per_page) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    
+                    <!-- 다음 페이지 -->
+                    {% if pagination.page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('fortune_history', page=pagination.page+1, transaction_type=transaction_type, per_page=pagination.per_page) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 페이지 정보 -->
+    {% if pagination.total > 0 %}
+    <div class="row mt-3">
+        <div class="col-12 text-center">
+            <small class="text-muted">
+                총 {{ pagination.total }}건 중 {{ (pagination.page - 1) * pagination.per_page + 1 }}-{{ min(pagination.page * pagination.per_page, pagination.total) }}번째
+            </small>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 액션 버튼들 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{{ url_for('fortune_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-chart-line"></i> 대시보드
+                </a>
+                <a href="{{ url_for('fortune_charge') }}" class="btn btn-outline-success">
+                    <i class="fas fa-plus"></i> 포인트 충전
+                </a>
+                <a href="{{ url_for('shop_list') }}" class="btn btn-outline-info">
+                    <i class="fas fa-store"></i> 상점 가기
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.pagination .page-link {
+    color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+</style>
+{% endblock %} 

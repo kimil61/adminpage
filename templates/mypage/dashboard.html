@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}마이페이지 대시보드{% endblock %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h1 class="text-2xl font-bold mb-4">안녕하세요, {{ user.username }}님!</h1>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded shadow p-4">
+      <div class="text-gray-500 text-sm mb-1">주문/결제</div>
+      <div class="text-xl font-bold">{{ orders|length }}건</div>
+      <a href="{{ url_for('mypage_orders') }}" class="text-blue-500 text-sm">내역 보기 →</a>
+    </div>
+    <div class="bg-white rounded shadow p-4">
+      <div class="text-gray-500 text-sm mb-1">포인트</div>
+      <div class="text-xl font-bold">{{ points|length }}건</div>
+      <a href="{{ url_for('mypage_points') }}" class="text-blue-500 text-sm">내역 보기 →</a>
+    </div>
+    <div class="bg-white rounded shadow p-4">
+      <div class="text-gray-500 text-sm mb-1">리뷰</div>
+      <div class="text-xl font-bold">{{ reviews|length }}건</div>
+      <a href="/review/my" class="text-blue-500 text-sm">내역 보기 →</a>
+    </div>
+  </div>
+  <div class="bg-white rounded shadow p-4">
+    <h2 class="text-lg font-semibold mb-2">빠른 메뉴</h2>
+    <div class="flex flex-wrap gap-4">
+      <a href="{{ url_for('mypage_orders') }}" class="btn">주문/결제 내역</a>
+      <a href="{{ url_for('mypage_points') }}" class="btn">포인트 내역</a>
+      <a href="/review/my" class="btn">내가 쓴 리뷰</a>
+      <a href="/referral/dashboard" class="btn">추천인 관리</a>
+      <a href="{{ url_for('mypage_settings') }}" class="btn">계정/설정</a>
+    </div>
+  </div>
+</div>
+<style>
+.btn {
+  @apply inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition;
+}
+</style>
+{% endblock %} 

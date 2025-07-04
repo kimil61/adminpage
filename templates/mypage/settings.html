@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}계정/설정{% endblock %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h1 class="text-2xl font-bold mb-4">계정/설정</h1>
+  <div class="bg-white rounded shadow p-6">
+    <div class="mb-4">
+      <div class="text-gray-600 mb-1">이메일</div>
+      <div class="font-mono">{{ user.email }}</div>
+    </div>
+    <div class="mb-4">
+      <div class="text-gray-600 mb-1">닉네임</div>
+      <div class="font-mono">{{ user.username }}</div>
+    </div>
+    <div class="mb-4">
+      <div class="text-gray-600 mb-1">가입일</div>
+      <div class="font-mono">{{ user.created_at }}</div>
+    </div>
+    <div class="mt-8">
+      <a href="#" class="btn">비밀번호 변경</a>
+      <a href="#" class="btn ml-2">로그아웃</a>
+    </div>
+  </div>
+</div>
+<style>
+.btn {
+  @apply inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition;
+}
+</style>
+{% endblock %} 

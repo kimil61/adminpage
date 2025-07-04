@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}내 리뷰 목록{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">내 리뷰 목록</h1>
+        <p class="text-gray-600">작성한 리뷰를 관리하세요</p>
+    </div>
+
+    <!-- 리뷰 목록 -->
+    <div class="space-y-4">
+        {% if reviews %}
+            {% for review in reviews %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <!-- 리뷰 헤더 -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <!-- 상품 정보 -->
+                        <div class="flex items-center">
+                            {% if review.product.thumbnail %}
+                            <img src="{{ review.product.thumbnail }}" class="w-12 h-12 rounded-lg object-cover mr-3" alt="{{ review.product.name }}">
+                            {% else %}
+                            <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-magic text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="font-semibold text-gray-900">{{ review.product.name }}</h3>
+                                <a href="/shop/detail/{{ review.product.slug }}" class="text-sm text-blue-600 hover:text-blue-800">
+                                    상품 보기
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 평점 -->
+                        <div class="flex items-center">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star {% if i <= review.rating %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                            {% endfor %}
+                            <span class="ml-2 text-sm text-gray-600">{{ review.rating }}점</span>
+                        </div>
+
+                        <!-- 인증 배지 -->
+                        {% if review.is_verified %}
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                            <i class="fas fa-check-circle"></i> 구매 인증
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- 작성일 -->
+                    <span class="text-sm text-gray-500">{{ review.created_at.strftime('%Y년 %m월 %d일') }}</span>
+                </div>
+
+                <!-- 리뷰 제목 -->
+                {% if review.title %}
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">{{ review.title }}</h4>
+                {% endif %}
+
+                <!-- 리뷰 내용 -->
+                <p class="text-gray-700 mb-4">{{ review.content }}</p>
+
+                <!-- 추가 평점 -->
+                {% if review.accuracy_rating or review.satisfaction_rating or review.recommendation_rating %}
+                <div class="grid md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                    {% if review.accuracy_rating %}
+                    <div>
+                        <span class="text-sm text-gray-600">정확도:</span>
+                        <div class="flex items-center">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star text-xs {% if i <= review.accuracy_rating %}text-blue-400{% else %}text-gray-300{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.satisfaction_rating %}
+                    <div>
+                        <span class="text-sm text-gray-600">만족도:</span>
+                        <div class="flex items-center">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star text-xs {% if i <= review.satisfaction_rating %}text-green-400{% else %}text-gray-300{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.recommendation_rating %}
+                    <div>
+                        <span class="text-sm text-gray-600">추천도:</span>
+                        <div class="flex items-center">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star text-xs {% if i <= review.recommendation_rating %}text-purple-400{% else %}text-gray-300{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- 리뷰 통계 -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                        <span><i class="fas fa-thumbs-up"></i> 도움됨 {{ review.helpful_count }}개</span>
+                        {% if review.report_count > 0 %}
+                        <span class="text-red-600"><i class="fas fa-flag"></i> 신고 {{ review.report_count }}회</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- 액션 버튼 -->
+                    <div class="flex items-center space-x-2">
+                        <a href="/review/edit/{{ review.id }}" class="text-sm text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-edit"></i> 수정
+                        </a>
+                        <button onclick="deleteReview({{ review.id }})" class="text-sm text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i> 삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="bg-white rounded-lg shadow p-8 text-center">
+                <i class="fas fa-comment-slash text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">아직 작성한 리뷰가 없습니다</h3>
+                <p class="text-gray-600 mb-4">상품을 구매하고 리뷰를 작성해보세요!</p>
+                <a href="/shop" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    상품 둘러보기
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 페이징 -->
+    {% if pagination.pages > 1 %}
+    <div class="mt-8">
+        <nav class="flex justify-center">
+            <ul class="flex space-x-2">
+                <!-- 이전 페이지 -->
+                {% if pagination.page > 1 %}
+                <li>
+                    <a href="?page={{ pagination.page-1 }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- 페이지 번호 -->
+                {% for page_num in range(max(1, pagination.page-2), min(pagination.pages+1, pagination.page+3)) %}
+                <li>
+                    <a href="?page={{ page_num }}" 
+                       class="px-3 py-2 border rounded-lg {% if page_num == pagination.page %}bg-blue-600 text-white border-blue-600{% else %}border-gray-300 text-gray-700 hover:bg-gray-50{% endif %}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% endfor %}
+
+                <!-- 다음 페이지 -->
+                {% if pagination.page < pagination.pages %}
+                <li>
+                    <a href="?page={{ pagination.page+1 }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 리뷰 삭제
+async function deleteReview(reviewId) {
+    if (!confirm('정말로 이 리뷰를 삭제하시겠습니까?')) return;
+    
+    try {
+        const response = await fetch(`/review/api/v1/delete/${reviewId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            location.reload();
+        } else {
+            alert('리뷰 삭제 실패: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('리뷰 삭제 중 오류가 발생했습니다.');
+    }
+}
+</script>
+{% endblock %} 

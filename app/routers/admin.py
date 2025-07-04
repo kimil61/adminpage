@@ -10,9 +10,6 @@ from app.models import (
     User,
     Post,
     Category,
-    Media,
-    InPost,
-    FilteredContent,
     SajuUser,
 )
 from app.forms import (

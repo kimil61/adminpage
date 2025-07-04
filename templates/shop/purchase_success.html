@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}구매 완료 - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 성공 메시지 -->
+    <div class="text-center mb-8">
+        <div class="mb-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">구매가 완료되었습니다!</h1>
+            <p class="text-lg text-gray-600">{{ product.name }}</p>
+        </div>
+    </div>
+
+    <!-- 구매 정보 카드 -->
+    <div class="max-w-2xl mx-auto mb-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">구매 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <p class="text-sm text-gray-600">주문번호</p>
+                    <p class="font-mono font-medium">{{ purchase.id }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">구매일시</p>
+                    <p class="font-medium">{{ purchase.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">결제 방법</p>
+                    <p class="font-medium">
+                        {% if purchase.payment_type == 'fortune_points' %}
+                            <span class="text-purple-600">포인트 결제</span>
+                        {% else %}
+                            <span class="text-blue-600">현금 결제</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">결제 금액</p>
+                    <p class="font-medium">
+                        {% if purchase.payment_type == 'fortune_points' %}
+                            {{ purchase.fortune_points_used }} 포인트
+                        {% else %}
+                            {{ purchase.amount | format_price }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리포트 생성 상태 -->
+    <div class="max-w-2xl mx-auto mb-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">리포트 생성 상태</h2>
+            
+            <div id="report-status" class="mb-4">
+                {% if purchase.report_status == 'completed' %}
+                    <div class="flex items-center text-green-600 mb-4">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="font-medium">리포트가 생성되었습니다</span>
+                    </div>
+                    <a href="/shop/purchase/{{ purchase.id }}/report" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        리포트 보기
+                    </a>
+                {% elif purchase.report_status == 'failed' %}
+                    <div class="flex items-center text-red-600 mb-4">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <span class="font-medium">리포트 생성에 실패했습니다</span>
+                    </div>
+                    <button onclick="retryReportGeneration()" 
+                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        다시 시도
+                    </button>
+                {% else %}
+                    <div class="flex items-center text-yellow-600 mb-4">
+                        <svg class="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span class="font-medium">리포트를 생성하고 있습니다...</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 액션 버튼들 -->
+    <div class="max-w-2xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <a href="/mypage/purchases" 
+               class="flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                구매내역 보기
+            </a>
+            <a href="/shop" 
+               class="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                다른 상품 보기
+            </a>
+        </div>
+        
+        <div class="text-center">
+            <a href="/mypage" 
+               class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                마이페이지로 이동
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// 리포트 생성 상태 실시간 업데이트
+let progressInterval;
+let progress = 0;
+
+function startProgressAnimation() {
+    progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        
+        const progressBar = document.getElementById('progress-bar');
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+        }
+    }, 1000);
+}
+
+function checkReportStatus() {
+    fetch(`/shop/api/v1/purchase/${purchaseId}/status`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.status === 'completed') {
+                clearInterval(progressInterval);
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('리포트 상태 확인 실패:', error);
+        });
+}
+
+function retryReportGeneration() {
+    fetch(`/shop/api/v1/purchase/${purchaseId}/retry`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('리포트 생성 재시도에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('리포트 생성 재시도 실패:', error);
+        alert('리포트 생성 재시도에 실패했습니다.');
+    });
+}
+
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded', function() {
+    const purchaseId = {{ purchase.id }};
+    
+    {% if purchase.report_status != 'completed' and purchase.report_status != 'failed' %}
+        startProgressAnimation();
+        setInterval(checkReportStatus, 3000); // 3초마다 상태 확인
+    {% endif %}
+});
+</script>
+{% endblock %} 

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Form, Depends
 from app.exceptions import BadRequestError
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.database import get_db
-from app.models import Post, Category, SajuUser, SajuAnalysisCache, SajuInterpretation, Product
+from app.models import Post, Category, SajuUser, SajuAnalysisCache, Product
 from app.template import templates
 from datetime import datetime, timedelta
 import uuid

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}구독 대시보드 - 운세 커머스{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">구독 대시보드</h1>
+            <p class="text-gray-600">현재 구독 정보와 혜택을 확인하세요</p>
+        </div>
+        <a href="/subscription/manage" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            구독 관리
+        </a>
+    </div>
+
+    <!-- 구독 상태 카드 -->
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+        <!-- 구독 정보 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">구독 상태</h3>
+                    <p class="text-sm text-gray-600">{{ subscription.plan_type|title }} 플랜</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">상태:</span>
+                    <span class="font-semibold text-green-600">{{ subscription.status|title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">시작일:</span>
+                    <span>{{ subscription.started_at.strftime('%Y년 %m월 %d일') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">다음 결제:</span>
+                    <span>{{ subscription.next_billing_date.strftime('%Y년 %m월 %d일') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 월간 포인트 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">월간 포인트</h3>
+                    <p class="text-sm text-gray-600">매월 지급되는 행운 포인트</p>
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-green-600 mb-2">
+                    {{ "{:,}".format(benefits.benefits.monthly_fortune_points) }}
+                </div>
+                <p class="text-sm text-gray-600">포인트</p>
+            </div>
+        </div>
+
+        <!-- 할인율 -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">할인 혜택</h3>
+                    <p class="text-sm text-gray-600">모든 상품 할인율</p>
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-purple-600 mb-2">
+                    {{ benefits.benefits.discount_rate }}%
+                </div>
+                <p class="text-sm text-gray-600">할인</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구독 혜택 상세 -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">구독 혜택</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-3">포인트 혜택</h3>
+                <ul class="space-y-2">
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>매월 {{ "{:,}".format(benefits.benefits.monthly_fortune_points) }} 행운 포인트 자동 지급</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>포인트는 1년간 유효</span>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>모든 운세 분석에 포인트 사용 가능</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-3">할인 혜택</h3>
+                <ul class="space-y-2">
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>모든 상품 {{ benefits.benefits.discount_rate }}% 할인</span>
+                    </li>
+                    {% if benefits.benefits.priority_support %}
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>우선 고객 지원</span>
+                    </li>
+                    {% endif %}
+                    {% if benefits.benefits.exclusive_content %}
+                    <li class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>독점 콘텐츠 접근</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 최근 결제 내역 -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">최근 결제 내역</h2>
+        {% if orders %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">결제일</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">금액</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주문번호</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for order in orders %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ order.created_at.strftime('%Y년 %m월 %d일') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ₩{{ "{:,}".format(order.amount) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if order.status == 'paid' %}bg-green-100 text-green-800
+                                {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ order.status|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ order.kakao_tid }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">결제 내역이 없습니다</h3>
+            <p class="mt-1 text-sm text-gray-500">아직 구독 결제가 진행되지 않았습니다.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 빠른 액션 -->
+    <div class="mt-8 flex flex-wrap gap-4">
+        <a href="/shop" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+            상품 둘러보기
+        </a>
+        <a href="/fortune" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200">
+            행운 포인트 사용
+        </a>
+        <a href="/mypage" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-200">
+            마이페이지
+        </a>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - 리포트{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ product.name }}</h1>
+                <p class="text-gray-600 mt-2">구매일: {{ purchase.created_at.strftime('%Y년 %m월 %d일') }}</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/shop/purchase/{{ purchase.id }}/download?format=html" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    HTML 다운로드
+                </a>
+                <a href="/mypage/purchases" 
+                   class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    구매내역으로
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리포트 내용 -->
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="prose max-w-none">
+            {{ report_html | safe }}
+        </div>
+    </div>
+
+    <!-- 하단 액션 -->
+    <div class="mt-8 flex justify-center space-x-4">
+        <a href="/shop" 
+           class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+            다른 상품 보기
+        </a>
+        <a href="/mypage" 
+           class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+            마이페이지
+        </a>
+    </div>
+</div>
+
+<style>
+.prose {
+    line-height: 1.6;
+    color: #374151;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+    color: #111827;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.prose h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.prose h2 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.25rem;
+}
+
+.prose h3 {
+    font-size: 1.25rem;
+}
+
+.prose p {
+    margin-bottom: 1rem;
+}
+
+.prose ul, .prose ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.prose li {
+    margin-bottom: 0.5rem;
+}
+
+.prose blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+}
+
+.prose th, .prose td {
+    border: 1px solid #d1d5db;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.prose th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+.prose code {
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+}
+
+.prose pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+}
+</style>
+{% endblock %} 

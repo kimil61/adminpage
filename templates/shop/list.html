@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}운세 상점 - 상품 목록{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- 페이지 헤더 -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-store text-blue-600 mr-2"></i>
+            운세 상점
+        </h1>
+        <p class="text-gray-600">AI 기반 운세 분석 상품을 만나보세요</p>
+    </div>
+    <!-- 페이지 헤더 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-store text-primary"></i>
+                운세 상점
+            </h1>
+            <p class="text-muted">AI 기반 운세 분석 상품을 만나보세요</p>
+        </div>
+    </div>
+
+    <!-- 필터 및 검색 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('shop_list') }}" class="row g-3">
+                        <!-- 검색 -->
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">검색</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search or '' }}" placeholder="상품명 또는 설명 검색">
+                        </div>
+                        
+                        <!-- 카테고리 필터 -->
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">카테고리</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">전체</option>
+                                <option value="saju" {% if category == 'saju' %}selected{% endif %}>사주</option>
+                                <option value="tarot" {% if category == 'tarot' %}selected{% endif %}>타로</option>
+                                <option value="fortune" {% if category == 'fortune' %}selected{% endif %}>운세</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 정렬 -->
+                        <div class="col-md-3">
+                            <label for="sort_by" class="form-label">정렬</label>
+                            <select class="form-select" id="sort_by" name="sort_by">
+                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>최신순</option>
+                                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>가격순</option>
+                                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>이름순</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 검색 버튼 -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> 검색
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사용자 포인트 정보 (로그인한 경우) -->
+    {% if user %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-coins me-2"></i>
+                <div>
+                    <strong>보유 포인트:</strong> {{ "{:,}".format(user_points) }}P
+                    <a href="{{ url_for('fortune_dashboard') }}" class="btn btn-sm btn-outline-primary ms-3">
+                        포인트 관리
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 상품 목록 -->
+    <div class="row">
+        {% if products %}
+            {% for product in products %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 product-card">
+                    <!-- 상품 이미지 -->
+                    {% if product.thumbnail %}
+                    <img src="{{ product.thumbnail }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-magic fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 상품 정보 -->
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted">{{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}</p>
+                        
+                        <!-- 가격 정보 -->
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                {% if product.price > 0 %}
+                                    {% if product.discount_info and product.discount_info.has_discount %}
+                                    <div>
+                                        <span class="text-muted text-decoration-line-through">{{ "{:,}".format(product.discount_info.original_price) }}원</span>
+                                        <span class="text-danger fw-bold ms-2">{{ "{:,}".format(product.discount_info.discounted_price) }}원</span>
+                                        <span class="badge bg-danger ms-1">{{ product.discount_info.discount_rate }}% 할인</span>
+                                        {% if product.discount_info.discount_type == 'subscription' %}
+                                        <span class="badge bg-purple-100 text-purple-800 ms-1">
+                                            <i class="fas fa-crown"></i> 구독
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-primary fw-bold">{{ "{:,}".format(product.price) }}원</span>
+                                    {% endif %}
+                                {% endif %}
+                                {% if product.fortune_cost > 0 %}
+                                <span class="text-success fw-bold">{{ "{:,}".format(product.fortune_cost) }}P</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 구매 가능 여부 -->
+                            <div class="mb-3">
+                                {% if user %}
+                                    {% if product.fortune_cost > 0 and user_points >= product.fortune_cost %}
+                                    <span class="badge bg-success">포인트 구매 가능</span>
+                                    {% elif product.fortune_cost > 0 and user_points < product.fortune_cost %}
+                                    <span class="badge bg-warning">포인트 부족</span>
+                                    {% endif %}
+                                    {% if product.price > 0 %}
+                                    <span class="badge bg-primary">현금 구매 가능</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">로그인 필요</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 액션 버튼들 -->
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('shop_detail', slug=product.slug) }}" 
+                                   class="btn btn-outline-primary flex-fill">
+                                    <i class="fas fa-eye"></i> 상세보기
+                                </a>
+                                {% if user %}
+                                <button onclick="addToCart({{ product.id }})" 
+                                        class="btn btn-outline-success">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>검색 결과가 없습니다</h4>
+                    <p class="text-muted">다른 검색어나 필터를 시도해보세요.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 페이징 -->
+    {% if pagination.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="상품 목록 페이지">
+                <ul class="pagination justify-content-center">
+                    <!-- 이전 페이지 -->
+                    {% if pagination.page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('shop_list', page=pagination.page-1, category=category, search=search, sort_by=sort_by, sort_order=sort_order) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- 페이지 번호 -->
+                    {% for page_num in range(max(1, pagination.page-2), min(pagination.pages+1, pagination.page+3)) %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('shop_list', page=page_num, category=category, search=search, sort_by=sort_by, sort_order=sort_order) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    
+                    <!-- 다음 페이지 -->
+                    {% if pagination.page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('shop_list', page=pagination.page+1, category=category, search=search, sort_by=sort_by, sort_order=sort_order) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 전체 상품 수 -->
+    {% if pagination.total > 0 %}
+    <div class="row mt-3">
+        <div class="col-12 text-center">
+            <small class="text-muted">
+                총 {{ pagination.total }}개의 상품 중 {{ (pagination.page - 1) * pagination.per_page + 1 }}-{{ min(pagination.page * pagination.per_page, pagination.total) }}번째
+            </small>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    object-fit: cover;
+    height: 200px;
+}
+</style>
+
+<script>
+function addToCart(productId) {
+    fetch('/cart/api/v1/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1,
+            csrf_token: '{{ csrf_token }}',
+            idempotency_key: Date.now().toString()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('장바구니 추가 실패: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('장바구니 추가 중 오류가 발생했습니다.');
+    });
+}
+</script>
+{% endblock %} 

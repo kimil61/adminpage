@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}{{ seo_data.title }}{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags -->
+<meta name="description" content="{{ seo_data.description }}">
+<meta name="keywords" content="{{ seo_data.keywords }}">
+<link rel="canonical" href="{{ request.base_url }}{{ seo_data.canonical_url }}">
+
+<!-- OpenGraph -->
+<meta property="og:title" content="{{ seo_data.title }}">
+<meta property="og:description" content="{{ seo_data.description }}">
+<meta property="og:image" content="{{ request.base_url }}{{ seo_data.og_image }}">
+<meta property="og:url" content="{{ request.base_url }}{{ seo_data.canonical_url }}">
+<meta property="og:type" content="product">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo_data.title }}">
+<meta name="twitter:description" content="{{ seo_data.description }}">
+<meta name="twitter:image" content="{{ request.base_url }}{{ seo_data.og_image }}">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "description": "{{ product.description }}",
+  "image": "{{ request.base_url }}{{ seo_data.og_image }}",
+  "url": "{{ request.base_url }}{{ seo_data.canonical_url }}",
+  "category": "{{ product.category }}",
+  {% if product.price > 0 %}
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ product.price }}",
+    "priceCurrency": "KRW",
+    "availability": "https://schema.org/InStock"
+  },
+  {% endif %}
+  {% if reviews.count > 0 %}
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ reviews.average_rating }}",
+    "reviewCount": "{{ reviews.count }}"
+  },
+  {% endif %}
+  "brand": {
+    "@type": "Brand",
+    "name": "운세 분석"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600 mb-6">
+        <a href="{{ url_for('home') }}" class="hover:text-blue-600">홈</a>
+        <span class="mx-2">></span>
+        <a href="{{ url_for('shop_list') }}" class="hover:text-blue-600">상점</a>
+        <span class="mx-2">></span>
+        <span class="text-gray-900">{{ product.name }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- 상품 이미지 -->
+        <div>
+            {% if product.thumbnail %}
+            <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-full rounded-lg shadow-lg">
+            {% else %}
+            <div class="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-magic text-6xl text-gray-400"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 상품 정보 -->
+        <div>
+            <h1 class="text-3xl font-bold mb-4">{{ product.name }}</h1>
+            <p class="text-gray-600 mb-6">{{ product.description }}</p>
+
+            <!-- 가격 정보 -->
+            <div class="mb-6">
+                {% if product.price > 0 %}
+                <div class="text-2xl font-bold text-blue-600 mb-2">
+                    {{ "{:,}".format(product.price) }}원
+                </div>
+                {% endif %}
+                {% if product.fortune_cost > 0 %}
+                <div class="text-xl font-bold text-green-600">
+                    {{ "{:,}".format(product.fortune_cost) }}P
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 리뷰 정보 -->
+            {% if reviews.count > 0 %}
+            <div class="mb-6">
+                <div class="flex items-center mb-2">
+                    <div class="flex text-yellow-400">
+                        {% for i in range(5) %}
+                        {% if i < reviews.average_rating %}
+                        <i class="fas fa-star"></i>
+                        {% else %}
+                        <i class="far fa-star"></i>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="ml-2 text-gray-600">{{ reviews.average_rating }}/5</span>
+                    <span class="ml-2 text-gray-500">({{ reviews.count }}개 리뷰)</span>
+                </div>
+                <a href="{{ url_for('product_reviews', slug=product.slug) }}" class="text-blue-600 hover:underline">
+                    전체 리뷰 보기 →
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- 구매 버튼 -->
+            <div class="space-y-3">
+                <a href="{{ url_for('shop_buy', slug=product.slug) }}" 
+                   class="block w-full bg-blue-600 text-white text-center py-3 px-6 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-shopping-cart mr-2"></i>구매하기
+                </a>
+                {% if user %}
+                <button onclick="addToCart({{ product.id }})" 
+                        class="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-cart-plus mr-2"></i>장바구니 추가
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- 상품 상세 정보 -->
+            <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold mb-3">상품 정보</h3>
+                <div class="space-y-2 text-sm">
+                    <div><strong>카테고리:</strong> {{ product.category or '기타' }}</div>
+                    <div><strong>등록일:</strong> {{ product.created_at.strftime('%Y-%m-%d') if product.created_at else '' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리뷰 섹션 -->
+    {% if reviews.recent_reviews %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">최근 리뷰</h2>
+        <div class="space-y-4">
+            {% for review in reviews.recent_reviews %}
+            <div class="border rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex text-yellow-400">
+                        {% for i in range(5) %}
+                        {% if i < review.rating %}
+                        <i class="fas fa-star"></i>
+                        {% else %}
+                        <i class="far fa-star"></i>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-sm text-gray-500">{{ review.created_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                {% if review.title %}
+                <h4 class="font-semibold mb-1">{{ review.title }}</h4>
+                {% endif %}
+                <p class="text-gray-700">{{ review.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('product_reviews', slug=product.slug) }}" 
+               class="text-blue-600 hover:underline">전체 리뷰 보기 →</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 관련 상품 -->
+    {% if related_products %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">관련 상품</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for related in related_products %}
+            <div class="border rounded-lg overflow-hidden hover:shadow-lg transition">
+                <a href="{{ url_for('product_detail', slug=related.slug) }}">
+                    {% if related.thumbnail %}
+                    <img src="{{ related.thumbnail }}" alt="{{ related.name }}" class="w-full h-32 object-cover">
+                    {% else %}
+                    <div class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-magic text-2xl text-gray-400"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-3">
+                        <h4 class="font-semibold text-sm">{{ related.name }}</h4>
+                        <p class="text-gray-600 text-xs">{{ related.price }}원</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function addToCart(productId) {
+    fetch('/cart/api/v1/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1,
+            csrf_token: '{{ csrf_token }}',
+            idempotency_key: Date.now().toString()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('장바구니 추가 실패: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('장바구니 추가 중 오류가 발생했습니다.');
+    });
+}
+</script>
+{% endblock %} 
