@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, date
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
-
+from fastapi import Depends
 from app.models import (
     User, Subscription, Order, UserPurchase, 
     FortuneTransaction, UserFortunePoint

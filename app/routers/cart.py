@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from typing import Optional
 
 router = APIRouter(prefix="/cart", tags=["cart"])
-templates = Jinja2Templates(directory="templates")
 
 # Pydantic 모델
 class CartItemRequest(BaseModel):
@@ -26,12 +25,11 @@ class CartUpdateRequest(BaseModel):
 # SSR: 장바구니 페이지
 @router.get("", response_class=HTMLResponse)
 def cart_page(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    cart_data = CartService.get_cart(user.id, db)
-    return templates.TemplateResponse("cart/cart.html", {
-        "request": request, 
-        "user": user, 
-        "cart": cart_data
-    })
+    cart = dict(CartService.get_cart(user.id, db))
+    return request.app.state.templates.TemplateResponse(
+        "cart/cart.html",
+        {"request": request, "user": user, "cart": cart, "cart_items": cart.get("items", [])}
+    )
 
 # API: 장바구니 조회
 @router.get("/api/v1/items")

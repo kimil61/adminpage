@@ -18,7 +18,7 @@ import os
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="infoWow", version="1.0.0")
-
+app = FastAPI(debug=True)
 app.add_middleware(
     SessionMiddleware, 
     secret_key=os.getenv("SECRET_KEY", "your-super-secret-key-change-this-for-footjob")
@@ -27,10 +27,13 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+app.state.templates = templates  # 모든 라우터에서 request.app.state.templates로 접근 가능하게 등록
 
 templates.env.globals.update({
     "get_flashed_messages": get_flashed_messages,
 })
+
+templates.env.globals["get_flashed_messages"] = get_flashed_messages
 
 # 라우터 등록
 app.include_router(auth.router)

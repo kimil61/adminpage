@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}상품 리뷰 목록{% endblock %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h1 class="text-2xl font-bold mb-4">상품 리뷰</h1>
+  {% if reviews %}
+    <ul class="space-y-4">
+      {% for review in reviews %}
+      <li class="p-4 bg-white rounded shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="font-semibold text-lg">{{ review.title or '리뷰' }}</span>
+            <span class="ml-2 text-yellow-500">★ {{ review.rating }}</span>
+          </div>
+          <span class="text-gray-500 text-sm">{{ review.created_at.strftime('%Y-%m-%d') }}</span>
+        </div>
+        <div class="mt-2 text-gray-700">{{ review.content }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-center text-gray-500 py-12">아직 등록된 리뷰가 없습니다.</div>
+  {% endif %}
+</div>
+{% endblock %} 

@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
+from app.models import User, UserFortunePoint
 from app.services.fortune_service import FortuneService, get_fortune_service
 from app.services.payment_service import PaymentService, get_payment_service
 from app.utils.csrf import generate_csrf_token, validate_csrf_token
@@ -48,17 +48,17 @@ async def fortune_dashboard(
         fortune_service = FortuneService(db)
         
         # 포인트 잔액 및 통계
-        balance_info = fortune_service.get_user_balance(current_user.id)
+        balance_info = fortune_service.get_user_balance(int(current_user.id))
         
         # 최근 거래 내역 (최근 5개)
         recent_transactions = fortune_service.get_transactions(
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             page=1,
             per_page=5
         )
         
         # 만료 예정 포인트
-        expiring_points = fortune_service.get_expiring_points(current_user.id, days=30)
+        expiring_points = fortune_service.get_expiring_points(int(current_user.id), days=30)
         
         # CSRF 토큰 생성
         csrf_token = generate_csrf_token(request)
@@ -81,6 +81,11 @@ async def fortune_dashboard(
         logger.error(f"Fortune dashboard error: {e}")
         raise HTTPException(status_code=500, detail="포인트 대시보드를 불러오는 중 오류가 발생했습니다.")
 
+@router.get("/dashboard", response_class=HTMLResponse)
+async def fortune_dashboard_alias(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user(request, db)
+    return await fortune_dashboard(request, db)
+
 @router.get("/charge", response_class=HTMLResponse)
 async def fortune_charge(
     request: Request,
@@ -90,23 +95,23 @@ async def fortune_charge(
     try:
         current_user = get_current_user(request, db)
         fortune_service = FortuneService(db)
-        
-        # 충전 패키지 목록
-        packages = fortune_service.get_packages(current_user.id)
-        
+        # 충전 패키지 목록 (list of dicts)
+        packages = fortune_service.get_packages(int(current_user.id))
+        # 현재 포인트(정수) 추출
+        fortune_point_obj = db.query(UserFortunePoint).filter(UserFortunePoint.user_id == current_user.id).first()
+        fortune_points = fortune_point_obj.points if fortune_point_obj else 0
         # CSRF 토큰 생성
         csrf_token = generate_csrf_token(request)
-        
         return request.app.state.templates.TemplateResponse(
             "fortune/charge.html",
             {
                 "request": request,
                 "current_user": current_user,
+                "fortune_points": fortune_points,
                 "packages": packages,
                 "csrf_token": csrf_token
             }
         )
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -127,7 +132,7 @@ async def fortune_history(
         
         # 거래 내역 조회
         transactions_data = fortune_service.get_transactions(
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             page=page,
             per_page=20,
             transaction_type=transaction_type
@@ -168,7 +173,7 @@ async def api_get_balance(
         current_user = get_current_user(request, db)
         fortune_service = FortuneService(db)
         
-        balance_info = fortune_service.get_user_balance(current_user.id)
+        balance_info = fortune_service.get_user_balance(int(current_user.id))
         
         return {
             "success": True,
@@ -200,13 +205,13 @@ async def api_prepare_charge(
         import hashlib
         import time
         idempotency_key = hashlib.sha256(
-            f"{current_user.id}:{package_id}:{int(time.time() / 60)}".encode()
+            f"{int(current_user.id)}:{package_id}:{int(time.time() / 60)}".encode()
         ).hexdigest()
         
         # 포인트 충전 준비
         result = payment_service.prepare_point_charge(
             package_id=package_id,
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             idempotency_key=idempotency_key
         )
         
@@ -243,7 +248,7 @@ async def api_use_points(
         
         # 포인트 사용
         success = fortune_service.use_points_safely(
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             amount=amount,
             source=source,
             reference_id=reference_id
@@ -281,7 +286,7 @@ async def api_get_transactions(
         fortune_service = FortuneService(db)
         
         transactions_data = fortune_service.get_transactions(
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             page=page,
             per_page=per_page,
             transaction_type=transaction_type
@@ -308,7 +313,7 @@ async def api_get_packages(
         current_user = get_current_user(request, db)
         fortune_service = FortuneService(db)
         
-        packages = fortune_service.get_packages(current_user.id)
+        packages = fortune_service.get_packages(int(current_user.id))
         
         return {
             "success": True,
@@ -332,7 +337,7 @@ async def api_get_expiring_points(
         current_user = get_current_user(request, db)
         fortune_service = FortuneService(db)
         
-        expiring_points = fortune_service.get_expiring_points(current_user.id, days=days)
+        expiring_points = fortune_service.get_expiring_points(int(current_user.id), days=days)
         
         return {
             "success": True,
@@ -363,7 +368,7 @@ async def api_charge_completion(
         
         # 패키지 구매 완료 처리
         success = fortune_service.process_package_purchase(
-            user_id=current_user.id,
+            user_id=int(current_user.id),
             package_id=package_id,
             order_id=order_id
         )

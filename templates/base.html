@@ -307,6 +307,29 @@
         </div>
     </header>
 
+    <!-- 테스트용 전체 메뉴 (관리자/QA 전용) -->
+    <nav class="bg-yellow-50 border-b border-yellow-200 py-2 shadow-sm" style="margin-top:60px;">
+        <div class="container flex flex-wrap gap-2 justify-center text-sm">
+            <a href="/shop" class="px-3 py-1 rounded hover:bg-yellow-100">상점</a>
+            <a href="/fortune/dashboard" class="px-3 py-1 rounded hover:bg-yellow-100">포인트 대시보드</a>
+            <a href="/fortune/charge" class="px-3 py-1 rounded hover:bg-yellow-100">포인트 충전</a>
+            <a href="/fortune/history" class="px-3 py-1 rounded hover:bg-yellow-100">포인트 내역</a>
+            <a href="/mypage/dashboard" class="px-3 py-1 rounded hover:bg-yellow-100">마이페이지</a>
+            <a href="/mypage/orders" class="px-3 py-1 rounded hover:bg-yellow-100">구매내역</a>
+            <a href="/mypage/points" class="px-3 py-1 rounded hover:bg-yellow-100">포인트내역</a>
+            <a href="/mypage/reviews" class="px-3 py-1 rounded hover:bg-yellow-100">내 리뷰</a>
+            <a href="/subscription/plans" class="px-3 py-1 rounded hover:bg-yellow-100">구독 플랜</a>
+            <a href="/subscription/manage" class="px-3 py-1 rounded hover:bg-yellow-100">구독 관리</a>
+            <a href="/review/my" class="px-3 py-1 rounded hover:bg-yellow-100">내 리뷰(리뷰 시스템)</a>
+            <a href="/referral/dashboard" class="px-3 py-1 rounded hover:bg-yellow-100">추천 대시보드</a>
+            <a href="/referral/rewards" class="px-3 py-1 rounded hover:bg-yellow-100">추천 보상</a>
+            <a href="/referral/marketing" class="px-3 py-1 rounded hover:bg-yellow-100">추천 마케팅</a>
+            <a href="/product/premium-saju-report" class="px-3 py-1 rounded hover:bg-yellow-100">SEO 상품 상세</a>
+            <a href="/product/premium-saju-report/reviews" class="px-3 py-1 rounded hover:bg-yellow-100">SEO 리뷰 SSR</a>
+            <a href="/cart" class="px-3 py-1 rounded hover:bg-yellow-100">장바구니</a>
+        </div>
+    </nav>
+
     <!-- 플래시 메시지 -->
     <div class="flash-messages">
         {% for category, message in get_flashed_messages(request) %}

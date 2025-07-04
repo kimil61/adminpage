@@ -4,7 +4,7 @@
 <div class="container mx-auto py-8">
   <h1 class="text-2xl font-bold mb-4">장바구니</h1>
   
-  {% if cart.items %}
+  {% if cart['items'] %}
     <div class="bg-white rounded shadow">
       <div class="p-4 border-b">
         <div class="flex justify-between items-center">
@@ -14,7 +14,7 @@
       </div>
       
       <div class="divide-y">
-        {% for item in cart.items %}
+        {% for item in cart['items'] %}
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center space-x-4">
             <div class="w-16 h-16 bg-gray-200 rounded"></div>

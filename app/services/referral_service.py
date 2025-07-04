@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc, func
-
+from fastapi import Depends
 from app.models import (
     User, UserReferral, UserReferralReward, UserFortunePoint
 )

@@ -15,7 +15,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <span class="text-sm text-blue-600">현재 포인트</span>
-                <span class="ml-2 text-lg font-bold text-blue-800">{{ "{:,}".format(current_user.fortune_points or 0) }}P</span>
+                <span class="ml-2 text-lg font-bold text-blue-800">{{ "{:,}".format(fortune_points or 0) }}P</span>
             </div>
             <a href="/fortune" class="text-blue-600 hover:text-blue-800 text-sm">
                 대시보드로 →
@@ -162,11 +162,11 @@
 </div>
 
 <script>
+const packages = {{ packages|tojson }};
 let selectedPackage = null;
 
 function chargePoints(packageId) {
     // 선택된 패키지 정보 찾기
-    const packages = {{ packages|tojson }};
     selectedPackage = packages.find(p => p.id === packageId);
     
     if (!selectedPackage) {

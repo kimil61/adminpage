@@ -483,6 +483,23 @@ class Post(Base):
     category = relationship("Category", back_populates="posts")
 
 ################################################################################
+# 🆕 사주 위키 콘텐츠 모델 추가
+################################################################################
+
+class SajuWikiContent(Base):
+    """사주 위키 콘텐츠"""
+    __tablename__ = "saju_wiki_contents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    section = Column(Text, nullable=True)
+    line_number = Column(Integer, nullable=True)
+    content = Column(Text, nullable=True)
+    kr_literal = Column(Text, nullable=True)
+    kr_explained = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.now)
+
+################################################################################
 # 🔧 유틸리티 함수들
 ################################################################################
 

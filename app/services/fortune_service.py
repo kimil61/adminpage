@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
-
+from fastapi import Depends
 from app.database import get_db
 from app.models import (
     User, UserFortunePoint, FortuneTransaction, 

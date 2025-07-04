@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
-
+from fastapi import Depends
 from app.database import get_db
 from app.models import (
     Product, SajuProduct, User, UserPurchase, 

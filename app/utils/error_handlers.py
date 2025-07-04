@@ -65,3 +65,7 @@ class InsufficientPointsError(Exception):
 class ValidationError(Exception):
     """검증 에러"""
     pass
+
+def get_flashed_messages(request):
+    """세션에서 flash 메시지 목록을 꺼내온다 ([(category, message), ...])"""
+    return request.session.pop("_flashes", [])

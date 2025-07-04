@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from typing import Optional
 
 router = APIRouter(prefix="/product", tags=["product"])
-templates = Jinja2Templates(directory="templates")
 
 # Pydantic 모델
 class ReviewRequest(BaseModel):
@@ -27,11 +26,12 @@ def product_detail(request: Request, slug: str, db: Session = Depends(get_db), u
     - 구매는 shop.py로 연결
     """
     product_data = ProductService.get_product_detail_seo(slug, user.id if user else None, db)
-    
     if not product_data:
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없습니다.")
-    
-    return templates.TemplateResponse("product/detail.html", {
+    # seo_data가 없으면 빈 dict이라도 넘김
+    if "seo_data" not in product_data:
+        product_data["seo_data"] = {}
+    return request.app.state.templates.TemplateResponse("product/detail.html", {
         "request": request,
         "user": user,
         **product_data
@@ -48,7 +48,7 @@ def product_reviews(request: Request, slug: str, page: int = 1, db: Session = De
     if not reviews_data:
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없습니다.")
     
-    return templates.TemplateResponse("product/reviews.html", {
+    return request.app.state.templates.TemplateResponse("product/reviews.html", {
         "request": request,
         "page": page,
         **reviews_data

@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 from app.models import Product, UserReview, UserPurchase, Order, User
 from app.exceptions import BadRequestError, NotFoundError, PermissionDeniedError
 import logging
-
+from fastapi import Depends
 logger = logging.getLogger(__name__)
 
 class ProductService:
