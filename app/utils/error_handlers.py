@@ -48,3 +48,20 @@ def register_exception_handlers(app: FastAPI) -> None:
             {"request": request},
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+"""
+에러 핸들러 유틸리티
+"""
+
+class PaymentError(Exception):
+    """결제 관련 에러"""
+    pass
+
+class InsufficientPointsError(Exception):
+    """포인트 부족 에러"""
+    pass
+
+class ValidationError(Exception):
+    """검증 에러"""
+    pass

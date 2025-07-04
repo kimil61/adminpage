@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.template import templates
 from app.database import engine, get_db
 from app.models import Base, Post, Category
-from app.routers import auth, blog, admin, saju, order, shop, fortune, mypage, cart, product, subscription, review, referral  # shop, fortune, mypage, cart, product, subscription, review, referral 추가
+from app.routers import auth, blog, admin, saju, order, shop, fortune, mypage, cart, product, subscription, review, referral, payment  # payment 추가
 from app.utils import get_flashed_messages
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
@@ -46,6 +46,7 @@ app.include_router(product.router)  # SEO 상품 라우터 추가
 app.include_router(subscription.router)  # 구독 라우터 추가
 app.include_router(review.router)  # 리뷰 라우터 추가
 app.include_router(referral.router)  # 추천인 라우터 추가
+app.include_router(payment.router)  # 결제 콜백 라우터 추가
 
 register_exception_handlers(app)
 

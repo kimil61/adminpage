@@ -3,286 +3,198 @@
 {% block title %}행운 포인트 대시보드{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- 페이지 헤더 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h2 mb-3">
-                <i class="fas fa-coins text-warning"></i>
-                행운 포인트 대시보드
-            </h1>
-            <p class="text-muted">{{ user.username }}님의 포인트 현황을 확인하세요</p>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">행운 포인트 대시보드</h1>
+        <p class="text-gray-600">포인트 잔액과 거래 내역을 확인하세요</p>
     </div>
 
     <!-- 포인트 잔액 카드 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-gradient-primary text-white">
-                <div class="card-body text-center py-5">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h2 class="display-4 fw-bold">{{ "{:,}".format(fortune_info.points) }}P</h2>
-                            <p class="lead mb-0">현재 보유 포인트</p>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <h4 class="mb-1">{{ "{:,}".format(fortune_info.total_earned) }}P</h4>
-                                    <small>총 적립</small>
-                                </div>
-                                <div class="col-6">
-                                    <h4 class="mb-1">{{ "{:,}".format(fortune_info.total_spent) }}P</h4>
-                                    <small>총 사용</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 mb-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">현재 포인트</h2>
+                <div class="text-4xl font-bold mb-2">{{ "{:,}".format(balance_info.points) }}P</div>
+                <p class="text-purple-100">마지막 업데이트: {{ balance_info.last_updated.strftime('%Y-%m-%d %H:%M') if balance_info.last_updated else '없음' }}</p>
+            </div>
+            <div class="text-right">
+                <a href="/fortune/charge" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    포인트 충전
+                </a>
             </div>
         </div>
     </div>
 
     <!-- 통계 카드들 -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <i class="fas fa-arrow-up text-success fa-2x mb-2"></i>
-                    <h5 class="card-title">{{ "{:,}".format(statistics.monthly_earned) }}P</h5>
-                    <p class="card-text text-muted">이번 달 적립</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- 총 적립 포인트 -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">총 적립</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ "{:,}".format(balance_info.total_earned) }}P</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <i class="fas fa-arrow-down text-danger fa-2x mb-2"></i>
-                    <h5 class="card-title">{{ "{:,}".format(statistics.monthly_spent) }}P</h5>
-                    <p class="card-text text-muted">이번 달 사용</p>
+
+        <!-- 총 사용 포인트 -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-red-100 rounded-lg">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">총 사용</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ "{:,}".format(balance_info.total_spent) }}P</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <i class="fas fa-calendar-alt text-info fa-2x mb-2"></i>
-                    <h5 class="card-title">{{ expiring_points|length }}개</h5>
-                    <p class="card-text text-muted">만료 예정</p>
+
+        <!-- 사용률 -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <i class="fas fa-clock text-warning fa-2x mb-2"></i>
-                    <h5 class="card-title">{{ fortune_info.recent_transactions|length }}건</h5>
-                    <p class="card-text text-muted">최근 거래</p>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">사용률</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {% if balance_info.total_earned > 0 %}
+                            {{ "%.1f"|format(balance_info.total_spent / balance_info.total_earned * 100) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 액션 버튼들 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="fas fa-bolt text-primary"></i>
-                        빠른 액션
-                    </h5>
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('fortune_charge') }}" class="btn btn-primary w-100">
-                                <i class="fas fa-plus"></i> 포인트 충전
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('fortune_history') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-history"></i> 거래 내역
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('shop_list') }}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-store"></i> 상점 가기
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('home') }}" class="btn btn-outline-info w-100">
-                                <i class="fas fa-home"></i> 홈으로
-                            </a>
-                        </div>
-                    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- 최근 거래 내역 -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">최근 거래 내역</h3>
+                    <a href="/fortune/history" class="text-blue-600 hover:text-blue-800 text-sm">
+                        전체 보기 →
+                    </a>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- 만료 예정 포인트 -->
-    {% if expiring_points %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        만료 예정 포인트 (7일 이내)
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>포인트</th>
-                                    <th>적립 소스</th>
-                                    <th>만료일</th>
-                                    <th>남은 일수</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for point in expiring_points %}
-                                <tr>
-                                    <td class="fw-bold">{{ "{:,}".format(point.amount) }}P</td>
-                                    <td>{{ point.source }}</td>
-                                    <td>{{ point.expires_at.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        <span class="badge bg-warning">{{ point.days_until_expiry }}일</span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- 최근 거래 내역 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list"></i>
-                        최근 거래 내역
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if fortune_info.recent_transactions %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>날짜</th>
-                                    <th>유형</th>
-                                    <th>금액</th>
-                                    <th>잔액</th>
-                                    <th>설명</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for transaction in fortune_info.recent_transactions %}
-                                <tr>
-                                    <td>{{ transaction.created_at.strftime('%m-%d %H:%M') }}</td>
-                                    <td>
-                                        {% if transaction.transaction_type == 'earn' %}
-                                        <span class="badge bg-success">적립</span>
-                                        {% elif transaction.transaction_type == 'spend' %}
-                                        <span class="badge bg-danger">사용</span>
-                                        {% elif transaction.transaction_type == 'refund' %}
-                                        <span class="badge bg-info">환불</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="fw-bold {% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
-                                        {% if transaction.amount > 0 %}+{% endif %}{{ "{:,}".format(transaction.amount) }}P
-                                    </td>
-                                    <td>{{ "{:,}".format(transaction.balance_after) }}P</td>
-                                    <td>{{ transaction.description or transaction.source }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="{{ url_for('fortune_history') }}" class="btn btn-outline-primary">
-                            전체 거래 내역 보기
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5>거래 내역이 없습니다</h5>
-                        <p class="text-muted">첫 번째 포인트 거래를 시작해보세요!</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 상위 적립 소스 -->
-    {% if statistics.top_sources %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-pie"></i>
-                        상위 적립 소스
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for source in statistics.top_sources %}
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span>{{ source.source }}</span>
-                                <span class="fw-bold text-success">{{ "{:,}".format(source.amount) }}P</span>
+            <div class="p-6">
+                {% if recent_transactions %}
+                <div class="space-y-4">
+                    {% for transaction in recent_transactions %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3
+                                        {% if transaction.type == 'earn' %}bg-green-100{% else %}bg-red-100{% endif %}">
+                                <svg class="w-5 h-5 {% if transaction.type == 'earn' %}text-green-600{% else %}text-red-600{% endif %}" 
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {% if transaction.type == 'earn' %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    {% else %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    {% endif %}
+                                </svg>
                             </div>
-                            <div class="progress mt-1" style="height: 8px;">
-                                <div class="progress-bar bg-success" 
-                                     style="width: {{ (source.amount / statistics.total_earned * 100) if statistics.total_earned > 0 else 0 }}%">
-                                </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ transaction.description }}</p>
+                                <p class="text-sm text-gray-600">{{ transaction.source }}</p>
+                                <p class="text-xs text-gray-500">{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                             </div>
                         </div>
-                        {% endfor %}
+                        <div class="text-right">
+                            <p class="font-semibold {% if transaction.type == 'earn' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if transaction.type == 'earn' %}+{% else %}-{% endif %}{{ "{:,}".format(transaction.amount|abs) }}P
+                            </p>
+                            <p class="text-sm text-gray-600">잔액: {{ "{:,}".format(transaction.balance_after) }}P</p>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-4xl mb-4">📊</div>
+                    <p class="text-gray-600">아직 거래 내역이 없습니다.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 만료 예정 포인트 -->
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">만료 예정 포인트</h3>
+            </div>
+            <div class="p-6">
+                {% if expiring_points %}
+                <div class="space-y-4">
+                    {% for point in expiring_points %}
+                    <div class="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ "{:,}".format(point.amount) }}P</p>
+                            <p class="text-sm text-gray-600">{{ point.source }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-yellow-800">
+                                {{ point.days_until_expiry }}일 후 만료
+                            </p>
+                            <p class="text-xs text-gray-600">
+                                {{ point.expires_at.strftime('%Y-%m-%d') }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-4xl mb-4">🎉</div>
+                    <p class="text-gray-600">만료 예정인 포인트가 없습니다.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
+
+    <!-- 빠른 액션 버튼들 -->
+    <div class="mt-8 bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">빠른 액션</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="/fortune/charge" 
+               class="flex items-center justify-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span class="font-medium text-blue-800">포인트 충전</span>
+            </a>
+            
+            <a href="/fortune/history" 
+               class="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="font-medium text-green-800">거래 내역</span>
+            </a>
+            
+            <a href="/shop" 
+               class="flex items-center justify-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
+                <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <span class="font-medium text-purple-800">상점 가기</span>
+            </a>
+        </div>
+    </div>
 </div>
-
-<style>
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: #6c757d;
-}
-
-.progress {
-    background-color: #f8f9fa;
-}
-</style>
 {% endblock %} 

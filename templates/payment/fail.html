@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}결제 실패 - AdminPage{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-16 text-center">
+    <div class="inline-block bg-red-100 rounded-full p-6 mb-6">
+        <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </div>
+    <h1 class="text-3xl font-bold text-red-700 mb-2">결제에 실패했습니다</h1>
+    <p class="text-gray-600 mb-8">결제 과정에서 오류가 발생했습니다.<br>다시 시도하거나, 문제가 지속될 경우 고객센터로 문의해 주세요.</p>
+    <a href="/fortune/charge" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">포인트 충전으로 돌아가기</a>
+    <a href="/shop" class="inline-block ml-4 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">상점으로 돌아가기</a>
+</div>
+{% endblock %} 

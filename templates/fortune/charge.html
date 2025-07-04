@@ -3,248 +3,261 @@
 {% block title %}포인트 충전 - 행운 포인트{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- 페이지 헤더 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h2 mb-3">
-                <i class="fas fa-plus-circle text-success"></i>
-                포인트 충전
-            </h1>
-            <p class="text-muted">{{ user.username }}님의 포인트를 충전하세요</p>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">포인트 충전</h1>
+        <p class="text-gray-600">원하는 패키지를 선택하여 포인트를 충전하세요</p>
     </div>
 
-    <!-- 현재 포인트 정보 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="alert alert-info d-flex align-items-center">
-                <i class="fas fa-coins me-2"></i>
-                <div>
-                    <strong>현재 보유 포인트:</strong> {{ "{:,}".format(fortune_info.points) }}P
-                    <a href="{{ url_for('fortune_dashboard') }}" class="btn btn-sm btn-outline-primary ms-3">
-                        대시보드로
-                    </a>
-                </div>
+    <!-- 현재 포인트 표시 -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-sm text-blue-600">현재 포인트</span>
+                <span class="ml-2 text-lg font-bold text-blue-800">{{ "{:,}".format(current_user.fortune_points or 0) }}P</span>
             </div>
+            <a href="/fortune" class="text-blue-600 hover:text-blue-800 text-sm">
+                대시보드로 →
+            </a>
         </div>
     </div>
 
-    <!-- 충전 패키지 목록 -->
-    <div class="row">
-        {% if packages %}
-            {% for package in packages %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 package-card {% if package.is_featured %}border-primary{% endif %}">
-                    {% if package.is_featured %}
-                    <div class="card-header bg-primary text-white text-center">
-                        <i class="fas fa-star"></i> 추천 패키지
+    <!-- 패키지 목록 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for package in packages %}
+        <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow {% if package.is_featured %}ring-2 ring-purple-500{% endif %}">
+            <!-- 추천 배지 -->
+            {% if package.is_featured %}
+            <div class="bg-purple-500 text-white text-center py-2 rounded-t-lg">
+                <span class="text-sm font-semibold">추천</span>
+            </div>
+            {% endif %}
+            
+            <!-- 패키지 정보 -->
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ package.name }}</h3>
+                <p class="text-gray-600 text-sm mb-4">{{ package.description }}</p>
+                
+                <!-- 포인트 정보 -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600 mb-1">
+                            {{ "{:,}".format(package.total_points) }}P
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            기본 {{ "{:,}".format(package.fortune_points) }}P
+                            {% if package.bonus_points > 0 %}
+                            + 보너스 {{ "{:,}".format(package.bonus_points) }}P
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 가격 정보 -->
+                <div class="text-center mb-4">
+                    {% if package.discount_rate > 0 %}
+                    <div class="text-lg text-gray-500 line-through mb-1">
+                        {{ "{:,}".format(package.original_price) }}원
+                    </div>
+                    <div class="text-2xl font-bold text-blue-600 mb-1">
+                        {{ "{:,}".format(package.discounted_price) }}원
+                    </div>
+                    <div class="text-sm text-red-600 mb-2">
+                        {{ package.discount_rate }}% 할인
+                    </div>
+                    <div class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full inline-block">
+                        {{ "{:,}".format(package.savings) }}원 절약
+                    </div>
+                    {% else %}
+                    <div class="text-2xl font-bold text-blue-600 mb-1">
+                        {{ "{:,}".format(package.price) }}원
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- 추가 정보 -->
+                <div class="space-y-2 mb-6 text-sm text-gray-600">
+                    {% if package.expires_days > 0 %}
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        {{ package.expires_days }}일 후 만료
                     </div>
                     {% endif %}
                     
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title text-center">{{ package.name }}</h5>
-                        <p class="card-text text-muted text-center">{{ package.description }}</p>
-                        
-                        <!-- 포인트 정보 -->
-                        <div class="text-center mb-3">
-                            <div class="display-6 fw-bold text-success mb-1">
-                                {{ "{:,}".format(package.fortune_points + package.bonus_points) }}P
-                            </div>
-                            <div class="text-muted">
-                                기본 {{ "{:,}".format(package.fortune_points) }}P
-                                {% if package.bonus_points > 0 %}
-                                <span class="text-success">+ 보너스 {{ "{:,}".format(package.bonus_points) }}P</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- 가격 정보 -->
-                        <div class="text-center mb-3">
-                            <div class="h4 fw-bold text-primary mb-1">
-                                {{ "{:,}".format(package.price) }}원
-                            </div>
-                            {% if package.discount_rate > 0 %}
-                            <div class="text-success">
-                                <i class="fas fa-percentage"></i> {{ package.discount_rate }}% 할인
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- 추가 정보 -->
-                        <ul class="list-unstyled mb-3">
-                            <li><i class="fas fa-calendar-alt text-muted me-2"></i> 유효기간: {{ package.expires_days }}일</li>
-                            {% if package.max_purchase_per_user %}
-                            <li><i class="fas fa-limit text-muted me-2"></i> 최대 구매: {{ package.max_purchase_per_user }}개</li>
-                            {% endif %}
-                        </ul>
-                        
-                        <!-- 충전 버튼 -->
-                        <div class="mt-auto">
-                            <button class="btn btn-success w-100 charge-btn" 
-                                    data-package-id="{{ package.id }}"
-                                    data-package-name="{{ package.name }}"
-                                    data-package-price="{{ package.price }}">
-                                <i class="fas fa-plus"></i> 충전하기
-                            </button>
-                        </div>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        즉시 적립
                     </div>
                 </div>
+                
+                <!-- 충전 버튼 -->
+                <button onclick="chargePoints({{ package.id }})" 
+                        class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-semibold">
+                    충전하기
+                </button>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                    <h4>충전 패키지가 없습니다</h4>
-                    <p class="text-muted">관리자에게 문의해주세요.</p>
-                </div>
-            </div>
-        {% endif %}
+        </div>
+        {% endfor %}
     </div>
 
-    <!-- 충전 안내 -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle text-info"></i>
-                        충전 안내
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-check text-success"></i> 충전 즉시 사용 가능</h6>
-                            <p class="text-muted small">충전 완료 후 즉시 포인트를 사용할 수 있습니다.</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-clock text-warning"></i> 유효기간 확인</h6>
-                            <p class="text-muted small">포인트는 충전일로부터 설정된 기간 동안 유효합니다.</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-shield-alt text-primary"></i> 안전한 결제</h6>
-                            <p class="text-muted small">카카오페이를 통한 안전한 결제를 제공합니다.</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-undo text-info"></i> 환불 정책</h6>
-                            <p class="text-muted small">사용하지 않은 포인트는 환불이 가능합니다.</p>
-                        </div>
-                    </div>
-                </div>
+    <!-- 패키지가 없을 때 -->
+    {% if not packages %}
+    <div class="text-center py-12">
+        <div class="text-gray-400 text-6xl mb-4">📦</div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">충전 패키지가 없습니다</h3>
+        <p class="text-gray-600">잠시 후 다시 시도해주세요.</p>
+    </div>
+    {% endif %}
+
+    <!-- 안내 사항 -->
+    <div class="mt-12 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">충전 안내</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">결제 방법</h4>
+                <ul class="space-y-1">
+                    <li>• 카카오페이 결제</li>
+                    <li>• 신용카드, 체크카드</li>
+                    <li>• 계좌이체</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">주의사항</h4>
+                <ul class="space-y-1">
+                    <li>• 포인트는 구매 후 즉시 적립됩니다</li>
+                    <li>• 일부 포인트는 만료일이 있습니다</li>
+                    <li>• 환불은 구매 후 7일 이내에만 가능합니다</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 충전 모달 -->
-<div class="modal fade" id="chargeModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">포인트 충전 확인</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- 충전 확인 모달 -->
+<div id="chargeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">포인트 충전 확인</h3>
+            <div id="modalContent" class="mb-6">
+                <!-- 모달 내용이 여기에 동적으로 삽입됩니다 -->
             </div>
-            <div class="modal-body">
-                <p>다음 패키지를 충전하시겠습니까?</p>
-                <div class="alert alert-info">
-                    <strong id="modalPackageName"></strong><br>
-                    <span id="modalPackagePrice"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-success" id="confirmCharge">
-                    <i class="fas fa-credit-card"></i> 결제 진행
+            
+            <div class="flex space-x-3">
+                <button onclick="confirmCharge()" 
+                        class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                    충전하기
+                </button>
+                <button onclick="closeChargeModal()" 
+                        class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">
+                    취소
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.package-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 2px solid transparent;
-}
-
-.package-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.package-card.border-primary {
-    border-color: #0d6efd;
-}
-
-.charge-btn {
-    transition: all 0.2s;
-}
-
-.charge-btn:hover {
-    transform: scale(1.05);
-}
-</style>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 충전 버튼 클릭 이벤트
-    const chargeButtons = document.querySelectorAll('.charge-btn');
-    const modal = new bootstrap.Modal(document.getElementById('chargeModal'));
+let selectedPackage = null;
+
+function chargePoints(packageId) {
+    // 선택된 패키지 정보 찾기
+    const packages = {{ packages|tojson }};
+    selectedPackage = packages.find(p => p.id === packageId);
     
-    chargeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const packageId = this.dataset.packageId;
-            const packageName = this.dataset.packageName;
-            const packagePrice = this.dataset.packagePrice;
+    if (!selectedPackage) {
+        alert('패키지 정보를 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 모달 내용 생성
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="space-y-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 mb-2">${selectedPackage.name}</h4>
+                <p class="text-sm text-gray-600 mb-2">${selectedPackage.description}</p>
+                <div class="text-center">
+                    <div class="text-xl font-bold text-purple-600 mb-1">
+                        ${selectedPackage.total_points.toLocaleString()}P
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        기본 ${selectedPackage.fortune_points.toLocaleString()}P
+                        ${selectedPackage.bonus_points > 0 ? `+ 보너스 ${selectedPackage.bonus_points.toLocaleString()}P` : ''}
+                    </div>
+                </div>
+            </div>
             
-            // 모달 내용 설정
-            document.getElementById('modalPackageName').textContent = packageName;
-            document.getElementById('modalPackagePrice').textContent = packagePrice + '원';
+            <div class="text-center">
+                <div class="text-lg font-bold text-blue-600">
+                    ${selectedPackage.discounted_price ? selectedPackage.discounted_price.toLocaleString() : selectedPackage.price.toLocaleString()}원
+                </div>
+                ${selectedPackage.discount_rate > 0 ? `
+                <div class="text-sm text-red-600">
+                    ${selectedPackage.discount_rate}% 할인
+                </div>
+                ` : ''}
+            </div>
             
-            // 모달 표시
-            modal.show();
-            
-            // 확인 버튼 이벤트
-            document.getElementById('confirmCharge').onclick = function() {
-                // CSRF 토큰 가져오기
-                const csrfToken = '{{ csrf_token }}';
-                
-                // 충전 API 호출
-                fetch('/fortune/api/v1/charge', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        package_id: parseInt(packageId),
-                        csrf_token: csrfToken,
-                        idempotency_key: Date.now().toString()
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (data.data.redirect_url) {
-                            window.location.href = data.data.redirect_url;
-                        } else {
-                            alert('충전이 완료되었습니다!');
-                            window.location.reload();
-                        }
-                    } else {
-                        alert('충전 실패: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('충전 중 오류가 발생했습니다.');
-                });
-                
-                modal.hide();
-            };
-        });
+            <p class="text-sm text-gray-600 text-center">
+                카카오페이로 결제하시겠습니까?
+            </p>
+        </div>
+    `;
+    
+    showChargeModal();
+}
+
+function showChargeModal() {
+    document.getElementById('chargeModal').classList.remove('hidden');
+}
+
+function closeChargeModal() {
+    document.getElementById('chargeModal').classList.add('hidden');
+    selectedPackage = null;
+}
+
+function confirmCharge() {
+    if (!selectedPackage) {
+        alert('패키지 정보가 없습니다.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('package_id', selectedPackage.id);
+    formData.append('csrf_token', '{{ csrf_token }}');
+    
+    fetch('/fortune/api/v1/charge', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 카카오페이 결제 페이지로 리다이렉트
+            window.location.href = data.data.redirect_url;
+        } else {
+            alert('충전 준비 실패: ' + data.detail);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('충전 준비 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        closeChargeModal();
     });
+}
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('chargeModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeChargeModal();
+    }
 });
 </script>
 {% endblock %} 

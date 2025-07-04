@@ -1,214 +1,290 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - 상품 상세{% endblock %}
+{% block title %}{{ product.name }} - 운세 상점{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-2">
-                <i class="fas fa-gem text-primary"></i>
-                {{ product.name }}
-            </h1>
-            <p class="text-muted">{{ product.description }}</p>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-6 mb-4">
+<div class="container mx-auto px-4 py-8">
+    <!-- 브레드크럼 -->
+    <nav class="text-sm text-gray-500 mb-6">
+        <a href="/shop" class="hover:text-blue-600">상점</a>
+        <span class="mx-2">/</span>
+        <span>{{ product.name }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- 상품 이미지 -->
+        <div>
             {% if product.thumbnail %}
-            <img src="{{ product.thumbnail }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+            <img src="{{ product.thumbnail }}" alt="{{ product.name }}" 
+                 class="w-full rounded-lg shadow-lg">
             {% else %}
-            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 300px;">
-                <i class="fas fa-magic fa-4x text-muted"></i>
+            <div class="w-full h-96 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                <span class="text-white text-4xl font-bold">{{ product.name[:2] }}</span>
             </div>
             {% endif %}
         </div>
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">상품 정보</h4>
-                    <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item">
-                            <strong>카테고리:</strong> {{ product.category or '기타' }}
-                        </li>
-                        <li class="list-group-item">
-                            <strong>가격:</strong>
-                            {% if product.price > 0 %}
-                                {% if discount_info and discount_info.has_discount %}
-                                <div>
-                                    <span class="text-muted text-decoration-line-through">{{ "{:,}".format(discount_info.original_price) }}원</span>
-                                    <span class="text-danger fw-bold ms-2">{{ "{:,}".format(discount_info.discounted_price) }}원</span>
-                                    <span class="badge bg-danger ms-1">{{ discount_info.discount_rate }}% 할인</span>
-                                </div>
-                                <small class="text-muted">{{ discount_info.discount_reason }}</small>
-                                {% if discount_info.discount_type == 'subscription' %}
-                                <div class="mt-1">
-                                    <span class="badge bg-purple-100 text-purple-800">
-                                        <i class="fas fa-crown"></i> 구독 혜택
-                                    </span>
-                                </div>
-                                {% endif %}
-                                {% else %}
-                                <span class="text-primary fw-bold">{{ "{:,}".format(product.price) }}원</span>
-                                {% endif %}
-                            {% endif %}
-                            {% if product.fortune_cost > 0 %}
-                                <span class="text-success fw-bold ms-2">{{ "{:,}".format(product.fortune_cost) }}P</span>
-                            {% endif %}
-                        </li>
-                        <li class="list-group-item">
-                            <strong>등록일:</strong> {{ product.created_at.strftime('%Y-%m-%d') if product.created_at else '' }}
-                        </li>
-                    </ul>
-                    <div class="mb-3">
-                        {% if user %}
-                            {% if can_purchase_with_points %}
-                            <span class="badge bg-success">포인트 구매 가능</span>
-                            {% elif product.fortune_cost > 0 %}
-                            <span class="badge bg-warning">포인트 부족</span>
-                            {% endif %}
-                            {% if product.price > 0 %}
-                            <span class="badge bg-primary">현금 구매 가능</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="badge bg-secondary">로그인 필요</span>
-                        {% endif %}
-                    </div>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('shop_buy', slug=product.slug) }}" class="btn btn-lg btn-primary">
-                            <i class="fas fa-shopping-cart"></i> 구매하기
-                        </a>
-                        {% if user %}
-                        <button onclick="addToCart({{ product.id }})" class="btn btn-lg btn-outline-success">
-                            <i class="fas fa-cart-plus"></i> 장바구니 추가
-                        </button>
-                        {% endif %}
-                        <a href="{{ url_for('shop_list') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left"></i> 목록으로 돌아가기
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- 리뷰 섹션 -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0"><i class="fas fa-star text-warning"></i> 상품 리뷰</h4>
-                <div class="d-flex gap-2">
-                    {% if user %}
-                    <a href="/review/write/{{ product.slug }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pen"></i> 리뷰 작성
-                    </a>
-                    {% endif %}
-                    <a href="/review/list/{{ product.slug }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-list"></i> 전체 리뷰
-                    </a>
-                </div>
-            </div>
-            
-            {% if reviews and reviews.count > 0 %}
-            <div class="mb-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="d-flex align-items-center">
-                        <span class="h5 mb-0 text-warning">{{ reviews.average_rating }}</span>
-                        <div class="ms-2">
-                            {% for i in range(1, 6) %}
-                            <i class="fas fa-star {% if i <= reviews.average_rating %}text-warning{% else %}text-muted{% endif %}"></i>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <span class="text-muted">({{ reviews.count }}건의 리뷰)</span>
-                </div>
-            </div>
-            
-            <div class="list-group">
-                {% for review in reviews.recent_reviews[:3] %}
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="d-flex">
-                                {% for i in range(1, 6) %}
-                                <i class="fas fa-star {% if i <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
-                                {% endfor %}
-                            </div>
-                            {% if review.is_verified %}
-                            <span class="badge bg-success">
-                                <i class="fas fa-check-circle"></i> 구매 인증
-                            </span>
-                            {% endif %}
-                        </div>
-                        <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d') }}</small>
-                    </div>
-                    {% if review.title %}
-                    <h6 class="fw-bold mb-1">{{ review.title }}</h6>
-                    {% endif %}
-                    <p class="mb-1">{{ review.content[:200] }}{% if review.content|length > 200 %}...{% endif %}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            {% if review.reviewer_age_group %}{{ review.reviewer_age_group }}{% endif %}
-                            {% if review.reviewer_gender %}{{ review.reviewer_gender }}{% endif %}
-                        </small>
-                        <small class="text-muted">
-                            <i class="fas fa-thumbs-up"></i> {{ review.helpful_count }}
-                        </small>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            {% if reviews.count > 3 %}
-            <div class="mt-3 text-center">
-                <a href="/review/list/{{ product.slug }}" class="btn btn-outline-primary">
-                    전체 {{ reviews.count }}건의 리뷰 보기
-                </a>
+
+        <!-- 상품 정보 -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+            <p class="text-gray-600 mb-6">{{ product.description }}</p>
+
+            <!-- 상품 특징 -->
+            {% if product.features %}
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">주요 특징</h3>
+                <ul class="space-y-2">
+                    {% for feature in product.features %}
+                    <li class="flex items-center text-gray-700">
+                        <span class="text-green-500 mr-2">✓</span>
+                        {{ feature }}
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endif %}
-            
-            {% else %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                아직 리뷰가 없습니다. 첫 번째 리뷰를 남겨보세요!
-                {% if user %}
-                <div class="mt-2">
-                    <a href="/review/write/{{ product.slug }}" class="btn btn-sm btn-primary">
-                        리뷰 작성하기
-                    </a>
+
+            <!-- 가격 정보 -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">가격 정보</h3>
+                
+                {% if product.fortune_cost > 0 %}
+                <!-- 포인트 구매 -->
+                <div class="text-center mb-4">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">
+                        {{ "{:,}".format(product.fortune_cost) }}P
+                    </div>
+                    <div class="text-sm text-gray-600">포인트로 구매</div>
+                </div>
+                
+                {% if current_user %}
+                    {% if user_points >= product.fortune_cost %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center">
+                            <span class="text-green-600 mr-2">✓</span>
+                            <span class="text-green-800">포인트 구매 가능</span>
+                        </div>
+                        <div class="text-sm text-green-600 mt-1">
+                            보유 포인트: {{ "{:,}".format(user_points) }}P
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center">
+                            <span class="text-yellow-600 mr-2">⚠</span>
+                            <span class="text-yellow-800">포인트 부족</span>
+                        </div>
+                        <div class="text-sm text-yellow-600 mt-1">
+                            필요: {{ "{:,}".format(product.fortune_cost) }}P / 보유: {{ "{:,}".format(user_points) }}P
+                        </div>
+                        <a href="/fortune/charge" class="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block">
+                            포인트 충전하기 →
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                {% elif product.price > 0 %}
+                <!-- 현금 구매 -->
+                <div class="text-center mb-4">
+                    {% if discount_info and discount_info.discount_rate > 0 %}
+                    <div class="text-lg text-gray-500 line-through mb-1">
+                        {{ "{:,}".format(discount_info.original_price) }}원
+                    </div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">
+                        {{ "{:,}".format(discount_info.final_price) }}원
+                    </div>
+                    <div class="text-sm text-red-600 mb-2">
+                        {{ discount_info.discount_rate }}% 할인
+                    </div>
+                    {% if discount_info.is_new_user %}
+                    <div class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full inline-block">
+                        신규 사용자 할인
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-3xl font-bold text-blue-600 mb-2">
+                        {{ "{:,}".format(product.price) }}원
+                    </div>
+                    {% endif %}
+                    <div class="text-sm text-gray-600">현금으로 구매</div>
                 </div>
                 {% endif %}
+            </div>
+
+            <!-- 구매 버튼 -->
+            <div class="space-y-3">
+                {% if current_user %}
+                    {% if product.fortune_cost > 0 and user_points >= product.fortune_cost %}
+                    <button onclick="purchaseWithPoints()" 
+                            class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors">
+                        포인트로 구매하기
+                    </button>
+                    {% elif product.price > 0 %}
+                    <button onclick="purchaseWithCash()" 
+                            class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                        현금으로 구매하기
+                    </button>
+                    {% endif %}
+                {% else %}
+                <a href="/auth/login?redirect={{ request.url }}" 
+                   class="block w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors text-center">
+                    로그인 후 구매하기
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- 상품 상세 정보 -->
+            {% if product.analysis_type or product.ai_model or product.includes_monthly_fortune %}
+            <div class="mt-8 border-t pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">상세 정보</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {% if product.analysis_type %}
+                    <div>
+                        <span class="font-medium text-gray-700">분석 유형:</span>
+                        <span class="text-gray-600">{{ product.analysis_type }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.ai_model %}
+                    <div>
+                        <span class="font-medium text-gray-700">AI 모델:</span>
+                        <span class="text-gray-600">{{ product.ai_model }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.includes_monthly_fortune %}
+                    <div>
+                        <span class="font-medium text-gray-700">월간 운세:</span>
+                        <span class="text-gray-600">포함</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.includes_compatibility %}
+                    <div>
+                        <span class="font-medium text-gray-700">궁합 분석:</span>
+                        <span class="text-gray-600">포함</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.includes_lucky_items %}
+                    <div>
+                        <span class="font-medium text-gray-700">행운 아이템:</span>
+                        <span class="text-gray-600">포함</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.max_pages %}
+                    <div>
+                        <span class="font-medium text-gray-700">최대 페이지:</span>
+                        <span class="text-gray-600">{{ product.max_pages }}페이지</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.estimated_time %}
+                    <div>
+                        <span class="font-medium text-gray-700">예상 소요시간:</span>
+                        <span class="text-gray-600">{{ product.estimated_time }}</span>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
+<!-- 구매 모달 -->
+<div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">구매 확인</h3>
+            <p class="text-gray-600 mb-6">정말로 이 상품을 구매하시겠습니까?</p>
+            
+            <div class="flex space-x-3">
+                <button onclick="confirmPurchase()" 
+                        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                    구매하기
+                </button>
+                <button onclick="closePurchaseModal()" 
+                        class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">
+                    취소
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function addToCart(productId) {
-    fetch('/cart/api/v1/add', {
+let purchaseType = '';
+let purchaseData = {};
+
+function purchaseWithPoints() {
+    purchaseType = 'points';
+    purchaseData = {
+        product_id: {{ product.id }},
+        purchase_type: 'points',
+        csrf_token: '{{ csrf_token }}'
+    };
+    showPurchaseModal();
+}
+
+function purchaseWithCash() {
+    purchaseType = 'cash';
+    purchaseData = {
+        product_id: {{ product.id }},
+        purchase_type: 'cash',
+        csrf_token: '{{ csrf_token }}'
+    };
+    showPurchaseModal();
+}
+
+function showPurchaseModal() {
+    document.getElementById('purchaseModal').classList.remove('hidden');
+}
+
+function closePurchaseModal() {
+    document.getElementById('purchaseModal').classList.add('hidden');
+}
+
+function confirmPurchase() {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(purchaseData)) {
+        formData.append(key, value);
+    }
+
+    fetch('/shop/api/v1/purchases', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            product_id: productId,
-            quantity: 1,
-            csrf_token: '{{ csrf_token }}',
-            idempotency_key: Date.now().toString()
-        })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            if (purchaseType === 'points') {
+                alert('포인트 구매가 완료되었습니다!');
+                window.location.href = '/mypage/purchases';
+            } else if (purchaseType === 'cash') {
+                // 카카오페이 결제 페이지로 리다이렉트
+                window.location.href = data.data.redirect_url;
+            }
         } else {
-            alert('장바구니 추가 실패: ' + data.message);
+            alert('구매 실패: ' + data.detail);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('장바구니 추가 중 오류가 발생했습니다.');
+        alert('구매 처리 중 오류가 발생했습니다.');
+    })
+    .finally(() => {
+        closePurchaseModal();
     });
 }
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('purchaseModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePurchaseModal();
+    }
+});
 </script>
 {% endblock %} 

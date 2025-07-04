@@ -1,413 +1,385 @@
 """
 행운 포인트 관리 라우터 - 트랜잭션 안전성 보장
-- 포인트 대시보드 (SSR)
-- 충전 페이지 (패키지 목록)
-- 거래 내역 (페이징)
-- API 엔드포인트 (JSON, CSRF 보호)
+Week 1: 핵심 인프라 - 포인트 시스템 완전 구현
 """
 
-from fastapi import APIRouter, Request, Depends, Query, Form, Body, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
 import logging
-import secrets
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, UserFortunePoint, FortuneTransaction, FortunePackage
-from app.template import templates
-from app.dependencies import get_current_user, get_current_user_optional
-from app.services.fortune_service import FortuneService
-from app.services.payment_service import PaymentService
-from app.exceptions import BadRequestError, NotFoundError, InternalServerError
+from app.models import User
+from app.services.fortune_service import FortuneService, get_fortune_service
+from app.services.payment_service import PaymentService, get_payment_service
+from app.utils.csrf import generate_csrf_token, validate_csrf_token
+from app.utils.error_handlers import ValidationError, InsufficientPointsError
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/fortune", tags=["Fortune"])
+router = APIRouter(prefix="/fortune", tags=["fortune"])
+
+# 의존성
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    """현재 로그인한 사용자 조회"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="유효하지 않은 사용자입니다.")
+    
+    return user
 
 ################################################################################
-# 웹페이지 라우터 (SSR HTML)
+# 💰 웹페이지 라우터 (SSR HTML)
 ################################################################################
 
 @router.get("/", response_class=HTMLResponse)
 async def fortune_dashboard(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """포인트 대시보드 (SSR)"""
+    """포인트 대시보드"""
     try:
-        # 사용자 포인트 정보 조회
-        fortune_info = FortuneService.get_user_fortune_info(user.id, db)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        # 통계 정보 조회
-        statistics = FortuneService.get_fortune_statistics(user.id, db)
+        # 포인트 잔액 및 통계
+        balance_info = fortune_service.get_user_balance(current_user.id)
         
-        # 만료 예정 포인트 조회
-        expiring_points = FortuneService.check_expiring_points(user.id, db)
+        # 최근 거래 내역 (최근 5개)
+        recent_transactions = fortune_service.get_transactions(
+            user_id=current_user.id,
+            page=1,
+            per_page=5
+        )
+        
+        # 만료 예정 포인트
+        expiring_points = fortune_service.get_expiring_points(current_user.id, days=30)
         
         # CSRF 토큰 생성
-        csrf_token = request.session.get("csrf_token")
-        if not csrf_token:
-            csrf_token = secrets.token_urlsafe(16)
-            request.session["csrf_token"] = csrf_token
+        csrf_token = generate_csrf_token(request)
         
-        return templates.TemplateResponse("fortune/dashboard.html", {
-            "request": request,
-            "user": user,
-            "fortune_info": fortune_info,
-            "statistics": statistics,
-            "expiring_points": expiring_points,
-            "csrf_token": csrf_token
-        })
+        return request.app.state.templates.TemplateResponse(
+            "fortune/dashboard.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "balance_info": balance_info,
+                "recent_transactions": recent_transactions['transactions'],
+                "expiring_points": expiring_points,
+                "csrf_token": csrf_token
+            }
+        )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"포인트 대시보드 조회 실패: user_id={user.id}, error={e}")
-        raise HTTPException(status_code=500, detail="포인트 정보를 불러오는 중 오류가 발생했습니다.")
+        logger.error(f"Fortune dashboard error: {e}")
+        raise HTTPException(status_code=500, detail="포인트 대시보드를 불러오는 중 오류가 발생했습니다.")
 
 @router.get("/charge", response_class=HTMLResponse)
 async def fortune_charge(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """충전 페이지 (패키지 목록)"""
+    """포인트 충전 페이지"""
     try:
-        # 충전 패키지 목록 조회
-        packages = FortuneService.get_charge_packages(db)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        # 사용자 포인트 정보
-        fortune_info = FortuneService.get_user_fortune_info(user.id, db)
+        # 충전 패키지 목록
+        packages = fortune_service.get_packages(current_user.id)
         
         # CSRF 토큰 생성
-        csrf_token = request.session.get("csrf_token")
-        if not csrf_token:
-            csrf_token = secrets.token_urlsafe(16)
-            request.session["csrf_token"] = csrf_token
+        csrf_token = generate_csrf_token(request)
         
-        return templates.TemplateResponse("fortune/charge.html", {
-            "request": request,
-            "user": user,
-            "packages": packages,
-            "fortune_info": fortune_info,
-            "csrf_token": csrf_token
-        })
+        return request.app.state.templates.TemplateResponse(
+            "fortune/charge.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "packages": packages,
+                "csrf_token": csrf_token
+            }
+        )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"충전 페이지 조회 실패: user_id={user.id}, error={e}")
-        raise HTTPException(status_code=500, detail="충전 패키지를 불러오는 중 오류가 발생했습니다.")
+        logger.error(f"Fortune charge error: {e}")
+        raise HTTPException(status_code=500, detail="충전 페이지를 불러오는 중 오류가 발생했습니다.")
 
 @router.get("/history", response_class=HTMLResponse)
 async def fortune_history(
     request: Request,
     page: int = Query(1, ge=1),
     transaction_type: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """포인트 거래 내역 (페이징)"""
+    """포인트 거래 내역 페이지"""
     try:
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
+        
         # 거래 내역 조회
-        result = FortuneService.get_transaction_history(
-            user_id=user.id,
+        transactions_data = fortune_service.get_transactions(
+            user_id=current_user.id,
             page=page,
             per_page=20,
-            transaction_type=transaction_type,
-            db=db
+            transaction_type=transaction_type
         )
         
-        # 사용자 포인트 정보
-        fortune_info = FortuneService.get_user_fortune_info(user.id, db)
+        # CSRF 토큰 생성
+        csrf_token = generate_csrf_token(request)
         
-        return templates.TemplateResponse("fortune/history.html", {
-            "request": request,
-            "user": user,
-            "transactions": result["transactions"],
-            "pagination": result["pagination"],
-            "fortune_info": fortune_info,
-            "transaction_type": transaction_type
-        })
+        return request.app.state.templates.TemplateResponse(
+            "fortune/history.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "transactions": transactions_data['transactions'],
+                "pagination": transactions_data['pagination'],
+                "transaction_type": transaction_type,
+                "csrf_token": csrf_token
+            }
+        )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"거래 내역 조회 실패: user_id={user.id}, error={e}")
+        logger.error(f"Fortune history error: {e}")
         raise HTTPException(status_code=500, detail="거래 내역을 불러오는 중 오류가 발생했습니다.")
 
 ################################################################################
-# API 라우터 (JSON, CSRF 보호)
+# 🔌 JSON API 라우터
 ################################################################################
 
 @router.get("/api/v1/balance")
 async def api_get_balance(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    request: Request,
+    db: Session = Depends(get_db)
 ):
-    """잔액 조회 API"""
+    """포인트 잔액 조회 API"""
     try:
-        balance = PaymentService.get_user_point_balance(user.id, db)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        return JSONResponse({
+        balance_info = fortune_service.get_user_balance(current_user.id)
+        
+        return {
             "success": True,
-            "data": {
-                "balance": balance,
-                "formatted_balance": f"{balance:,}P"
-            }
-        })
+            "data": balance_info
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"잔액 조회 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "잔액 조회 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API balance error: {e}")
+        raise HTTPException(status_code=500, detail="잔액 조회 중 오류가 발생했습니다.")
 
 @router.post("/api/v1/charge")
-async def api_charge_points(
+async def api_prepare_charge(
     request: Request,
-    payload: Dict[str, Any] = Body(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    package_id: int = Form(...),
+    csrf_token: str = Form(...),
+    db: Session = Depends(get_db)
 ):
-    """패키지 충전 (idempotency_key, 카카오페이)"""
+    """포인트 충전 준비 API"""
     try:
-        package_id = payload.get("package_id")
-        idempotency_key = payload.get("idempotency_key")
-        csrf_token = payload.get("csrf_token")
-        
         # CSRF 토큰 검증
-        session_csrf = request.session.get("csrf_token")
-        if not csrf_token or not session_csrf or csrf_token != session_csrf:
-            return JSONResponse({
-                "success": False,
-                "error": "보안 토큰이 유효하지 않습니다."
-            }, status_code=403)
+        validate_csrf_token(request, csrf_token)
         
-        if not package_id:
-            return JSONResponse({
-                "success": False,
-                "error": "패키지 ID가 필요합니다."
-            }, status_code=400)
+        current_user = get_current_user(request, db)
+        payment_service = PaymentService(db)
         
-        # Idempotency 체크
-        if idempotency_key:
-            existing_result = PaymentService.check_idempotency(db, idempotency_key, "point_charge")
-            if existing_result:
-                return JSONResponse({
-                    "success": True,
-                    "data": existing_result,
-                    "idempotency_hit": True
-                })
+        # 멱등성 키 생성
+        import hashlib
+        import time
+        idempotency_key = hashlib.sha256(
+            f"{current_user.id}:{package_id}:{int(time.time() / 60)}".encode()
+        ).hexdigest()
         
         # 포인트 충전 준비
-        result = await PaymentService.prepare_point_charge(
+        result = payment_service.prepare_point_charge(
             package_id=package_id,
-            user_id=user.id,
-            idempotency_key=idempotency_key,
-            db=db
+            user_id=current_user.id,
+            idempotency_key=idempotency_key
         )
         
-        # Idempotency 결과 저장
-        if idempotency_key:
-            PaymentService.store_idempotency_result(
-                db, idempotency_key, "point_charge", result
-            )
-        
-        return JSONResponse({
+        return {
             "success": True,
-            "data": result
-        })
+            "data": result,
+            "message": "충전 페이지로 이동합니다."
+        }
         
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"포인트 충전 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "포인트 충전 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API charge preparation error: {e}")
+        raise HTTPException(status_code=500, detail="충전 준비 중 오류가 발생했습니다.")
 
 @router.post("/api/v1/use")
 async def api_use_points(
     request: Request,
-    payload: Dict[str, Any] = Body(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    amount: int = Form(...),
+    source: str = Form(...),
+    reference_id: str = Form(...),
+    csrf_token: str = Form(...),
+    db: Session = Depends(get_db)
 ):
-    """포인트 사용 처리 (내부 API, CSRF 필수)"""
+    """포인트 사용 API (내부 API, CSRF 필수)"""
     try:
-        amount = payload.get("amount")
-        source = payload.get("source")
-        reference_id = payload.get("reference_id")
-        csrf_token = payload.get("csrf_token")
-        
         # CSRF 토큰 검증
-        session_csrf = request.session.get("csrf_token")
-        if not csrf_token or not session_csrf or csrf_token != session_csrf:
-            return JSONResponse({
-                "success": False,
-                "error": "보안 토큰이 유효하지 않습니다."
-            }, status_code=403)
+        validate_csrf_token(request, csrf_token)
         
-        if not all([amount, source, reference_id]):
-            return JSONResponse({
-                "success": False,
-                "error": "필수 파라미터가 누락되었습니다."
-            }, status_code=400)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        # 포인트 사용 처리
-        success = PaymentService.process_point_usage(
-            user_id=user.id,
+        # 포인트 사용
+        success = fortune_service.use_points_safely(
+            user_id=current_user.id,
             amount=amount,
             source=source,
-            reference_id=reference_id,
-            db=db
+            reference_id=reference_id
         )
         
         if success:
-            # 업데이트된 잔액 조회
-            new_balance = PaymentService.get_user_point_balance(user.id, db)
-            
-            return JSONResponse({
+            return {
                 "success": True,
-                "data": {
-                    "amount_used": amount,
-                    "new_balance": new_balance,
-                    "formatted_balance": f"{new_balance:,}P"
-                }
-            })
+                "message": "포인트가 사용되었습니다."
+            }
         else:
-            return JSONResponse({
-                "success": False,
-                "error": "포인트 사용 처리에 실패했습니다."
-            }, status_code=400)
-            
-    except BadRequestError as e:
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=400)
+            raise HTTPException(status_code=400, detail="포인트 사용에 실패했습니다.")
+        
+    except InsufficientPointsError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"포인트 사용 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "포인트 사용 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API point usage error: {e}")
+        raise HTTPException(status_code=500, detail="포인트 사용 중 오류가 발생했습니다.")
 
 @router.get("/api/v1/transactions")
 async def api_get_transactions(
+    request: Request,
     page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
+    per_page: int = Query(20, ge=1, le=50),
     transaction_type: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """거래 내역 API (페이징)"""
+    """거래 내역 조회 API (페이징)"""
     try:
-        result = FortuneService.get_transaction_history(
-            user_id=user.id,
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
+        
+        transactions_data = fortune_service.get_transactions(
+            user_id=current_user.id,
             page=page,
             per_page=per_page,
-            transaction_type=transaction_type,
-            db=db
+            transaction_type=transaction_type
         )
         
-        # 거래 내역 직렬화
-        transactions_data = []
-        for transaction in result["transactions"]:
-            transactions_data.append({
-                "id": transaction.id,
-                "transaction_type": transaction.transaction_type,
-                "amount": transaction.amount,
-                "balance_after": transaction.balance_after,
-                "source": transaction.source,
-                "reference_id": transaction.reference_id,
-                "description": transaction.description,
-                "expires_at": transaction.expires_at.isoformat() if transaction.expires_at else None,
-                "created_at": transaction.created_at.isoformat() if transaction.created_at else None
-            })
-        
-        return JSONResponse({
+        return {
             "success": True,
-            "data": {
-                "transactions": transactions_data,
-                "pagination": result["pagination"]
-            }
-        })
+            "data": transactions_data
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"거래 내역 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "거래 내역을 불러오는 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API transactions error: {e}")
+        raise HTTPException(status_code=500, detail="거래 내역 조회 중 오류가 발생했습니다.")
 
-@router.get("/api/v1/statistics")
-async def api_get_statistics(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+@router.get("/api/v1/packages")
+async def api_get_packages(
+    request: Request,
+    db: Session = Depends(get_db)
 ):
-    """포인트 통계 API"""
+    """충전 패키지 목록 API"""
     try:
-        statistics = FortuneService.get_fortune_statistics(user.id, db)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        return JSONResponse({
+        packages = fortune_service.get_packages(current_user.id)
+        
+        return {
             "success": True,
-            "data": statistics
-        })
+            "data": packages
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"포인트 통계 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "포인트 통계를 불러오는 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API packages error: {e}")
+        raise HTTPException(status_code=500, detail="패키지 목록 조회 중 오류가 발생했습니다.")
 
 @router.get("/api/v1/expiring")
 async def api_get_expiring_points(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    request: Request,
+    days: int = Query(30, ge=1, le=90),
+    db: Session = Depends(get_db)
 ):
-    """만료 예정 포인트 API"""
+    """만료 예정 포인트 조회 API"""
     try:
-        expiring_points = FortuneService.check_expiring_points(user.id, db)
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
         
-        return JSONResponse({
+        expiring_points = fortune_service.get_expiring_points(current_user.id, days=days)
+        
+        return {
             "success": True,
-            "data": {
-                "expiring_points": expiring_points,
-                "count": len(expiring_points)
-            }
-        })
+            "data": expiring_points
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"만료 예정 포인트 API 실패: user_id={user.id}, error={e}")
-        return JSONResponse({
-            "success": False,
-            "error": "만료 예정 포인트를 불러오는 중 오류가 발생했습니다."
-        }, status_code=500)
+        logger.error(f"API expiring points error: {e}")
+        raise HTTPException(status_code=500, detail="만료 예정 포인트 조회 중 오류가 발생했습니다.")
 
 ################################################################################
-# 유틸리티 함수들
+# 🔄 결제 완료 처리 (Webhook 대응)
 ################################################################################
 
-def format_points(points: int) -> str:
-    """포인트 포맷팅"""
-    return f"{points:,}P"
-
-def get_transaction_type_display(transaction_type: str) -> str:
-    """거래 타입 표시명"""
-    type_map = {
-        "earn": "적립",
-        "spend": "사용",
-        "refund": "환불",
-        "expire": "만료"
-    }
-    return type_map.get(transaction_type, transaction_type)
-
-def get_source_display(source: str) -> str:
-    """거래 소스 표시명"""
-    source_map = {
-        "package_charge": "패키지 충전",
-        "product_purchase": "상품 구매",
-        "daily_bonus": "일일 보너스",
-        "referral": "추천 보상",
-        "subscription": "구독 혜택"
-    }
-    return source_map.get(source, source) 
+@router.post("/api/v1/charge/complete")
+async def api_charge_completion(
+    request: Request,
+    order_id: int = Form(...),
+    package_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    """포인트 충전 완료 처리 API"""
+    try:
+        current_user = get_current_user(request, db)
+        fortune_service = FortuneService(db)
+        
+        # 패키지 구매 완료 처리
+        success = fortune_service.process_package_purchase(
+            user_id=current_user.id,
+            package_id=package_id,
+            order_id=order_id
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": "포인트 충전이 완료되었습니다."
+            }
+        else:
+            raise HTTPException(status_code=400, detail="포인트 충전 처리에 실패했습니다.")
+        
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"API charge completion error: {e}")
+        raise HTTPException(status_code=500, detail="포인트 충전 완료 처리 중 오류가 발생했습니다.") 
