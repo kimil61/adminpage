@@ -29,6 +29,13 @@
                     <input type="password" id="password_confirm" name="password_confirm" required
                            class="w-full border rounded px-3 py-2" />
                 </div>
+                <div>
+                    <label for="referral_code" class="block text-sm font-medium mb-1">추천인 코드 (선택사항)</label>
+                    <input type="text" id="referral_code" name="referral_code" 
+                           class="w-full border rounded px-3 py-2" placeholder="친구의 추천인 코드를 입력하세요" 
+                           value="{{ referral_code or '' }}" />
+                    <p class="text-xs text-gray-500 mt-1">추천인 코드로 가입하면 1,000포인트를 받을 수 있습니다!</p>
+                </div>
                 <button type="submit"
                         class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     회원가입
