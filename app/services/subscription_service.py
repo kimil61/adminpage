@@ -6,7 +6,7 @@
 """
 
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
@@ -127,12 +127,11 @@ class SubscriptionService:
             
             # 첫 달 포인트 지급
             if plan_info["monthly_fortune_points"] > 0:
-                FortuneService.add_fortune_points(
+                FortuneService(db).earn_points_safely(
                     user_id=user_id,
                     amount=plan_info["monthly_fortune_points"],
                     source="subscription_bonus",
-                    reference_id=f"sub_{subscription.id}",
-                    db=db
+                    reference_id=f"sub_{subscription.id}"
                 )
             
             logger.info(f"구독 생성 성공: user_id={user_id}, plan_type={plan_type}")
@@ -171,7 +170,7 @@ class SubscriptionService:
             # 구독 해지 처리
             subscription.status = "cancelled"
             subscription.cancelled_at = datetime.now()
-            subscription.ends_at = subscription.next_billing_date
+            subscription.ends_at = datetime.combine(subscription.next_billing_date, time.min) if subscription.next_billing_date else None
             subscription.auto_renewal = False
             
             db.commit()

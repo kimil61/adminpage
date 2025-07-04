@@ -35,6 +35,12 @@ def mypage_reviews(request: Request, db: Session = Depends(get_db), user=Depends
 def mypage_settings(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
     return request.app.state.templates.TemplateResponse("mypage/settings.html", {"request": request, "user": user})
 
+# SSR: 구매 내역
+@router.get("/purchases", response_class=HTMLResponse)
+def mypage_purchases(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    purchases = MypageService.get_purchases(user.id, db)
+    return request.app.state.templates.TemplateResponse("mypage/purchases.html", {"request": request, "user": user, "purchases": purchases})
+
 # (추후) API 라우트도 추가 가능 
 
 @router.get("/dashboard", response_class=HTMLResponse)

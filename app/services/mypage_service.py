@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
+from app.models import UserPurchase
 
 class MypageService:
     @staticmethod
@@ -20,4 +21,8 @@ class MypageService:
     @staticmethod
     def get_reviews(user_id: int, db: Session) -> List[Dict[str, Any]]:
         # TODO: 실제 리뷰 내역 조회
-        return [] 
+        return []
+
+    @staticmethod
+    def get_purchases(user_id: int, db: Session):
+        return db.query(UserPurchase).filter(UserPurchase.user_id == user_id).order_by(UserPurchase.created_at.desc()).all() 

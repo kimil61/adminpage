@@ -8,11 +8,12 @@
 from fastapi import APIRouter, Request, Depends, Query, Form, Body, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, desc
 from typing import Optional, Dict, Any
 import logging
 
 from app.database import get_db
-from app.models import User, Subscription
+from app.models import User, Subscription, Order
 from app.template import templates
 from app.dependencies import get_current_user, get_current_user_optional
 from app.services.subscription_service import SubscriptionService
