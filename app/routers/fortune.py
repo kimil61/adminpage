@@ -15,6 +15,7 @@ from app.services.fortune_service import FortuneService, get_fortune_service
 from app.services.payment_service import PaymentService, get_payment_service
 from app.utils.csrf import generate_csrf_token, validate_csrf_token
 from app.utils.error_handlers import ValidationError, InsufficientPointsError
+from app.template import templates
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ async def fortune_dashboard(
         # CSRF 토큰 생성
         csrf_token = generate_csrf_token(request)
         
-        return request.app.state.templates.TemplateResponse(
+        return templates.TemplateResponse(
             "fortune/dashboard.html",
             {
                 "request": request,
@@ -102,7 +103,7 @@ async def fortune_charge(
         fortune_points = fortune_point_obj.points if fortune_point_obj else 0
         # CSRF 토큰 생성
         csrf_token = generate_csrf_token(request)
-        return request.app.state.templates.TemplateResponse(
+        return templates.TemplateResponse(
             "fortune/charge.html",
             {
                 "request": request,
@@ -141,7 +142,7 @@ async def fortune_history(
         # CSRF 토큰 생성
         csrf_token = generate_csrf_token(request)
         
-        return request.app.state.templates.TemplateResponse(
+        return templates.TemplateResponse(
             "fortune/history.html",
             {
                 "request": request,

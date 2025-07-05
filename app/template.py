@@ -9,3 +9,5 @@ templates.env.globals.update({
     "get_flashed_messages": get_flashed_messages,
     "generate_csrf_token": generate_csrf_token,
 })
+
+templates.env.filters['comma'] = lambda v: '{:,}'.format(int(v) if v is not None else 0)

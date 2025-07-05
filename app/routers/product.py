@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from app.services.product_service import ProductService
 from app.dependencies import get_db, get_current_user
 from sqlalchemy.orm import Session
-from fastapi.templating import Jinja2Templates
+from app.template import templates
 from pydantic import BaseModel
 from typing import Optional
 
@@ -31,7 +31,7 @@ def product_detail(request: Request, slug: str, db: Session = Depends(get_db), u
     # seo_data가 없으면 빈 dict이라도 넘김
     if "seo_data" not in product_data:
         product_data["seo_data"] = {}
-    return request.app.state.templates.TemplateResponse("product/detail.html", {
+    return templates.TemplateResponse("product/detail.html", {
         "request": request,
         "user": user,
         **product_data
@@ -48,7 +48,7 @@ def product_reviews(request: Request, slug: str, page: int = 1, db: Session = De
     if not reviews_data:
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없습니다.")
     
-    return request.app.state.templates.TemplateResponse("product/reviews.html", {
+    return templates.TemplateResponse("product/reviews.html", {
         "request": request,
         "page": page,
         **reviews_data

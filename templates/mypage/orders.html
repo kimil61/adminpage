@@ -1,42 +1,38 @@
 {% extends "base.html" %}
-{% block title %}주문/결제 내역{% endblock %}
+{% block title %}주문 내역{% endblock %}
 {% block content %}
 <div class="container mx-auto py-8">
-  <h1 class="text-2xl font-bold mb-4">주문/결제 내역</h1>
-  <table class="min-w-full bg-white rounded shadow">
-    <thead>
-      <tr>
-        <th class="py-2 px-4">주문번호</th>
-        <th class="py-2 px-4">상품명</th>
-        <th class="py-2 px-4">결제금액</th>
-        <th class="py-2 px-4">상태</th>
-        <th class="py-2 px-4">주문일시</th>
-        <th class="py-2 px-4">액션</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for order in orders %}
-      <tr>
-        <td class="py-2 px-4">{{ order.id }}</td>
-        <td class="py-2 px-4">{{ order.product_name }}</td>
-        <td class="py-2 px-4">{{ order.amount }}원</td>
-        <td class="py-2 px-4">{{ order.status }}</td>
-        <td class="py-2 px-4">{{ order.created_at }}</td>
-        <td class="py-2 px-4">
-          {% if order.status == 'paid' %}
-            <a href="/shop/purchase/{{ order.id }}/report" 
-               class="text-blue-600 hover:text-blue-800 underline">리포트 보기</a>
-          {% else %}
-            <span class="text-gray-400">-</span>
+  <h1 class="text-2xl font-bold mb-6">주문 내역</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for order in orders %}
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-xl transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-gray-400">#{{ order.id }}</span>
+            <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-600 font-semibold">{{ order.status|default('-') }}</span>
+          </div>
+          <div class="text-lg font-bold mb-1 truncate">{{ order.product.name if order.product else '-' }}</div>
+          <div class="text-gray-500 text-sm mb-2">{{ order.product.category.name if order.product and order.product.category else '' }}</div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl font-extrabold text-blue-600">{{ order.amount|int|comma }}원</span>
+            {% if order.points_used > 0 %}
+              <span class="text-xs bg-green-100 text-green-700 rounded px-2 py-1 font-semibold">포인트 {{ order.points_used|int|comma }}P 사용</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+          <span>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+          {% if order.status %}
+            <span class="px-2 py-1 rounded bg-gray-100 text-gray-600">{{ order.status }}</span>
           {% endif %}
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="6" class="py-4 text-center text-gray-400">주문 내역이 없습니다.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="col-span-full text-center text-gray-400 py-12">
+        <div class="text-5xl mb-4">📦</div>
+        <div class="text-lg font-semibold">주문 내역이 없습니다.</div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %} 

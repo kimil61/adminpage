@@ -2,34 +2,40 @@
 {% block title %}구매 내역{% endblock %}
 {% block content %}
 <div class="container mx-auto py-8">
-  <h1 class="text-2xl font-bold mb-4">구매 내역</h1>
-  <table class="min-w-full bg-white rounded shadow">
-    <thead>
-      <tr>
-        <th class="py-2 px-4">구매번호</th>
-        <th class="py-2 px-4">상품명</th>
-        <th class="py-2 px-4">구매유형</th>
-        <th class="py-2 px-4">결제금액</th>
-        <th class="py-2 px-4">포인트 사용</th>
-        <th class="py-2 px-4">구매일시</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for purchase in purchases %}
-      <tr>
-        <td class="py-2 px-4">{{ purchase.id }}</td>
-        <td class="py-2 px-4">{{ purchase.product.name if purchase.product else '-' }}</td>
-        <td class="py-2 px-4">{{ purchase.purchase_type }}</td>
-        <td class="py-2 px-4">{{ purchase.paid_amount }}원</td>
-        <td class="py-2 px-4">{{ purchase.fortune_points_used }}P</td>
-        <td class="py-2 px-4">{{ purchase.created_at }}</td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="6" class="py-4 text-center text-gray-400">구매 내역이 없습니다.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h1 class="text-2xl font-bold mb-6">구매 내역</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for purchase in purchases %}
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-xl transition">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-gray-400">#{{ purchase.id }}</span>
+          <span
+            class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-600 font-semibold">{{ purchase.purchase_type|default('-') }}</span>
+        </div>
+        <div class="text-lg font-bold mb-1 truncate">{{ purchase.product.name if purchase.product else '-' }}</div>
+        <div class="text-gray-500 text-sm mb-2">
+          {{ purchase.product.category.name if purchase.product and purchase.product.category else '' }}</div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl font-extrabold text-blue-600">{{ purchase.amount|int|comma }}원</span>
+          {% if purchase.points_used > 0 %}
+          <span class="text-xs bg-green-100 text-green-700 rounded px-2 py-1 font-semibold">포인트
+            {{ purchase.points_used|int|comma }}P 사용</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+        <span>{{ purchase.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        {% if purchase.status %}
+        <span class="px-2 py-1 rounded bg-gray-100 text-gray-600">{{ purchase.status }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="col-span-full text-center text-gray-400 py-12">
+      <div class="text-5xl mb-4">🛒</div>
+      <div class="text-lg font-semibold">구매 내역이 없습니다.</div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}

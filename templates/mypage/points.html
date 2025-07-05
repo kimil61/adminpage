@@ -1,31 +1,41 @@
 {% extends "base.html" %}
-{% block title %}포인트/충전 내역{% endblock %}
+{% block title %}포인트 내역{% endblock %}
 {% block content %}
 <div class="container mx-auto py-8">
-  <h1 class="text-2xl font-bold mb-4">포인트/충전 내역</h1>
-  <table class="min-w-full bg-white rounded shadow">
-    <thead>
-      <tr>
-        <th class="py-2 px-4">구분</th>
-        <th class="py-2 px-4">금액</th>
-        <th class="py-2 px-4">설명</th>
-        <th class="py-2 px-4">일시</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for point in points %}
-      <tr>
-        <td class="py-2 px-4">{{ point.type }}</td>
-        <td class="py-2 px-4">{{ point.amount }}P</td>
-        <td class="py-2 px-4">{{ point.description }}</td>
-        <td class="py-2 px-4">{{ point.created_at }}</td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="4" class="py-4 text-center text-gray-400">포인트 내역이 없습니다.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h1 class="text-2xl font-bold mb-6">포인트 내역</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for point in points %}
+      <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-xl transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-gray-400">#{{ point.id }}</span>
+            {% if point.amount > 0 %}
+              <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-semibold">적립</span>
+            {% else %}
+              <span class="text-xs px-2 py-1 rounded bg-red-100 text-red-600 font-semibold">차감</span>
+            {% endif %}
+          </div>
+          <div class="text-lg font-bold mb-1 truncate">{{ point.reason|default('-') }}</div>
+          <div class="text-gray-500 text-sm mb-2">{{ point.reference_id|default('') }}</div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl font-extrabold {% if point.amount > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+              {{ point.amount|int|comma }}P
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+          <span>{{ point.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+          {% if point.status %}
+            <span class="px-2 py-1 rounded bg-gray-100 text-gray-600">{{ point.status }}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="col-span-full text-center text-gray-400 py-12">
+        <div class="text-5xl mb-4">💸</div>
+        <div class="text-lg font-semibold">포인트 내역이 없습니다.</div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %} 

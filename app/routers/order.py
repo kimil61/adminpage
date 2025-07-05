@@ -618,8 +618,7 @@ async def view_report(
 ################################################################################
 # 9-2) 빠른 리포트 보기 (새로운 utils.py 함수 사용)
 ################################################################################
-from fastapi.templating import Jinja2Templates
-templates = Jinja2Templates(directory="templates")
+templates = templates  # Use the imported global instance
 
 @router.get("/report/live/{report_id}", response_class=HTMLResponse)
 async def view_live_report(

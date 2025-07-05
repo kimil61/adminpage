@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from app.services.cart_service import CartService
 from app.dependencies import get_db, get_current_user
 from sqlalchemy.orm import Session
-from fastapi.templating import Jinja2Templates
+from app.template import templates
 from pydantic import BaseModel
 from typing import Optional
 
@@ -26,7 +26,7 @@ class CartUpdateRequest(BaseModel):
 @router.get("", response_class=HTMLResponse)
 def cart_page(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
     cart = dict(CartService.get_cart(user.id, db))
-    return request.app.state.templates.TemplateResponse(
+    return templates.TemplateResponse(
         "cart/cart.html",
         {"request": request, "user": user, "cart": cart, "cart_items": cart.get("items", [])}
     )

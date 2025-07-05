@@ -26,8 +26,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-templates = Jinja2Templates(directory="templates")
-app.state.templates = templates  # 모든 라우터에서 request.app.state.templates로 접근 가능하게 등록
+app.state.templates = templates  # Use the imported global instance
 
 templates.env.globals.update({
     "get_flashed_messages": get_flashed_messages,

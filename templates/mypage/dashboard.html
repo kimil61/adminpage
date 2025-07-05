@@ -1,39 +1,54 @@
 {% extends "base.html" %}
-{% block title %}마이페이지 대시보드{% endblock %}
+{% block title %}마이페이지{% endblock %}
 {% block content %}
 <div class="container mx-auto py-8">
-  <h1 class="text-2xl font-bold mb-4">안녕하세요, {{ user.username }}님!</h1>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-    <div class="bg-white rounded shadow p-4">
-      <div class="text-gray-500 text-sm mb-1">주문/결제</div>
-      <div class="text-xl font-bold">{{ orders|length }}건</div>
-      <a href="{{ url_for('mypage_orders') }}" class="text-blue-500 text-sm">내역 보기 →</a>
+  <h1 class="text-2xl font-bold mb-6">마이페이지</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">보유 포인트</div>
+      <div class="text-3xl font-extrabold text-blue-600 mb-2">{{ "{:,}".format(user.fortune_points | int) }}P</div>
+      <a href="/mypage/points"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">포인트 내역</a>
     </div>
-    <div class="bg-white rounded shadow p-4">
-      <div class="text-gray-500 text-sm mb-1">포인트</div>
-      <div class="text-xl font-bold">{{ points|length }}건</div>
-      <a href="{{ url_for('mypage_points') }}" class="text-blue-500 text-sm">내역 보기 →</a>
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">구독</div>
+      {% if subscription %}
+      <div class="mb-1 text-blue-600 font-semibold">{{ subscription.plan_type|capitalize }} 플랜</div>
+      <div class="text-sm text-gray-500 mb-2">{{ subscription.status|capitalize }}</div>
+      <div class="text-xs text-gray-500 mb-2">만료:
+        {{ subscription.ends_at.strftime('%Y-%m-%d') if subscription.ends_at else '-' }}</div>
+      <a href="/subscription/dashboard"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">구독 내역</a>
+      {% else %}
+      <div class="text-gray-400 mb-2">구독 없음</div>
+      <a href="/subscription/plans"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">구독하기</a>
+      {% endif %}
     </div>
-    <div class="bg-white rounded shadow p-4">
-      <div class="text-gray-500 text-sm mb-1">리뷰</div>
-      <div class="text-xl font-bold">{{ reviews|length }}건</div>
-      <a href="/review/my" class="text-blue-500 text-sm">내역 보기 →</a>
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">구매 내역</div>
+      <div class="text-2xl font-extrabold text-blue-600 mb-2">{{ purchases_count|int }}건</div>
+      <a href="/mypage/purchases"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">구매 내역</a>
     </div>
-  </div>
-  <div class="bg-white rounded shadow p-4">
-    <h2 class="text-lg font-semibold mb-2">빠른 메뉴</h2>
-    <div class="flex flex-wrap gap-4">
-      <a href="{{ url_for('mypage_orders') }}" class="btn">주문/결제 내역</a>
-      <a href="{{ url_for('mypage_points') }}" class="btn">포인트 내역</a>
-      <a href="/review/my" class="btn">내가 쓴 리뷰</a>
-      <a href="/referral/dashboard" class="btn">추천인 관리</a>
-      <a href="{{ url_for('mypage_settings') }}" class="btn">계정/설정</a>
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">주문 내역</div>
+      <div class="text-2xl font-extrabold text-blue-600 mb-2">{{ orders_count|int }}건</div>
+      <a href="/mypage/orders"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">주문 내역</a>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">내가 쓴 리뷰</div>
+      <div class="text-2xl font-extrabold text-blue-600 mb-2">{{ reviews_count|int }}건</div>
+      <a href="/mypage/reviews"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">리뷰 내역</a>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-xl transition">
+      <div class="text-lg font-bold mb-2">추천인</div>
+      <div class="text-2xl font-extrabold text-blue-600 mb-2">{{ referrals_count|int }}명</div>
+      <a href="/referral/dashboard"
+        class="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded font-semibold hover:bg-blue-200">추천인 내역</a>
     </div>
   </div>
 </div>
-<style>
-.btn {
-  @apply inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition;
-}
-</style>
-{% endblock %} 
+{% endblock %}

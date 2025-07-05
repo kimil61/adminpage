@@ -12,6 +12,7 @@ from app.models import User, Order
 from app.services.payment_service import PaymentService
 from app.services.fortune_service import FortuneService
 from app.utils.error_handlers import PaymentError
+from app.template import templates
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 
@@ -46,7 +47,7 @@ async def payment_success(
                 order_id=int(order.id)
             )
         
-        return request.app.state.templates.TemplateResponse(
+        return templates.TemplateResponse(
             "payment/success.html",
             {"request": request, "order": order, "result": result}
         )
@@ -56,7 +57,7 @@ async def payment_success(
 @router.get("/fail", response_class=HTMLResponse)
 async def payment_fail(request: Request):
     """카카오페이 결제 실패 콜백"""
-    return request.app.state.templates.TemplateResponse(
+    return templates.TemplateResponse(
         "payment/fail.html", {"request": request}
     )
 

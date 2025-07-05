@@ -119,11 +119,12 @@ async def blog_detail(
         logger.warning(f"Post not found: slug={slug}")
         raise NotFoundError("포스트를 찾을 수 없습니다.")
     
-    # 조회수 증가
-    if post.views is None:
-        post.views = 0
-    post.views += 1
-    db.commit()
+    # 조회수 증가 (views 필드가 있을 때만)
+    if hasattr(post, "views"):
+        if post.views is None:
+            post.views = 0
+        post.views += 1
+        db.commit()
     
     # 관련 포스트
     related_posts = db.query(Post).filter(
@@ -131,8 +132,6 @@ async def blog_detail(
         Post.id != post.id,
         Post.is_published == True
     ).limit(3).all()
-    
-
     post_content = post.content if post.content else ""
 
     return templates.TemplateResponse("blog/detail.html", {
